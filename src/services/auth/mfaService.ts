@@ -16,6 +16,17 @@ export interface MFASettings {
 }
 
 /**
+ * Sanitize email for use as SecureStore key
+ * SecureStore keys can only contain alphanumeric characters, ".", "-", and "_"
+ */
+function sanitizeEmailForKey(email: string): string {
+  // Replace @ with _at_ and any other invalid characters with _
+  return email
+    .replace(/@/g, '_at_')
+    .replace(/[^a-zA-Z0-9.\-_]/g, '_');
+}
+
+/**
  * Check if device supports biometric authentication
  */
 export async function checkBiometricSupport(): Promise<{
@@ -69,10 +80,13 @@ export async function setupTOTP(email: string): Promise<{
   // Generate new TOTP secret
   const secret = await generateTOTPSecret();
   
-  // Store secret in SecureStore (not yet verified)
-  await SecureStore.setItemAsync(`totp_secret_temp_${email}`, secret);
+  // Sanitize email for SecureStore key
+  const sanitizedEmail = sanitizeEmailForKey(email);
   
-  // Generate QR code URI
+  // Store secret in SecureStore (not yet verified)
+  await SecureStore.setItemAsync(`totp_secret_temp_${sanitizedEmail}`, secret);
+  
+  // Generate QR code URI (use original email for display)
   const qrCodeUri = `otpauth://totp/DocsShelf:${encodeURIComponent(
     email
   )}?secret=${secret}&issuer=DocsShelf&digits=6&period=30`;
@@ -87,8 +101,11 @@ export async function verifyAndActivateTOTP(
   email: string,
   code: string
 ): Promise<boolean> {
+  // Sanitize email for SecureStore key
+  const sanitizedEmail = sanitizeEmailForKey(email);
+  
   // Get temporary secret
-  const tempSecret = await SecureStore.getItemAsync(`totp_secret_temp_${email}`);
+  const tempSecret = await SecureStore.getItemAsync(`totp_secret_temp_${sanitizedEmail}`);
   
   if (!tempSecret) {
     throw new Error('TOTP setup not initiated');
@@ -99,8 +116,8 @@ export async function verifyAndActivateTOTP(
   
   if (isValid) {
     // Move from temp to permanent storage
-    await SecureStore.setItemAsync(`totp_secret_${email}`, tempSecret);
-    await SecureStore.deleteItemAsync(`totp_secret_temp_${email}`);
+    await SecureStore.setItemAsync(`totp_secret_${sanitizedEmail}`, tempSecret);
+    await SecureStore.deleteItemAsync(`totp_secret_temp_${sanitizedEmail}`);
     
     // Update database
     await updateMFASettings(email, { totpEnabled: true });
@@ -118,7 +135,8 @@ export async function verifyAndActivateTOTP(
  * Verify TOTP code during login
  */
 export async function verifyTOTPLogin(email: string, code: string): Promise<boolean> {
-  const secret = await SecureStore.getItemAsync(`totp_secret_${email}`);
+  const sanitizedEmail = sanitizeEmailForKey(email);
+  const secret = await SecureStore.getItemAsync(`totp_secret_${sanitizedEmail}`);
   
   if (!secret) {
     return false;
@@ -131,6 +149,7 @@ export async function verifyTOTPLogin(email: string, code: string): Promise<bool
  * Generate backup codes for account recovery
  */
 async function generateBackupCodes(email: string): Promise<string[]> {
+  const sanitizedEmail = sanitizeEmailForKey(email);
   const codes: string[] = [];
   
   // Generate 10 backup codes (8 characters each)
@@ -141,7 +160,7 @@ async function generateBackupCodes(email: string): Promise<string[]> {
   
   // Store hashed backup codes in SecureStore
   await SecureStore.setItemAsync(
-    `backup_codes_${email}`,
+    `backup_codes_${sanitizedEmail}`,
     JSON.stringify(codes)
   );
   
@@ -152,8 +171,9 @@ async function generateBackupCodes(email: string): Promise<string[]> {
  * Get MFA settings for user
  */
 export async function getMFASettings(email: string): Promise<MFASettings> {
-  const totpSecret = await SecureStore.getItemAsync(`totp_secret_${email}`);
-  const biometricEnabled = await SecureStore.getItemAsync(`biometric_enabled_${email}`);
+  const sanitizedEmail = sanitizeEmailForKey(email);
+  const totpSecret = await SecureStore.getItemAsync(`totp_secret_${sanitizedEmail}`);
+  const biometricEnabled = await SecureStore.getItemAsync(`biometric_enabled_${sanitizedEmail}`);
   
   return {
     totpEnabled: !!totpSecret,
@@ -192,6 +212,7 @@ async function updateMFASettings(
  * Enable biometric authentication for user
  */
 export async function enableBiometric(email: string): Promise<boolean> {
+  const sanitizedEmail = sanitizeEmailForKey(email);
   const biometricSupport = await checkBiometricSupport();
   
   if (!biometricSupport.available) {
@@ -202,7 +223,7 @@ export async function enableBiometric(email: string): Promise<boolean> {
   const authenticated = await authenticateWithBiometrics();
   
   if (authenticated) {
-    await SecureStore.setItemAsync(`biometric_enabled_${email}`, 'true');
+    await SecureStore.setItemAsync(`biometric_enabled_${sanitizedEmail}`, 'true');
     return true;
   }
   
@@ -213,7 +234,8 @@ export async function enableBiometric(email: string): Promise<boolean> {
  * Disable biometric authentication
  */
 export async function disableBiometric(email: string): Promise<void> {
-  await SecureStore.deleteItemAsync(`biometric_enabled_${email}`);
+  const sanitizedEmail = sanitizeEmailForKey(email);
+  await SecureStore.deleteItemAsync(`biometric_enabled_${sanitizedEmail}`);
 }
 
 /**
@@ -228,8 +250,9 @@ export async function isMFARequired(email: string): Promise<boolean> {
  * Disable TOTP for user
  */
 export async function disableTOTP(email: string): Promise<void> {
-  await SecureStore.deleteItemAsync(`totp_secret_${email}`);
-  await SecureStore.deleteItemAsync(`totp_secret_temp_${email}`);
-  await SecureStore.deleteItemAsync(`backup_codes_${email}`);
+  const sanitizedEmail = sanitizeEmailForKey(email);
+  await SecureStore.deleteItemAsync(`totp_secret_${sanitizedEmail}`);
+  await SecureStore.deleteItemAsync(`totp_secret_temp_${sanitizedEmail}`);
+  await SecureStore.deleteItemAsync(`backup_codes_${sanitizedEmail}`);
   await updateMFASettings(email, { totpEnabled: false });
 }
