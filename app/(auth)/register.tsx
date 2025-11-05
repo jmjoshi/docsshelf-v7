@@ -1,15 +1,17 @@
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { generateSalt, hashPassword } from '../../utils/crypto/passwordHash';
-import { logger } from '../../utils/helpers/logger';
-import { sanitizeEmail, validateEmail } from '../../utils/validators/emailValidator';
-import { validatePassword } from '../../utils/validators/passwordValidator';
+import { Alert, Button, StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { generateSalt, hashPassword } from '../../src/utils/crypto/passwordHash';
+import { logger } from '../../src/utils/helpers/logger';
+import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';
+import { validatePassword } from '../../src/utils/validators/passwordValidator';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     // Validate and sanitize email
@@ -29,6 +31,7 @@ export default function RegisterScreen() {
     }
     
     setError('');
+    setLoading(true);
     
     try {
       // Generate cryptographically secure random salt
@@ -45,10 +48,14 @@ export default function RegisterScreen() {
       setEmail('');
       setPassword('');
       logger.info('User registration successful', { email: sanitizedEmail });
-      Alert.alert('Success', 'Account created securely!');
+      Alert.alert('Success', 'Account created securely!', [
+        { text: 'OK', onPress: () => router.replace('/(auth)/login' as any) }
+      ]);
     } catch (err) {
       logger.error('Registration failed', err as Error, { email: sanitizeEmail(email) });
       setError('Failed to create account. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,6 +69,7 @@ export default function RegisterScreen() {
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        editable={!loading}
       />
       <TextInput
         style={styles.input}
@@ -69,9 +77,28 @@ export default function RegisterScreen() {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        editable={!loading}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Register" onPress={handleRegister} />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Creating your account...</Text>
+        </View>
+      ) : (
+        <Button 
+          title="Register" 
+          onPress={handleRegister}
+          disabled={loading}
+        />
+      )}
+      <TouchableOpacity 
+        style={styles.linkContainer}
+        onPress={() => router.push('/(auth)/login' as any)}
+        disabled={loading}
+      >
+        <Text style={styles.linkText}>Already have an account? Login</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -101,5 +128,22 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  linkContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#007AFF',
+    fontSize: 16,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 14,
   },
 });
