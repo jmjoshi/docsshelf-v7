@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
+import { initializeDatabase } from '../src/services/database/dbInit';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -16,6 +17,13 @@ function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Initialize database on app start
+  useEffect(() => {
+    initializeDatabase().catch((error) => {
+      console.error('Failed to initialize database:', error);
+    });
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
