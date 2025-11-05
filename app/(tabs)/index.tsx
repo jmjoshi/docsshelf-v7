@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Button, Alert } from 'react-native';
+import { Alert, Button, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';

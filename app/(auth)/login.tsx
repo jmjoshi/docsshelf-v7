@@ -1,11 +1,11 @@
-import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Button, StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { verifyPassword } from '../../src/utils/crypto/passwordHash';
 import { logger } from '../../src/utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';
-import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

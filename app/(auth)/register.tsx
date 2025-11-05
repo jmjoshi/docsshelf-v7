@@ -1,14 +1,14 @@
-import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { createUser, userExists } from '../../src/services/database/userService';
+import { UserProfile } from '../../src/types/user';
 import { generateSalt, hashPassword } from '../../src/utils/crypto/passwordHash';
 import { logger } from '../../src/utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';
 import { validatePassword } from '../../src/utils/validators/passwordValidator';
 import { validatePhone } from '../../src/utils/validators/phoneValidator';
-import { createUser, userExists } from '../../src/services/database/userService';
-import { UserProfile } from '../../src/types/user';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
