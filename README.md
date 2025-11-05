@@ -1,50 +1,153 @@
-# Welcome to your Expo app 👋
+# DocsShelf - Secure Document Management App 📄
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+DocsShelf is a cross-platform (iOS/Android) mobile application for secure document management with end-to-end encryption, OCR capabilities, and strict local storage.
 
-## Get started
+## 🚀 Features
 
-1. Install dependencies
+- **End-to-End Encryption**: All documents are encrypted at rest using AES-256-GCM
+- **Offline-First**: Works completely offline with no cloud dependency
+- **OCR Support**: Extract text from scanned documents
+- **Biometric Authentication**: Secure access with fingerprint/Face ID
+- **Document Organization**: Categories, tags, and versioning
+- **Search**: Full-text search across all documents
+- **Compliance**: GDPR and CCPA compliant
 
+## 📋 Prerequisites
+
+- Node.js 18+ and npm/yarn
+- Expo CLI (`npm install -g expo-cli`)
+- iOS Simulator (Mac only) or Android Emulator
+- React Native development environment set up
+
+## 🛠️ Installation
+
+1. **Clone the repository**
    ```bash
-   npm install
+   git clone <repository-url>
+   cd docsshelf-v7
    ```
 
-2. Start the app
-
+2. **Install dependencies**
    ```bash
-   npx expo start
+   npm install --legacy-peer-deps
    ```
 
-In the output, you'll find options to open the app in a
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your configuration
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🏃‍♂️ Running the App
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### Development Mode
 
 ```bash
-npm run reset-project
+# Start Expo development server
+npm run start:dev
+
+# Run on Android
+npm run android:dev
+
+# Run on iOS
+npm run ios:dev
+
+# Run on Web
+npm run web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Production Build
 
-## Learn more
+```bash
+npm run start:prod
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🧪 Testing
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# Run all tests
+npm test
 
-## Join the community
+# Run tests in watch mode
+npm run test:watch
 
-Join our community of developers creating universal apps.
+# Run tests with coverage
+npm run test:coverage
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Type checking
+npm run type-check
+```
+
+## 📁 Project Structure
+
+```
+docsshelf-v7/
+├── app/                    # Expo Router pages
+├── src/
+│   ├── components/         # Reusable UI components
+│   ├── screens/           # Screen components
+│   ├── services/          # Business logic
+│   ├── store/             # Redux state management
+│   ├── utils/             # Utility functions
+│   ├── hooks/             # Custom React hooks
+│   ├── types/             # TypeScript definitions
+│   ├── navigation/        # Navigation config
+│   ├── i18n/              # Internationalization
+│   └── config/            # App configuration
+├── assets/                # Static assets
+├── __tests__/            # Unit tests
+└── e2e/                  # End-to-end tests
+```
+
+## 🔒 Security
+
+- All data is encrypted at rest using AES-256-GCM
+- Passwords are hashed using Argon2id
+- Secure key storage using device keychain
+- No data is sent to external servers without explicit user consent
+- Regular security audits
+
+## 📱 Supported Platforms
+
+- iOS 13.0+
+- Android 6.0+ (API 23+)
+- Web (limited functionality)
+
+## 🔧 Configuration
+
+Key configuration files:
+- `src/config/env.ts` - Environment variables
+- `src/config/appConfig.ts` - App-wide settings
+- `app.json` - Expo configuration
+- `tsconfig.json` - TypeScript configuration
+
+## 📝 Code Standards
+
+- **TypeScript**: Strict mode enabled
+- **Linting**: ESLint with Expo config
+- **Formatting**: Prettier (if configured)
+- **Testing**: Jest with React Native Testing Library
+- **Commit Messages**: Conventional Commits
+
+## 🤝 Contributing
+
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+3. Push to the branch (`git push origin feature/amazing-feature`)
+4. Open a Pull Request
+
+## 📄 License
+
+This project is proprietary and confidential.
+
+## 📞 Support
+
+For issues and questions, please refer to the documentation in the `documents/` directory.
+
+## 🔄 Version History
+
+See [CHANGELOG.md](./documents/changelog/) for detailed version history.
+
+---
+
+Built with ❤️ using React Native and Expo
