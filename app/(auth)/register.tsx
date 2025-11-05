@@ -123,8 +123,8 @@ export default function RegisterScreen() {
       setConfirmPassword('');
       
       logger.info('User registration successful', { email: sanitizedEmail });
-      Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login' as any) }
+      Alert.alert('Success', 'Account created successfully! Now let\'s secure your account with two-factor authentication.', [
+        { text: 'OK', onPress: () => router.replace('/(auth)/mfa-setup' as any) }
       ]);
     } catch (err) {
       logger.error('Registration failed', err as Error, { email: sanitizeEmail(email) });

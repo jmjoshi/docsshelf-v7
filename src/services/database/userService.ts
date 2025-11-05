@@ -140,3 +140,16 @@ export async function userExists(email: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Get current authenticated user's email from SecureStore
+ */
+export async function getCurrentUserEmail(): Promise<string | null> {
+  try {
+    const { getItemAsync } = await import('expo-secure-store');
+    return await getItemAsync('user_email');
+  } catch (error) {
+    console.error('Get current user email failed:', error);
+    return null;
+  }
+}
