@@ -5,7 +5,7 @@
 
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { generateTOTPSecret, verifyTOTPCode } from '../../utils/crypto/totp';
+import { generateTOTPSecret, generateTOTPUri, verifyTOTPCode } from '../../utils/crypto/totp';
 import { db } from '../database/dbInit';
 
 export interface MFASettings {
@@ -60,7 +60,8 @@ export async function authenticateWithBiometrics(): Promise<boolean> {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Authenticate to continue',
       cancelLabel: 'Cancel',
-      disableDeviceFallback: false,
+      disableDeviceFallback: true, // Do NOT allow device passcode fallback
+      fallbackLabel: '', // Remove fallback option
     });
     
     return result.success;
@@ -77,7 +78,7 @@ export async function setupTOTP(email: string): Promise<{
   secret: string;
   qrCodeUri: string;
 }> {
-  // Generate new TOTP secret
+  // Generate new TOTP secret using proven library
   const secret = await generateTOTPSecret();
   
   // Sanitize email for SecureStore key
@@ -86,10 +87,8 @@ export async function setupTOTP(email: string): Promise<{
   // Store secret in SecureStore (not yet verified)
   await SecureStore.setItemAsync(`totp_secret_temp_${sanitizedEmail}`, secret);
   
-  // Generate QR code URI (use original email for display)
-  const qrCodeUri = `otpauth://totp/DocsShelf:${encodeURIComponent(
-    email
-  )}?secret=${secret}&issuer=DocsShelf&digits=6&period=30`;
+  // Generate QR code URI using otplib's standard format
+  const qrCodeUri = generateTOTPUri(secret, email, 'DocsShelf');
   
   return { secret, qrCodeUri };
 }
