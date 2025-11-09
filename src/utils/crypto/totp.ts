@@ -6,7 +6,7 @@
  */
 
 import * as Crypto from 'expo-crypto';
-import base32 from 'hi-base32';
+import * as base32 from 'hi-base32';
 
 const TOTP_PERIOD = 30; // 30 seconds
 const TOTP_DIGITS = 6; // 6-digit codes
@@ -19,8 +19,12 @@ export async function generateTOTPSecret(): Promise<string> {
   // Generate 20 random bytes (160 bits) - RFC 6238 recommendation
   const randomBytes = await Crypto.getRandomBytesAsync(20);
   
+  // Convert Uint8Array to regular array for hi-base32
+  const byteArray = Array.from(randomBytes);
+  
   // Convert to base32 using proven library
-  return base32.encode(randomBytes).replace(/=/g, ''); // Remove padding
+  // Keep padding for maximum compatibility
+  return base32.encode(byteArray);
 }
 
 /**
@@ -70,29 +74,48 @@ export async function verifyTOTPCode(
  * @returns 6-digit code
  */
 async function generateHOTP(secret: string, counter: number): Promise<string> {
-  // Decode base32 secret
-  const key = base32.decode.asBytes(secret.toUpperCase());
-  
-  // Convert counter to 8-byte buffer (big-endian)
-  const buffer = new ArrayBuffer(8);
-  const view = new DataView(buffer);
-  view.setUint32(4, counter, false); // Big-endian, high 32 bits are 0
-  const counterBytes = new Uint8Array(buffer);
-  
-  // Compute HMAC-SHA1 using expo-crypto
-  const hmac = await computeHMACSHA1(new Uint8Array(key), counterBytes);
-  
-  // Dynamic truncation (RFC 4226 Section 5.3)
-  const offset = hmac[hmac.length - 1] & 0x0f;
-  const code =
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff);
-  
-  // Generate 6-digit OTP
-  const otp = code % Math.pow(10, TOTP_DIGITS);
-  return otp.toString().padStart(TOTP_DIGITS, '0');
+  try {
+    // Decode base32 secret - ensure it has padding
+    const paddedSecret = padBase32(secret.toUpperCase());
+    const keyBytes = base32.decode.asBytes(paddedSecret);
+    const key = new Uint8Array(keyBytes);
+    
+    // Convert counter to 8-byte buffer (big-endian)
+    const buffer = new ArrayBuffer(8);
+    const view = new DataView(buffer);
+    view.setUint32(4, counter, false); // Big-endian, high 32 bits are 0
+    const counterBytes = new Uint8Array(buffer);
+    
+    // Compute HMAC-SHA1 using expo-crypto
+    const hmac = await computeHMACSHA1(key, counterBytes);
+    
+    // Dynamic truncation (RFC 4226 Section 5.3)
+    const offset = hmac[hmac.length - 1] & 0x0f;
+    const code =
+      ((hmac[offset] & 0x7f) << 24) |
+      ((hmac[offset + 1] & 0xff) << 16) |
+      ((hmac[offset + 2] & 0xff) << 8) |
+      (hmac[offset + 3] & 0xff);
+    
+    // Generate 6-digit OTP
+    const otp = code % Math.pow(10, TOTP_DIGITS);
+    return otp.toString().padStart(TOTP_DIGITS, '0');
+  } catch (error) {
+    console.error('HOTP generation error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add padding to base32 string if missing
+ */
+function padBase32(secret: string): string {
+  // Base32 padding: strings should be multiples of 8 characters
+  const remainder = secret.length % 8;
+  if (remainder === 0) {
+    return secret;
+  }
+  return secret + '='.repeat(8 - remainder);
 }
 
 /**
