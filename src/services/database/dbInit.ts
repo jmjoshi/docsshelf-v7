@@ -7,7 +7,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2; // Updated for Phase 2 (Categories, Documents, Tags)
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -92,6 +92,125 @@ export async function initializeDatabase(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       `);
 
+      // Create categories table for document organization
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS categories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          icon TEXT DEFAULT 'folder',
+          color TEXT DEFAULT '#007AFF',
+          parent_id INTEGER,
+          user_id INTEGER NOT NULL,
+          sort_order INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+      `);
+
+      // Create indexes for category queries
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
+        CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);
+        CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);
+      `);
+
+      // Create documents table for file metadata
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS documents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          category_id INTEGER,
+          filename TEXT NOT NULL,
+          original_filename TEXT NOT NULL,
+          file_path TEXT NOT NULL,
+          file_size INTEGER NOT NULL,
+          mime_type TEXT NOT NULL,
+          encryption_key TEXT NOT NULL,
+          encryption_iv TEXT NOT NULL,
+          checksum TEXT NOT NULL,
+          thumbnail_path TEXT,
+          page_count INTEGER DEFAULT 1,
+          ocr_text TEXT,
+          ocr_confidence REAL,
+          is_favorite INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          last_accessed_at TEXT,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+        );
+      `);
+
+      // Create indexes for document queries
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+        CREATE INDEX IF NOT EXISTS idx_documents_category_id ON documents(category_id);
+        CREATE INDEX IF NOT EXISTS idx_documents_filename ON documents(filename);
+        CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at);
+        CREATE INDEX IF NOT EXISTS idx_documents_is_favorite ON documents(is_favorite);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_checksum ON documents(checksum, user_id);
+      `);
+
+      // Create full-text search virtual table for OCR text
+      await db.execAsync(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
+          document_id UNINDEXED,
+          filename,
+          ocr_text,
+          content='documents',
+          content_rowid='id'
+        );
+      `);
+
+      // Create tags table for document tagging
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS tags (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          color TEXT DEFAULT '#666666',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(user_id, name COLLATE NOCASE)
+        );
+      `);
+
+      // Create document_tags junction table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS document_tags (
+          document_id INTEGER NOT NULL,
+          tag_id INTEGER NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (document_id, tag_id),
+          FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+          FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        );
+      `);
+
+      // Create audit log table for security
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id INTEGER,
+          details TEXT,
+          ip_address TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+      `);
+
+      // Create index for audit queries
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_log(user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at);
+      `);
+
       await setDatabaseVersion(db, DATABASE_VERSION);
       console.log(`Database initialized successfully (version ${DATABASE_VERSION})`);
     } else if (currentVersion < DATABASE_VERSION) {
@@ -110,16 +229,135 @@ export async function initializeDatabase(): Promise<void> {
 /**
  * Run database migrations
  */
-async function runMigrations(db: SQLite.SQLiteDatabase, _fromVersion: number): Promise<void> {
+async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Promise<void> {
   try {
-    // Future migrations go here
-    // Example:
-    // if (fromVersion < 2) {
-    //   await db.execAsync('ALTER TABLE users ADD COLUMN new_field TEXT');
-    // }
+    console.log(`Running migrations from version ${fromVersion}`);
+
+    // Migration from version 1 to 2: Add Phase 2 tables
+    if (fromVersion < 2) {
+      console.log('Migrating to version 2: Adding categories, documents, tags tables');
+      
+      // Create categories table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS categories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          icon TEXT DEFAULT 'folder',
+          color TEXT DEFAULT '#007AFF',
+          parent_id INTEGER,
+          user_id INTEGER NOT NULL,
+          sort_order INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
+        CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);
+        CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);
+      `);
+
+      // Create documents table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS documents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          category_id INTEGER,
+          filename TEXT NOT NULL,
+          original_filename TEXT NOT NULL,
+          file_path TEXT NOT NULL,
+          file_size INTEGER NOT NULL,
+          mime_type TEXT NOT NULL,
+          encryption_key TEXT NOT NULL,
+          encryption_iv TEXT NOT NULL,
+          checksum TEXT NOT NULL,
+          thumbnail_path TEXT,
+          page_count INTEGER DEFAULT 1,
+          ocr_text TEXT,
+          ocr_confidence REAL,
+          is_favorite INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          last_accessed_at TEXT,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+        CREATE INDEX IF NOT EXISTS idx_documents_category_id ON documents(category_id);
+        CREATE INDEX IF NOT EXISTS idx_documents_filename ON documents(filename);
+        CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at);
+        CREATE INDEX IF NOT EXISTS idx_documents_is_favorite ON documents(is_favorite);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_checksum ON documents(checksum, user_id);
+      `);
+
+      // Create FTS table
+      await db.execAsync(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
+          document_id UNINDEXED,
+          filename,
+          ocr_text,
+          content='documents',
+          content_rowid='id'
+        );
+      `);
+
+      // Create tags table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS tags (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          color TEXT DEFAULT '#666666',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(user_id, name COLLATE NOCASE)
+        );
+      `);
+
+      // Create document_tags junction table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS document_tags (
+          document_id INTEGER NOT NULL,
+          tag_id INTEGER NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (document_id, tag_id),
+          FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+          FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        );
+      `);
+
+      // Create audit log table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id INTEGER,
+          details TEXT,
+          ip_address TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_log(user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at);
+      `);
+
+      console.log('Migration to version 2 completed');
+    }
     
     await setDatabaseVersion(db, DATABASE_VERSION);
-    console.log('Migrations completed successfully');
+    console.log('All migrations completed successfully');
   } catch (error) {
     console.error('Migration failed:', error);
     throw error;
@@ -140,7 +378,19 @@ export async function resetDatabase(): Promise<void> {
   const db = getDatabase();
   
   try {
+    // Drop tables in reverse order of dependencies
+    await db.execAsync('DROP TABLE IF EXISTS audit_log;');
+    await db.execAsync('DROP TABLE IF EXISTS document_tags;');
+    await db.execAsync('DROP TABLE IF EXISTS tags;');
+    await db.execAsync('DROP TABLE IF EXISTS documents_fts;');
+    await db.execAsync('DROP TABLE IF EXISTS documents;');
+    await db.execAsync('DROP TABLE IF EXISTS categories;');
     await db.execAsync('DROP TABLE IF EXISTS users;');
+    
+    // Reset initialization flag
+    isInitialized = false;
+    
+    // Reinitialize
     await initializeDatabase();
     console.log('Database reset successfully');
   } catch (error) {

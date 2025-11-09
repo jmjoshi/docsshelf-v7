@@ -153,3 +153,21 @@ export async function getCurrentUserEmail(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Get current authenticated user's ID
+ */
+export async function getCurrentUserId(): Promise<number | null> {
+  try {
+    const email = await getCurrentUserEmail();
+    if (!email) {
+      return null;
+    }
+
+    const user = await getUserByEmail(email);
+    return user?.id || null;
+  } catch (error) {
+    console.error('Get current user ID failed:', error);
+    return null;
+  }
+}
