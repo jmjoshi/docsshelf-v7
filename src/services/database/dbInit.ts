@@ -110,7 +110,7 @@ export async function initializeDatabase(): Promise<void> {
 /**
  * Run database migrations
  */
-async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Promise<void> {
+async function runMigrations(db: SQLite.SQLiteDatabase, _fromVersion: number): Promise<void> {
   try {
     // Future migrations go here
     // Example:

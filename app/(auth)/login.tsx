@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState, useCallback, useEffect } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { isAccountLocked, recordFailedAttempt, resetFailedAttempts, formatLockoutTime } from '../../src/services/auth/accountSecurityService';
 import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { verifyPassword } from '../../src/utils/crypto/passwordHash';
 import { logger } from '../../src/utils/helpers/logger';
@@ -53,6 +54,19 @@ function LoginScreenContent() {
       setError('Please enter your password');
       return;
     }
+
+    // Check if account is locked (FR-LOGIN-005)
+    const lockStatus = await isAccountLocked(sanitizedEmail);
+    if (lockStatus.isLocked) {
+      const timeRemaining = formatLockoutTime(lockStatus.remainingTime);
+      setError(`Account locked due to multiple failed login attempts. Please try again in ${timeRemaining}.`);
+      Alert.alert(
+        'Account Locked',
+        `Your account has been temporarily locked for security reasons.\n\nTime remaining: ${timeRemaining}\n\nA notification has been sent to your email.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     
     setError('');
     setLoading(true);
@@ -71,7 +85,15 @@ function LoginScreenContent() {
       
       // Verify email matches
       if (storedEmail !== sanitizedEmail) {
-        setError('Invalid email or password');
+        // Record failed attempt
+        const isLocked = await recordFailedAttempt(sanitizedEmail);
+        const attempts = await isAccountLocked(sanitizedEmail);
+        
+        if (isLocked) {
+          setError('Account locked due to multiple failed attempts. Check your email for details.');
+        } else {
+          setError(`Invalid email or password. ${attempts.attemptsRemaining} attempts remaining.`);
+        }
         setLoading(false);
         return;
       }
@@ -80,6 +102,8 @@ function LoginScreenContent() {
       const isValid = await verifyPassword(password, storedSalt, storedHash);
       
       if (isValid) {
+        // Reset failed attempts on successful login
+        await resetFailedAttempts(sanitizedEmail);
         logger.info('User login successful', { email: sanitizedEmail });
         
         // Check if MFA is enabled
@@ -106,7 +130,16 @@ function LoginScreenContent() {
           }
         }
       } else {
-        setError('Invalid email or password');
+        // Record failed attempt and check if account should be locked
+        const isLocked = await recordFailedAttempt(sanitizedEmail);
+        const attempts = await isAccountLocked(sanitizedEmail);
+        
+        if (isLocked) {
+          const timeRemaining = formatLockoutTime(attempts.remainingTime);
+          setError(`Account locked for ${timeRemaining}. Check your email for details.`);
+        } else {
+          setError(`Invalid email or password. ${attempts.attemptsRemaining} attempts remaining.`);
+        }
       }
     } catch (err) {
       logger.error('Login failed', err as Error, { email: sanitizeEmail(email) });
@@ -153,11 +186,20 @@ function LoginScreenContent() {
           <Text style={styles.loadingText}>Verifying credentials...</Text>
         </View>
       ) : (
-        <Button 
-          title="Login" 
-          onPress={handleLogin}
-          disabled={loading}
-        />
+        <>
+          <Button 
+            title="Login" 
+            onPress={handleLogin}
+            disabled={loading}
+          />
+          <TouchableOpacity 
+            style={styles.forgotPasswordContainer}
+            onPress={() => router.push('/(auth)/forgot-password' as any)}
+            disabled={loading}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </>
       )}
       <TouchableOpacity 
         style={styles.linkContainer}
@@ -209,12 +251,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   linkContainer: {
-    marginTop: 16,
+    marginTop: 20,
     alignItems: 'center',
   },
   linkText: {
     color: '#007AFF',
-    fontSize: 16,
+    fontSize: 14,
+  },
+  forgotPasswordContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    color: '#007AFF',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   loadingContainer: {
     padding: 20,
