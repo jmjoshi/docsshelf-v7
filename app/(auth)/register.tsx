@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
+import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { createUser, userExists } from '../../src/services/database/userService';
 import { UserProfile } from '../../src/types/user';
 import { generateSalt, hashPassword } from '../../src/utils/crypto/passwordHash';
@@ -10,7 +12,7 @@ import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailVa
 import { validatePassword } from '../../src/utils/validators/passwordValidator';
 import { validatePhone } from '../../src/utils/validators/phoneValidator';
 
-export default function RegisterScreen() {
+function RegisterScreenContent() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,8 +23,31 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dbReady, setDbReady] = useState(false);
 
-  const handleRegister = async () => {
+  // Initialize database on component mount
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        if (!isDatabaseInitialized()) {
+          await initializeDatabase();
+        }
+        setDbReady(true);
+      } catch (error) {
+        console.error('Failed to initialize database:', error);
+        setError('Failed to initialize app. Please restart.');
+      }
+    };
+    initDb();
+  }, []);
+
+  const handleRegister = useCallback(async () => {
+    // Don't proceed if database not ready
+    if (!dbReady) {
+      setError('App is initializing, please wait...');
+      return;
+    }
+
     // Validate first name
     if (!firstName.trim()) {
       setError('First name is required');
@@ -44,10 +69,16 @@ export default function RegisterScreen() {
     
     const sanitizedEmail = sanitizeEmail(email);
     
-    // Check if user already exists
-    const exists = await userExists(sanitizedEmail);
-    if (exists) {
-      setError('An account with this email already exists');
+    // Check if user already exists - wrapped in try-catch
+    try {
+      const exists = await userExists(sanitizedEmail);
+      if (exists) {
+        setError('An account with this email already exists');
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking user existence:', err);
+      setError('Failed to verify email. Please try again.');
       return;
     }
     
@@ -132,10 +163,24 @@ export default function RegisterScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [firstName, lastName, email, mobilePhone, homePhone, workPhone, password, confirmPassword, dbReady]);
+
+  // Show loading while database initializes
+  if (!dbReady) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Initializing...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Create Account</Text>
       <Text style={styles.subtitle}>Please provide your information</Text>
       
@@ -244,10 +289,22 @@ export default function RegisterScreen() {
   );
 }
 
+export default function RegisterScreen() {
+  return (
+    <ErrorBoundary>
+      <RegisterScreenContent />
+    </ErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentContainer: {
     padding: 24,

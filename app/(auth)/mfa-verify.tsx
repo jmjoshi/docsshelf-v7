@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { authenticateWithBiometrics, checkBiometricSupport, getMFASettings, verifyTOTPLogin } from '../../src/services/auth/mfaService';
 
-export default function MFAVerifyScreen() {
+function MFAVerifyScreenContent() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -187,6 +188,14 @@ export default function MFAVerifyScreen() {
         </>
       )}
     </View>
+  );
+}
+
+export default function MFAVerifyScreen() {
+  return (
+    <ErrorBoundary>
+      <MFAVerifyScreenContent />
+    </ErrorBoundary>
   );
 }
 

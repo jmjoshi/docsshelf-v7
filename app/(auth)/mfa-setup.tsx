@@ -2,10 +2,11 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { checkBiometricSupport, enableBiometric, setupTOTP, verifyAndActivateTOTP } from '../../src/services/auth/mfaService';
 import { getCurrentUserEmail } from '../../src/services/database/userService';
 
-export default function MFASetupScreen() {
+function MFASetupScreenContent() {
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'choice' | 'totp-setup' | 'totp-verify' | 'biometric'>('choice');
   const [totpSecret, setTotpSecret] = useState('');
@@ -261,6 +262,14 @@ export default function MFASetupScreen() {
   }
 
   return null;
+}
+
+export default function MFASetupScreen() {
+  return (
+    <ErrorBoundary>
+      <MFASetupScreenContent />
+    </ErrorBoundary>
+  );
 }
 
 const styles = StyleSheet.create({

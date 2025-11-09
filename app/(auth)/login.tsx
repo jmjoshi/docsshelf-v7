@@ -1,20 +1,45 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { verifyPassword } from '../../src/utils/crypto/passwordHash';
 import { logger } from '../../src/utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';
 
-export default function LoginScreen() {
+function LoginScreenContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dbReady, setDbReady] = useState(false);
   const { login } = useAuth();
 
-  const handleLogin = async () => {
+  // Initialize database on component mount
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        if (!isDatabaseInitialized()) {
+          await initializeDatabase();
+        }
+        setDbReady(true);
+      } catch (error) {
+        console.error('Failed to initialize database:', error);
+        setError('Failed to initialize app. Please restart.');
+      }
+    };
+    initDb();
+  }, []);
+
+  const handleLogin = useCallback(async () => {
+    // Don't proceed if database not ready
+    if (!dbReady) {
+      setError('App is initializing, please wait...');
+      return;
+    }
+
     // Validate and sanitize email
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) {
@@ -89,7 +114,17 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [email, password, login, dbReady]);
+
+  // Show loading while database initializes
+  if (!dbReady) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Initializing...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -135,12 +170,24 @@ export default function LoginScreen() {
   );
 }
 
+export default function LoginScreen() {
+  return (
+    <ErrorBoundary>
+      <LoginScreenContent />
+    </ErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
     backgroundColor: '#fff',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
