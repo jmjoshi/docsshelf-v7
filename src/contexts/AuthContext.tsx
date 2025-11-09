@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { startSession, endSession, startActivityMonitoring, stopActivityMonitoring, isSessionValid } from '../services/auth/sessionService';
+import { endSession, isSessionValid, startActivityMonitoring, startSession, stopActivityMonitoring } from '../services/auth/sessionService';
 
 interface AuthContextType {
   isAuthenticated: boolean;

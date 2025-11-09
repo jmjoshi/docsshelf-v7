@@ -4,8 +4,8 @@
  */
 
 import { router } from 'expo-router';
-import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { requestPasswordReset } from '../../src/services/auth/passwordRecoveryService';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';

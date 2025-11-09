@@ -33,33 +33,55 @@ export async function generateTOTPSecret(): Promise<string> {
  * @returns 6-digit TOTP code
  */
 export async function generateTOTPCode(secret: string): Promise<string> {
-  const counter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
-  return await generateHOTP(secret, counter);
+  const currentTime = Math.floor(Date.now() / 1000);
+  const counter = Math.floor(currentTime / TOTP_PERIOD);
+  console.log(`[TOTP] Generating code at time=${currentTime}, counter=${counter}`);
+  const code = await generateHOTP(secret, counter);
+  console.log(`[TOTP] Generated code: ${code}`);
+  return code;
 }
 
 /**
  * Verify a TOTP code against the secret
  * @param code - User provided code
  * @param secret - Base32 encoded secret
- * @param _window - Number of time windows to check (default 1 = ±30 seconds)
+ * @param window - Number of time windows to check (default 2 = ±60 seconds)
  * @returns true if code is valid
  */
 export async function verifyTOTPCode(
   code: string,
   secret: string,
-  _window: number = 1
+  window: number = 2
 ): Promise<boolean> {
   try {
-    const counter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
+    // Normalize code (remove spaces, ensure string)
+    const normalizedCode = String(code).replace(/\s/g, '');
     
-    // Check current window and ±1 window for clock skew tolerance (90 seconds total)
-    for (let i = -1; i <= 1; i++) {
-      const testCode = await generateHOTP(secret, counter + i);
-      if (testCode === code) {
+    if (normalizedCode.length !== TOTP_DIGITS) {
+      console.log(`[TOTP] Invalid code length: ${normalizedCode.length}, expected ${TOTP_DIGITS}`);
+      return false;
+    }
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    const counter = Math.floor(currentTime / TOTP_PERIOD);
+    
+    console.log(`[TOTP] Current time: ${currentTime}, Counter: ${counter}`);
+    console.log(`[TOTP] Verifying code: ${normalizedCode}`);
+    console.log(`[TOTP] Checking ${window * 2 + 1} time windows (±${window * TOTP_PERIOD}s)`);
+    
+    // Check current window and ±window for clock skew tolerance
+    for (let i = -window; i <= window; i++) {
+      const testCounter = counter + i;
+      const testCode = await generateHOTP(secret, testCounter);
+      console.log(`[TOTP] Window ${i}: counter=${testCounter}, generated=${testCode}`);
+      
+      if (testCode === normalizedCode) {
+        console.log(`[TOTP] ✓ Code matched at window ${i}`);
         return true;
       }
     }
     
+    console.log('[TOTP] ✗ No match found in any window');
     return false;
   } catch (error) {
     console.error('TOTP verification error:', error);

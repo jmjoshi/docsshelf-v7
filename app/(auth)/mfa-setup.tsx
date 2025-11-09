@@ -59,6 +59,10 @@ function MFASetupScreenContent() {
     setError('');
     
     try {
+      console.log('[MFA Setup] Verifying code:', verificationCode);
+      console.log('[MFA Setup] User email:', email);
+      console.log('[MFA Setup] TOTP secret:', totpSecret);
+      
       const isValid = await verifyAndActivateTOTP(email, verificationCode);
       
       if (isValid) {
@@ -73,7 +77,7 @@ function MFASetupScreenContent() {
           ]
         );
       } else {
-        setError('Invalid code. Please try again.');
+        setError('Invalid code. Please check your authenticator app and try again. Make sure your device time is correct.');
       }
     } catch (err) {
       setError('Verification failed. Please try again.');
@@ -213,6 +217,16 @@ function MFASetupScreenContent() {
   }
 
   if (step === 'totp-verify') {
+    const handleTestCode = async () => {
+      try {
+        const { generateTOTPCode } = await import('../../src/utils/crypto/totp');
+        const code = await generateTOTPCode(totpSecret);
+        Alert.alert('Test Code', `Current expected code: ${code}\n\nThis is for debugging only. Use your authenticator app.`);
+      } catch (err) {
+        Alert.alert('Error', 'Failed to generate test code');
+      }
+    };
+
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <Text style={styles.title}>Verify Authenticator</Text>
@@ -239,11 +253,22 @@ function MFASetupScreenContent() {
             <Text style={styles.loadingText}>Verifying code...</Text>
           </View>
         ) : (
-          <Button
-            title="Verify & Enable"
-            onPress={handleVerifyTOTP}
-            disabled={verificationCode.length !== 6}
-          />
+          <>
+            <Button
+              title="Verify & Enable"
+              onPress={handleVerifyTOTP}
+              disabled={verificationCode.length !== 6}
+            />
+            
+            {__DEV__ && (
+              <TouchableOpacity
+                style={[styles.backButton, { backgroundColor: '#f0f0f0', marginTop: 8 }]}
+                onPress={handleTestCode}
+              >
+                <Text style={[styles.backText, { color: '#666' }]}>Debug: Show Expected Code</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
 
         <TouchableOpacity

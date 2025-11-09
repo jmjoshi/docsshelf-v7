@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export function AppSplashScreen() {
   return (

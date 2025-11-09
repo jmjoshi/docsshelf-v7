@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
