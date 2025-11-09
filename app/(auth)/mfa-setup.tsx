@@ -62,6 +62,8 @@ function MFASetupScreenContent() {
       console.log('[MFA Setup] Verifying code:', verificationCode);
       console.log('[MFA Setup] User email:', email);
       console.log('[MFA Setup] TOTP secret:', totpSecret);
+      console.log('[MFA Setup] Device time:', new Date().toISOString());
+      console.log('[MFA Setup] Unix timestamp:', Math.floor(Date.now() / 1000));
       
       const isValid = await verifyAndActivateTOTP(email, verificationCode);
       
@@ -77,7 +79,7 @@ function MFASetupScreenContent() {
           ]
         );
       } else {
-        setError('Invalid code. Please check your authenticator app and try again. Make sure your device time is correct.');
+        setError('Invalid code. Please check your authenticator app and try again. Make sure your device time is set to automatic.');
       }
     } catch (err) {
       setError('Verification failed. Please try again.');

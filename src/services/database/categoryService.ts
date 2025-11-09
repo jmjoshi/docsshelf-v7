@@ -4,16 +4,16 @@
  * Production-grade with security, validation, and audit logging
  */
 
-import { db } from './dbInit';
 import type {
-  Category,
-  CategoryCreateInput,
-  CategoryStats,
-  CategoryTreeNode,
-  CategoryUpdateInput,
+    Category,
+    CategoryCreateInput,
+    CategoryStats,
+    CategoryTreeNode,
+    CategoryUpdateInput,
 } from '../../types/category';
-import { getCurrentUserId } from './userService';
 import { logAudit } from './auditService';
+import { db } from './dbInit';
+import { getCurrentUserId } from './userService';
 
 /**
  * Get all categories for current user
