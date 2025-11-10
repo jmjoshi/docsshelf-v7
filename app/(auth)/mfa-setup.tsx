@@ -33,11 +33,24 @@ function MFASetupScreenContent() {
   };
 
   const handleSetupTOTP = async () => {
+    // Wait for email to load if needed
+    let userEmail = email;
+    if (!userEmail) {
+      console.log('[MFA Setup] Email not loaded yet, fetching...');
+      userEmail = await getCurrentUserEmail() || '';
+      if (!userEmail) {
+        setError('Unable to load user information. Please try again.');
+        return;
+      }
+      setEmail(userEmail);
+    }
+    
+    console.log('[MFA Setup] Setting up TOTP for email:', userEmail);
     setLoading(true);
     setError('');
     
     try {
-      const result = await setupTOTP(email);
+      const result = await setupTOTP(userEmail);
       setTotpSecret(result.secret);
       setQrCodeUri(result.qrCodeUri);
       setStep('totp-setup');

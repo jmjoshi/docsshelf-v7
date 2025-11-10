@@ -84,8 +84,16 @@ export async function setupTOTP(email: string): Promise<{
   // Sanitize email for SecureStore key
   const sanitizedEmail = sanitizeEmailForKey(email);
   
+  console.log('[MFA Service] setupTOTP called');
+  console.log('[MFA Service] Original email:', email);
+  console.log('[MFA Service] Sanitized email:', sanitizedEmail);
+  console.log('[MFA Service] Generated secret:', secret);
+  console.log('[MFA Service] Storing with key:', `totp_secret_temp_${sanitizedEmail}`);
+  
   // Store secret in SecureStore (not yet verified)
   await SecureStore.setItemAsync(`totp_secret_temp_${sanitizedEmail}`, secret);
+  
+  console.log('[MFA Service] Secret stored successfully');
   
   // Generate QR code URI using otplib's standard format
   const qrCodeUri = generateTOTPUri(secret, email, 'DocsShelf');
@@ -103,8 +111,15 @@ export async function verifyAndActivateTOTP(
   // Sanitize email for SecureStore key
   const sanitizedEmail = sanitizeEmailForKey(email);
   
+  console.log('[MFA Service] verifyAndActivateTOTP called');
+  console.log('[MFA Service] Original email:', email);
+  console.log('[MFA Service] Sanitized email:', sanitizedEmail);
+  console.log('[MFA Service] Looking for key:', `totp_secret_temp_${sanitizedEmail}`);
+  
   // Get temporary secret
   const tempSecret = await SecureStore.getItemAsync(`totp_secret_temp_${sanitizedEmail}`);
+  
+  console.log('[MFA Service] Temp secret found:', !!tempSecret);
   
   if (!tempSecret) {
     throw new Error('TOTP setup not initiated');
