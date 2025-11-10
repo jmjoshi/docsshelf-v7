@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { checkBiometricSupport, enableBiometric, setupTOTP, verifyAndActivateTOTP } from '../../src/services/auth/mfaService';
+import { startSession } from '../../src/services/auth/sessionService';
 import { getCurrentUserEmail } from '../../src/services/database/userService';
 
 function MFASetupScreenContent() {
@@ -131,7 +133,7 @@ function MFASetupScreenContent() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     Alert.alert(
       'Skip MFA Setup?',
       'Multi-factor authentication adds an extra layer of security to your account. You can set it up later in Settings.',
@@ -140,7 +142,12 @@ function MFASetupScreenContent() {
         {
           text: 'Skip',
           style: 'destructive',
-          onPress: () => router.replace('/(tabs)' as any),
+          onPress: async () => {
+            // Set authenticated state and start session
+            await SecureStore.setItemAsync('user_authenticated', 'true');
+            await startSession();
+            router.replace('/(tabs)' as any);
+          },
         },
       ]
     );

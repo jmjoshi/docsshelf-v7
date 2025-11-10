@@ -116,18 +116,10 @@ function LoginScreenContent() {
           // Navigate to MFA verification
           router.push('/(auth)/mfa-verify' as any);
         } else {
-          // Check if this is first login (no MFA setup yet)
-          const firstLoginFlag = await SecureStore.getItemAsync('first_login_complete');
-          
-          if (!firstLoginFlag) {
-            // First login - redirect to MFA setup
-            await SecureStore.setItemAsync('first_login_complete', 'true');
-            router.push('/(auth)/mfa-setup' as any);
-          } else {
-            // Regular login without MFA
-            await login();
-            // Navigation will be handled by the root layout
-          }
+          // Login without MFA - user has skipped or hasn't set it up yet
+          // MFA setup is optional and can be configured in settings
+          await login();
+          // Navigation to tabs will be handled by the root layout
         }
       } else {
         // Record failed attempt and check if account should be locked
