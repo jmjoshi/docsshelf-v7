@@ -1,9 +1,9 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** November 10, 2025  
-**Project Status:** Phase 2 - Core Document Management (75% Complete)  
-**Current Sprint:** FR-MAIN-002 (Document Upload & Management)  
-**Recent Major Achievement:** Category Management UI Complete + Production-Ready AES-256 Encryption
+**Last Updated:** November 11, 2025  
+**Project Status:** Phase 2 - Core Document Management (90% Complete)  
+**Current Sprint:** FR-MAIN-002 (Document Upload & Management - NEAR COMPLETE)  
+**Recent Major Achievement:** Document Redux State + Upload/List UI Complete
 
 ---
 
@@ -67,9 +67,9 @@ DocsShelf is a React Native mobile app (iOS/Android) for secure, offline-first d
 - ✅ Service layer complete (categoryService.ts - 450 lines)
 - ✅ Audit logging (auditService.ts - 240 lines)
 
-### 🚧 PHASE 2: CORE DOCUMENT MANAGEMENT (IN PROGRESS - 75%)
+### 🚧 PHASE 2: CORE DOCUMENT MANAGEMENT (IN PROGRESS - 90%)
 
-#### FR-MAIN-002: Document Upload & Management (IN PROGRESS - 75%)
+#### FR-MAIN-002: Document Upload & Management (IN PROGRESS - 90%)
 - ✅ Dependencies installed (expo-document-picker, expo-file-system, expo-image-picker, aes-js)
 - ✅ Type definitions complete (Document, DocumentFilter, UploadProgress, etc.)
 - ✅ **Encryption service - PRODUCTION READY** (AES-256-CTR + HMAC-SHA256)
@@ -84,9 +84,25 @@ DocsShelf is a React Native mobile app (iOS/Android) for secure, offline-first d
   - Download with HMAC verification
   - CRUD operations with user isolation
   - Statistics and search functionality
-- ⏳ Redux slice for document state management (NEXT)
-- ⏳ Document upload UI
-- ⏳ Document list UI with grid/list views
+- ✅ **Redux slice for document state management** (documentSlice.ts - 400 lines)
+  - 7 async thunks: loadDocuments, loadDocumentStats, uploadDocumentWithProgress, readDocumentContent, updateDocumentMetadata, removeDocument, toggleFavorite
+  - 11 selectors including derived selectors for filtering
+  - Real-time upload progress tracking
+  - Integrated into Redux store
+- ✅ **Document Upload UI** (DocumentUploadScreen.tsx - 529 lines)
+  - File picker with expo-document-picker
+  - Category selection with modal
+  - Real-time upload progress display
+  - Form validation and error handling
+- ✅ **Document List UI** (DocumentListScreen.tsx - 595 lines)
+  - View modes: All, Favorites, Recent
+  - Search by name/description
+  - Sort by: Date, Name, Size
+  - Pull-to-refresh
+  - Document statistics display
+  - Favorite toggle and delete actions
+- ⏳ Document viewer/reader UI (NEXT)
+- ⏳ Document edit/update UI
 
 #### FR-MAIN-003: Document Scanning (PENDING)
 - Camera-based document scanning
@@ -466,22 +482,27 @@ docsshelf-v7/
 - **Result:** 100% compatibility with authenticator apps
 - **Features:** QR code generation, ±60s time window, proper counter handling
 
-### Document Foundation Complete (Commits: Multiple)
-- **Feature:** Document upload infrastructure (75% complete)
+### Document Management Complete (Commits: 79cce86, 5a38a24, abb4376)
+- **Feature:** Document upload & management (90% complete)
 - **Service:** documentService.ts (582 lines) - Complete CRUD with encryption
 - **Encryption:** AES-256-CTR + HMAC-SHA256 (production-ready)
 - **Database:** Schema v3 with HMAC fields
 - **API:** expo-file-system v14 (modern API)
-- **Next:** Document Redux slice and UI components
+- **State Management:** documentSlice.ts (400 lines)
+  - 7 async thunks for all document operations
+  - 11 selectors including derived selectors
+  - Real-time upload progress tracking
+- **UI Components:**
+  - DocumentUploadScreen.tsx (529 lines) - File picker, category selection, progress tracking
+  - DocumentListScreen.tsx (595 lines) - Search, filter, sort, favorites, delete
+- **Next:** Document viewer UI
+- **Files:** documentSlice.ts, DocumentUploadScreen.tsx, DocumentListScreen.tsx
+
+### Category Management Complete (Commits: Multiple)
+- **Feature:** Full category management system
 - **UI:** 675-line CategoryManagementScreen with modals, pickers
 - **State:** Redux slice with async thunks
 - **Files:** CategoryManagementScreen.tsx, categorySlice.ts, categories.tsx
-
-### Document Foundation Started (Commit: 5924e05)
-- **Feature:** Document upload infrastructure (40% complete)
-- **Added:** Types, encryption service, audit service, document service
-- **Status:** Needs API migration to complete
-- **Files:** document.ts, encryption.ts, auditService.ts, documentService.ts
 
 ---
 
