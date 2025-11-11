@@ -11,6 +11,7 @@ import type {
     CategoryTreeNode,
     CategoryUpdateInput,
 } from '../../types/category';
+// Make sure auditService.ts exists in the same directory or update the path accordingly
 import { logAudit } from './auditService';
 import { db } from './dbInit';
 import { getCurrentUserId } from './userService';

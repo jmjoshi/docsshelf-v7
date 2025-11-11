@@ -48,11 +48,10 @@ export default function DocumentListScreen() {
   const error = useAppSelector(selectDocumentError);
   const stats = useAppSelector(selectDocumentStats);
 
-  const [userId, setUserId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('date');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -63,7 +62,6 @@ export default function DocumentListScreen() {
     try {
       const id = await getCurrentUserId();
       if (id) {
-        setUserId(id);
         dispatch(loadCategories(id));
         dispatch(loadDocuments(undefined));
         dispatch(loadDocumentStats());
@@ -98,7 +96,7 @@ export default function DocumentListScreen() {
   const handleDeleteDocument = (document: Document) => {
     Alert.alert(
       'Delete Document',
-      `Are you sure you want to delete "${document.file_name}"? This action cannot be undone.`,
+      `Are you sure you want to delete "${document.filename}"? This action cannot be undone.`,
       [
         {
           text: 'Cancel',
@@ -148,8 +146,8 @@ export default function DocumentListScreen() {
       const query = searchQuery.toLowerCase();
       documents = documents.filter(
         (doc) =>
-          doc.file_name.toLowerCase().includes(query) ||
-          doc.description?.toLowerCase().includes(query)
+          doc.filename.toLowerCase().includes(query) ||
+          doc.ocr_text?.toLowerCase().includes(query)
       );
     }
 
@@ -157,7 +155,7 @@ export default function DocumentListScreen() {
     const sorted = [...documents];
     switch (sortMode) {
       case 'name':
-        sorted.sort((a, b) => a.file_name.localeCompare(b.file_name));
+        sorted.sort((a, b) => a.filename.localeCompare(b.filename));
         break;
       case 'size':
         sorted.sort((a, b) => b.file_size - a.file_size);
@@ -203,13 +201,13 @@ export default function DocumentListScreen() {
       style={styles.documentItem}
       onPress={() => {
         // TODO: Navigate to document detail screen
-        Alert.alert('View Document', `Opening: ${item.file_name}`);
+        Alert.alert('View Document', `Opening: ${item.filename}`);
       }}
     >
       <View style={styles.documentContent}>
         <View style={styles.documentHeader}>
           <Text style={styles.documentName} numberOfLines={1}>
-            {item.file_name}
+            {item.filename}
           </Text>
           <TouchableOpacity
             onPress={() => handleToggleFavorite(item.id)}
@@ -225,9 +223,9 @@ export default function DocumentListScreen() {
           </Text>
         </View>
 
-        {item.description && (
+        {item.ocr_text && (
           <Text style={styles.documentDescription} numberOfLines={2}>
-            {item.description}
+            {item.ocr_text}
           </Text>
         )}
 
@@ -236,7 +234,7 @@ export default function DocumentListScreen() {
             style={styles.actionButton}
             onPress={() => {
               // TODO: Navigate to document viewer
-              Alert.alert('View', `View: ${item.file_name}`);
+              Alert.alert('View', `View: ${item.filename}`);
             }}
           >
             <Text style={styles.actionButtonText}>View</Text>
@@ -273,15 +271,15 @@ export default function DocumentListScreen() {
       {stats && (
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.total_count}</Text>
+            <Text style={styles.statValue}>{stats.totalDocuments}</Text>
             <Text style={styles.statLabel}>Total</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.favorite_count}</Text>
+            <Text style={styles.statValue}>{favoriteDocuments.length}</Text>
             <Text style={styles.statLabel}>Favorites</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatFileSize(stats.total_size)}</Text>
+            <Text style={styles.statValue}>{formatFileSize(stats.totalSize)}</Text>
             <Text style={styles.statLabel}>Storage</Text>
           </View>
         </View>
