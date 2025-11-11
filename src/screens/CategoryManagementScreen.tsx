@@ -5,29 +5,29 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  TextInput,
-  Modal,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import { getCurrentUserId } from '../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-  loadCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  setSelectedCategory,
-  selectCategoryTree,
-  selectCategoryLoading,
-  selectCategoryError,
+    createCategory,
+    deleteCategory,
+    loadCategories,
+    selectCategoryError,
+    selectCategoryLoading,
+    selectCategoryTree,
+    setSelectedCategory,
+    updateCategory,
 } from '../store/slices/categorySlice';
-import { getCurrentUserId } from '../services/database/userService';
-import { CategoryTreeNode, CATEGORY_ICONS, CATEGORY_COLORS } from '../types/category';
+import { CATEGORY_COLORS, CATEGORY_ICONS, CategoryTreeNode } from '../types/category';
 
 export default function CategoryManagementScreen() {
   const dispatch = useAppDispatch();

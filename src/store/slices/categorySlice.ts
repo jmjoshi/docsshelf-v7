@@ -3,10 +3,10 @@
  * Manages category state for document organization
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../index';
-import type { Category, CategoryTreeNode } from '../../types/category';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as categoryService from '../../services/database/categoryService';
+import type { Category, CategoryTreeNode } from '../../types/category';
+import type { RootState } from '../index';
 
 // Input types for category operations
 interface CreateCategoryInput {

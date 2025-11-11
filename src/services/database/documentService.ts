@@ -7,21 +7,21 @@
 
 import { Directory, File, Paths } from 'expo-file-system';
 import type {
-  Document,
-  DocumentFilter,
-  DocumentPickerResult,
-  DocumentStats,
-  DocumentUpdateInput,
-  DocumentUploadOptions,
-  DocumentWithCategory,
+    Document,
+    DocumentFilter,
+    DocumentPickerResult,
+    DocumentStats,
+    DocumentUpdateInput,
+    DocumentUploadOptions,
+    DocumentWithCategory,
 } from '../../types/document';
 import { DOCUMENT_VALIDATION, SUPPORTED_MIME_TYPES } from '../../types/document';
 import {
-  calculateChecksum,
-  decryptDocument,
-  encryptDocument,
-  formatFileSize,
-  secureWipe,
+    calculateChecksum,
+    decryptDocument,
+    encryptDocument,
+    formatFileSize,
+    secureWipe,
 } from '../../utils/crypto/encryption';
 import { logAudit } from './auditService';
 import { db } from './dbInit';
@@ -137,11 +137,9 @@ export async function uploadDocument(
     // Ensure directories exist
     await ensureDirectoriesExist();
     
-    // Read file content
-    const fileContent = await FileSystem.readAsStringAsync(file.uri, {
-      encoding: 'base64',
-    });
-    const fileBytes = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0));
+    // Read file content using new API
+    const sourceFile = new File(file.uri);
+    const fileBytes = await sourceFile.bytes();
     
     // Report progress: encrypting
     options.onProgress?.({
@@ -163,9 +161,10 @@ export async function uploadDocument(
     // Securely wipe original data from memory
     secureWipe(fileBytes);
     
-    // Generate stored filename
+    // Generate stored filename and create file
     const storedFilename = generateStoredFilename(file.name);
-    const filePath = `${getDocumentsDirectory()}${storedFilename}`;
+    const docsDir = getDocumentsDirectory();
+    const targetFile = new File(docsDir, storedFilename);
     
     // Report progress: uploading (saving to disk)
     options.onProgress?.({
@@ -178,11 +177,8 @@ export async function uploadDocument(
       startTime,
     });
     
-    // Save encrypted file to disk
-    const encryptedBase64 = btoa(String.fromCharCode(...encrypted.encryptedData));
-    await FileSystem.writeAsStringAsync(filePath, encryptedBase64, {
-      encoding: 'base64',
-    });
+    // Save encrypted file to disk using new API
+    await targetFile.write(encrypted.encryptedData);
     
     // Securely wipe encrypted data from memory
     secureWipe(encrypted.encryptedData);
@@ -209,7 +205,7 @@ export async function uploadDocument(
         options.categoryId || null,
         file.name,
         file.name,
-        filePath,
+        targetFile.uri,  // Store file URI instead of path
         file.size,
         file.mimeType || 'application/octet-stream',
         encrypted.key,
@@ -383,10 +379,8 @@ export async function readDocument(documentId: number, userId?: number): Promise
     }
     
     // Read encrypted file
-    const encryptedBase64 = await FileSystem.readAsStringAsync(document.file_path, {
-      encoding: 'base64',
-    });
-    const encryptedBytes = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+    const file = new File(document.file_path);
+    const encryptedBytes = await file.bytes();
     
     // Decrypt
     const decrypted = await decryptDocument({
@@ -502,16 +496,16 @@ export async function deleteDocument(documentId: number, userId?: number): Promi
     }
     
     // Delete physical file
-    const fileInfo = await FileSystem.getInfoAsync(document.file_path);
-    if (fileInfo.exists) {
-      await FileSystem.deleteAsync(document.file_path);
+    const file = new File(document.file_path);
+    if (file.exists) {
+      await file.delete();
     }
     
     // Delete thumbnail if exists
     if (document.thumbnail_path) {
-      const thumbInfo = await FileSystem.getInfoAsync(document.thumbnail_path);
-      if (thumbInfo.exists) {
-        await FileSystem.deleteAsync(document.thumbnail_path);
+      const thumbFile = new File(document.thumbnail_path);
+      if (thumbFile.exists) {
+        await thumbFile.delete();
       }
     }
     
