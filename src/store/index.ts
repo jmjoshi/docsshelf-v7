@@ -6,19 +6,25 @@
 import { configureStore } from '@reduxjs/toolkit';
 import categoryReducer from './slices/categorySlice';
 
+import documentReducer from './slices/documentSlice';
+
 export const store = configureStore({
   reducer: {
     category: categoryReducer,
+    documents: documentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types for serialization checks
-        ignoredActions: ['category/loadCategories/fulfilled'],
+        ignoredActions: [
+          'category/loadCategories/fulfilled',
+          'documents/upload/fulfilled',
+        ],
         // Ignore these field paths in all actions
-        ignoredActionPaths: ['payload.timestamp'],
+        ignoredActionPaths: ['payload.timestamp', 'meta.arg.file'],
         // Ignore these paths in the state
-        ignoredPaths: ['category.lastSync'],
+        ignoredPaths: ['category.lastSync', 'documents.uploadProgress'],
       },
     }),
 });
