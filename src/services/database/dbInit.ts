@@ -7,7 +7,8 @@
 import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
-const DATABASE_VERSION = 2; // Updated for Phase 2 (Categories, Documents, Tags)
+// Database version - increment when schema changes
+const DATABASE_VERSION = 3;
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -274,6 +275,8 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
           mime_type TEXT NOT NULL,
           encryption_key TEXT NOT NULL,
           encryption_iv TEXT NOT NULL,
+          encryption_hmac TEXT,
+          encryption_hmac_key TEXT,
           checksum TEXT NOT NULL,
           thumbnail_path TEXT,
           page_count INTEGER DEFAULT 1,
@@ -354,6 +357,22 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
       `);
 
       console.log('Migration to version 2 completed');
+    }
+
+    // Migration from version 2 to 3: Add HMAC fields for authenticated encryption
+    if (fromVersion < 3) {
+      console.log('Migrating to version 3: Adding HMAC fields for authenticated encryption');
+      
+      // Add HMAC columns to documents table
+      await db.execAsync(`
+        ALTER TABLE documents ADD COLUMN encryption_hmac TEXT;
+      `);
+      
+      await db.execAsync(`
+        ALTER TABLE documents ADD COLUMN encryption_hmac_key TEXT;
+      `);
+      
+      console.log('Migration to version 3 completed');
     }
     
     await setDatabaseVersion(db, DATABASE_VERSION);

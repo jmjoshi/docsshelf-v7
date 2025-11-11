@@ -13,6 +13,8 @@ export interface Document {
   mime_type: string;
   encryption_key: string;
   encryption_iv: string;
+  encryption_hmac: string | null; // Added for v3 authenticated encryption
+  encryption_hmac_key: string | null; // Added for v3 authenticated encryption
   checksum: string;
   thumbnail_path: string | null;
   page_count: number;

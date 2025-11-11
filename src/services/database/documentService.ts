@@ -198,8 +198,8 @@ export async function uploadDocument(
     const result = await db.runAsync(
       `INSERT INTO documents (
         user_id, category_id, filename, original_filename, file_path, file_size, mime_type,
-        encryption_key, encryption_iv, checksum, page_count, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        encryption_key, encryption_iv, encryption_hmac, encryption_hmac_key, checksum, page_count, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         currentUserId,
         options.categoryId || null,
@@ -210,6 +210,8 @@ export async function uploadDocument(
         file.mimeType || 'application/octet-stream',
         encrypted.key,
         encrypted.iv,
+        encrypted.hmac,
+        encrypted.hmacKey,
         checksum,
         1, // Default page count
       ]
@@ -387,6 +389,8 @@ export async function readDocument(documentId: number, userId?: number): Promise
       encryptedData: encryptedBytes,
       key: document.encryption_key,
       iv: document.encryption_iv,
+      hmac: document.encryption_hmac || '',
+      hmacKey: document.encryption_hmac_key || '',
     });
     
     // Update last accessed timestamp
