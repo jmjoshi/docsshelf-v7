@@ -1,12 +1,12 @@
 /**
- * Audit Logging Service
- * Tracks all user actions for security and compliance
- * Implements GDPR-compliant audit trails
+ * Audit Service
+ * GDPR-compliant audit logging for user actions
+ * Production-grade with data retention and export capabilities
  */
 
 import { db } from './dbInit';
 
-export interface AuditLog {
+export interface AuditLogEntry {
   id: number;
   user_id: number;
   action: string;
@@ -14,14 +14,13 @@ export interface AuditLog {
   entity_id: number | null;
   details: string | null;
   ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 }
 
 export interface AuditLogFilter {
-  user_id?: number;
   action?: string;
   entity_type?: string;
-  entity_id?: number;
   date_from?: string;
   date_to?: string;
   limit?: number;
@@ -36,70 +35,70 @@ export async function logAudit(
   action: string,
   entityType: string,
   entityId: number | null,
-  details?: any,
-  ipAddress?: string
+  details?: Record<string, any>
 ): Promise<void> {
   try {
-    const detailsJson = details ? JSON.stringify(details) : null;
-
     await db.runAsync(
-      `INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [userId, action, entityType, entityId, detailsJson, ipAddress || null]
+      `INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, created_at)
+       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        userId,
+        action,
+        entityType,
+        entityId,
+        details ? JSON.stringify(details) : null,
+      ]
     );
   } catch (error) {
-    // Don't throw on audit failures to avoid breaking main operations
+    // Don't throw - audit logging should not break app functionality
     console.error('Failed to log audit event:', error);
   }
 }
 
 /**
- * Get audit logs with filtering
+ * Get audit logs for user
  */
-export async function getAuditLogs(filter: AuditLogFilter = {}): Promise<AuditLog[]> {
+export async function getAuditLogs(
+  userId: number,
+  filter: AuditLogFilter = {}
+): Promise<AuditLogEntry[]> {
   try {
-    const conditions: string[] = [];
-    const params: any[] = [];
-
-    if (filter.user_id) {
-      conditions.push('user_id = ?');
-      params.push(filter.user_id);
-    }
-
+    let query = 'SELECT * FROM audit_log WHERE user_id = ?';
+    const params: any[] = [userId];
+    
     if (filter.action) {
-      conditions.push('action = ?');
+      query += ' AND action = ?';
       params.push(filter.action);
     }
-
+    
     if (filter.entity_type) {
-      conditions.push('entity_type = ?');
+      query += ' AND entity_type = ?';
       params.push(filter.entity_type);
     }
-
-    if (filter.entity_id) {
-      conditions.push('entity_id = ?');
-      params.push(filter.entity_id);
-    }
-
+    
     if (filter.date_from) {
-      conditions.push('created_at >= ?');
+      query += ' AND created_at >= ?';
       params.push(filter.date_from);
     }
-
+    
     if (filter.date_to) {
-      conditions.push('created_at <= ?');
+      query += ' AND created_at <= ?';
       params.push(filter.date_to);
     }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const limitClause = filter.limit ? `LIMIT ${filter.limit}` : '';
-    const offsetClause = filter.offset ? `OFFSET ${filter.offset}` : '';
-
-    const logs = await db.getAllAsync<AuditLog>(
-      `SELECT * FROM audit_log ${whereClause} ORDER BY created_at DESC ${limitClause} ${offsetClause}`,
-      params
-    );
-
+    
+    query += ' ORDER BY created_at DESC';
+    
+    if (filter.limit) {
+      query += ' LIMIT ?';
+      params.push(filter.limit);
+      
+      if (filter.offset) {
+        query += ' OFFSET ?';
+        params.push(filter.offset);
+      }
+    }
+    
+    const logs = await db.getAllAsync<AuditLogEntry>(query, params);
     return logs;
   } catch (error) {
     console.error('Failed to get audit logs:', error);
@@ -108,43 +107,11 @@ export async function getAuditLogs(filter: AuditLogFilter = {}): Promise<AuditLo
 }
 
 /**
- * Get audit logs for a specific entity
- */
-export async function getEntityAuditHistory(
-  entityType: string,
-  entityId: number
-): Promise<AuditLog[]> {
-  return getAuditLogs({ entity_type: entityType, entity_id: entityId });
-}
-
-/**
- * Delete old audit logs (GDPR compliance - data retention)
- */
-export async function cleanupOldAuditLogs(daysToKeep: number = 365): Promise<number> {
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    const cutoffDateStr = cutoffDate.toISOString();
-
-    const result = await db.runAsync(
-      'DELETE FROM audit_log WHERE created_at < ?',
-      [cutoffDateStr]
-    );
-
-    console.log(`Cleaned up ${result.changes} old audit logs`);
-    return result.changes;
-  } catch (error) {
-    console.error('Failed to cleanup audit logs:', error);
-    throw new Error('Failed to cleanup audit logs');
-  }
-}
-
-/**
- * Export audit logs for a user (GDPR compliance)
+ * Export audit logs for GDPR compliance
  */
 export async function exportUserAuditLogs(userId: number): Promise<string> {
   try {
-    const logs = await getAuditLogs({ user_id: userId });
+    const logs = await getAuditLogs(userId);
     return JSON.stringify(logs, null, 2);
   } catch (error) {
     console.error('Failed to export audit logs:', error);
@@ -153,69 +120,22 @@ export async function exportUserAuditLogs(userId: number): Promise<string> {
 }
 
 /**
- * Get audit log statistics
+ * Clean up old audit logs (data retention policy)
  */
-export async function getAuditStats(userId?: number): Promise<{
-  totalLogs: number;
-  byAction: Record<string, number>;
-  byEntityType: Record<string, number>;
-  recentActivity: number; // Last 24 hours
-}> {
+export async function cleanupOldAuditLogs(retentionDays: number = 90): Promise<number> {
   try {
-    const conditions = userId ? 'WHERE user_id = ?' : '';
-    const params = userId ? [userId] : [];
-
-    // Total logs
-    const totalResult = await db.getFirstAsync<{ count: number }>(
-      `SELECT COUNT(*) as count FROM audit_log ${conditions}`,
-      params
-    );
-    const totalLogs = totalResult?.count || 0;
-
-    // By action
-    const actionResults = await db.getAllAsync<{ action: string; count: number }>(
-      `SELECT action, COUNT(*) as count FROM audit_log ${conditions} GROUP BY action`,
-      params
-    );
-    const byAction: Record<string, number> = {};
-    actionResults.forEach(r => {
-      byAction[r.action] = r.count;
-    });
-
-    // By entity type
-    const entityResults = await db.getAllAsync<{ entity_type: string; count: number }>(
-      `SELECT entity_type, COUNT(*) as count FROM audit_log ${conditions} GROUP BY entity_type`,
-      params
-    );
-    const byEntityType: Record<string, number> = {};
-    entityResults.forEach(r => {
-      byEntityType[r.entity_type] = r.count;
-    });
-
-    // Recent activity (last 24 hours)
-    const yesterday = new Date();
-    yesterday.setHours(yesterday.getHours() - 24);
-    const yesterdayStr = yesterday.toISOString();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffStr = cutoffDate.toISOString();
     
-    const recentConditions = userId
-      ? 'WHERE user_id = ? AND created_at >= ?'
-      : 'WHERE created_at >= ?';
-    const recentParams = userId ? [userId, yesterdayStr] : [yesterdayStr];
-
-    const recentResult = await db.getFirstAsync<{ count: number }>(
-      `SELECT COUNT(*) as count FROM audit_log ${recentConditions}`,
-      recentParams
+    const result = await db.runAsync(
+      'DELETE FROM audit_log WHERE created_at < ?',
+      [cutoffStr]
     );
-    const recentActivity = recentResult?.count || 0;
-
-    return {
-      totalLogs,
-      byAction,
-      byEntityType,
-      recentActivity,
-    };
+    
+    return result.changes;
   } catch (error) {
-    console.error('Failed to get audit stats:', error);
-    throw new Error('Failed to retrieve audit statistics');
+    console.error('Failed to cleanup audit logs:', error);
+    throw new Error('Failed to cleanup audit logs');
   }
 }

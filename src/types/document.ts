@@ -175,3 +175,49 @@ export interface FileSizeFormatted {
   unit: 'B' | 'KB' | 'MB' | 'GB';
   formatted: string;
 }
+
+/**
+ * Upload progress tracking
+ */
+export interface UploadProgress {
+  uploadId: string;
+  filename: string;
+  totalBytes: number;
+  uploadedBytes: number;
+  percentage: number;
+  status: 'pending' | 'encrypting' | 'uploading' | 'processing' | 'complete' | 'error';
+  error?: string;
+  startTime: number;
+  estimatedTimeRemaining?: number;
+}
+
+/**
+ * Document encryption metadata
+ */
+export interface EncryptionMetadata {
+  algorithm: 'AES-256-GCM' | 'AES-256-CBC';
+  key: string; // Base64 encoded
+  iv: string; // Base64 encoded
+  authTag?: string; // For GCM mode
+}
+
+/**
+ * Document picker result
+ */
+export interface DocumentPickerResult {
+  uri: string;
+  name: string;
+  size: number;
+  mimeType?: string;
+  lastModified?: number;
+}
+
+/**
+ * Document upload options
+ */
+export interface DocumentUploadOptions {
+  categoryId?: number | null;
+  autoOCR?: boolean;
+  generateThumbnail?: boolean;
+  onProgress?: (progress: UploadProgress) => void;
+}
