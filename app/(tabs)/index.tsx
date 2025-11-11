@@ -1,14 +1,26 @@
-import { Image } from 'expo-image';
-import { Alert, Button, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { getCurrentUserProfile } from '../../src/services/database/userService';
+import { UserProfile } from '../../src/types/user';
 
 export default function HomeScreen() {
   const { logout } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await getCurrentUserProfile();
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -21,54 +33,208 @@ export default function HomeScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            // Navigation will be handled by the root layout
           },
         },
       ]
     );
   };
 
+  const featureCards = [
+    {
+      id: 'categories',
+      title: '📁 Categories',
+      description: 'Organize documents with folders and subfolders',
+      route: '/(tabs)/categories',
+      color: '#4CAF50',
+    },
+    {
+      id: 'documents',
+      title: '📄 Documents',
+      description: 'Upload, scan, and manage your documents',
+      route: '/(tabs)/documents',
+      color: '#2196F3',
+    },
+    {
+      id: 'search',
+      title: '🔍 Search',
+      description: 'Find documents quickly with full-text search',
+      route: '/(tabs)/documents',
+      color: '#FF9800',
+    },
+    {
+      id: 'settings',
+      title: '⚙️ Settings',
+      description: 'Manage your account and app preferences',
+      route: '/(tabs)/explore',
+      color: '#9C27B0',
+    },
+  ];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">You're Logged In!</ThemedText>
-        <ThemedText>
-          This is the main application screen. You successfully registered and logged in.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Button title="Logout" onPress={handleLogout} color="#ff3b30" />
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>
+          Welcome{userProfile ? `, ${userProfile.firstName}` : ''}! 👋
+        </Text>
+        <Text style={styles.subtitleText}>DocsShelf - Your Document Manager</Text>
+      </View>
+
+      {/* Quick Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statLabel}>Documents</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statLabel}>Categories</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statLabel}>Tags</Text>
+        </View>
+      </View>
+
+      {/* Feature Cards */}
+      <View style={styles.featuresContainer}>
+        <Text style={styles.sectionTitle}>Features</Text>
+        {featureCards.map((feature) => (
+          <TouchableOpacity
+            key={feature.id}
+            style={[styles.featureCard, { borderLeftColor: feature.color }]}
+            onPress={() => router.push(feature.route as any)}
+          >
+            <Text style={styles.featureTitle}>{feature.title}</Text>
+            <Text style={styles.featureDescription}>{feature.description}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Logout Button */}
+      <View style={styles.logoutContainer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Version Info */}
+      <View style={styles.versionContainer}>
+        <Text style={styles.versionText}>DocsShelf v1.0.0</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    backgroundColor: '#007AFF',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 32,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitleText: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.9,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    backgroundColor: '#fff',
+    marginTop: -20,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statCard: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  featuresContainer: {
+    padding: 16,
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  featureCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  logoutContainer: {
+    padding: 16,
+    marginTop: 16,
+  },
+  logoutButton: {
+    backgroundColor: '#ff3b30',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  versionContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#999',
   },
 });

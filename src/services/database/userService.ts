@@ -171,3 +171,20 @@ export async function getCurrentUserId(): Promise<number | null> {
     return null;
   }
 }
+
+/**
+ * Get current authenticated user's profile
+ */
+export async function getCurrentUserProfile(): Promise<UserProfile | null> {
+  try {
+    const email = await getCurrentUserEmail();
+    if (!email) {
+      return null;
+    }
+
+    return await getUserByEmail(email);
+  } catch (error) {
+    console.error('Get current user profile failed:', error);
+    return null;
+  }
+}
