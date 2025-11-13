@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import { useRouter } from 'expo-router';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -29,6 +30,7 @@ import {
 
 export default function DocumentUploadScreen() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const categories = useAppSelector(selectAllCategories);
   const activeUploads = useAppSelector(selectActiveUploads);
   const error = useAppSelector(selectDocumentError);
@@ -105,7 +107,7 @@ export default function DocumentUploadScreen() {
         mimeType: selectedFile.mimeType || 'application/octet-stream',
       };
 
-      await dispatch(
+      const result = await dispatch(
         uploadDocumentWithProgress({
           file,
           options: {
@@ -114,10 +116,16 @@ export default function DocumentUploadScreen() {
         })
       ).unwrap();
 
-      // Success - reset form
+      // Success - reset form and navigate back
       Alert.alert('Success', 'Document uploaded successfully', [
         {
-          text: 'OK',
+          text: 'View Document',
+          onPress: () => {
+            router.push(`/document/${result.id}`);
+          },
+        },
+        {
+          text: 'Upload Another',
           onPress: () => {
             setSelectedFile(null);
             setSelectedCategoryId(null);

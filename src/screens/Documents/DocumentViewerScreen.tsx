@@ -129,8 +129,7 @@ export default function DocumentViewerScreen() {
 
   const handleEdit = () => {
     if (!document) return;
-    // Navigate to edit screen
-    Alert.alert('Edit', 'Edit functionality will be available in next update');
+    router.push(`/document/edit/${document.id}`);
   };
 
   const formatFileSize = (bytes: number): string => {

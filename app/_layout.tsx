@@ -4,11 +4,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { Provider as ReduxProvider } from 'react-redux';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { initializeDatabase } from '../src/services/database/dbInit';
+import { store } from '../src/store';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -46,6 +48,14 @@ function RootLayoutNav() {
     }
   }, [isLoading]);
 
+  // Fallback: Force hide splash screen after 10 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      SplashScreen.hideAsync().catch(console.error);
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   if (isLoading) {
     return null;
   }
@@ -55,6 +65,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="document" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
@@ -65,9 +76,11 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
+      <ReduxProvider store={store}>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </ReduxProvider>
     </ErrorBoundary>
   );
 }

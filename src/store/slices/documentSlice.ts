@@ -4,7 +4,7 @@
  * Similar structure to categorySlice.ts
  */
 
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type {
   Document,
   DocumentFilter,
@@ -374,26 +374,38 @@ export const selectDocumentLoading = (state: RootState) => state.documents.loadi
 export const selectDocumentError = (state: RootState) => state.documents.error;
 export const selectDocumentFilter = (state: RootState) => state.documents.filter;
 
-// Derived selectors
-export const selectDocumentById = (state: RootState, documentId: number) =>
-  state.documents.documents.find((doc: Document) => doc.id === documentId);
+// Derived selectors with memoization
+export const selectDocumentById = createSelector(
+  [selectAllDocuments, (_state: RootState, documentId: number) => documentId],
+  (documents, documentId) => documents.find((doc: Document) => doc.id === documentId)
+);
 
-export const selectDocumentsByCategory = (state: RootState, categoryId: number | null) =>
-  state.documents.documents.filter((doc: Document) => doc.category_id === categoryId);
+export const selectDocumentsByCategory = createSelector(
+  [selectAllDocuments, (_state: RootState, categoryId: number | null) => categoryId],
+  (documents, categoryId) => documents.filter((doc: Document) => doc.category_id === categoryId)
+);
 
-export const selectFavoriteDocuments = (state: RootState) =>
-  state.documents.documents.filter((doc: Document) => doc.is_favorite);
+export const selectFavoriteDocuments = createSelector(
+  [selectAllDocuments],
+  (documents) => documents.filter((doc: Document) => doc.is_favorite)
+);
 
-export const selectRecentDocuments = (state: RootState, limit: number = 10) =>
-  state.documents.documents
-    .slice()
-    .sort((a: Document, b: Document) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, limit);
+export const selectRecentDocuments = createSelector(
+  [selectAllDocuments, (_state: RootState, limit: number = 10) => limit],
+  (documents, limit) =>
+    documents
+      .slice()
+      .sort((a: Document, b: Document) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit)
+);
 
-export const selectActiveUploads = (state: RootState) =>
-  Object.values(state.documents.uploadProgress).filter(
-    (progress: UploadProgress) => progress.status !== 'complete' && progress.status !== 'error'
-  );
+export const selectActiveUploads = createSelector(
+  [selectUploadProgress],
+  (uploadProgress) =>
+    Object.values(uploadProgress).filter(
+      (progress: UploadProgress) => progress.status !== 'complete' && progress.status !== 'error'
+    )
+);
 
 // Reducer export
 export default documentSlice.reducer;

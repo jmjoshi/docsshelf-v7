@@ -52,12 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const authStatus = await SecureStore.getItemAsync('user_authenticated');
       if (authStatus === 'true') {
-        // Check if session is still valid
         const validSession = await isSessionValid();
         if (validSession) {
           setIsAuthenticated(true);
         } else {
-          // Session expired, clear auth status
           await SecureStore.deleteItemAsync('user_authenticated');
           setIsAuthenticated(false);
         }

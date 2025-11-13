@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -40,6 +41,7 @@ type SortMode = 'name' | 'date' | 'size';
 
 export default function DocumentListScreen() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const allDocuments = useAppSelector(selectAllDocuments);
   const favoriteDocuments = useAppSelector(selectFavoriteDocuments);
   const recentDocuments = useAppSelector((state) => selectRecentDocuments(state, 20));
@@ -200,8 +202,7 @@ export default function DocumentListScreen() {
     <TouchableOpacity
       style={styles.documentItem}
       onPress={() => {
-        // TODO: Navigate to document detail screen
-        Alert.alert('View Document', `Opening: ${item.filename}`);
+        router.push(`/document/${item.id}`);
       }}
     >
       <View style={styles.documentContent}>
@@ -233,8 +234,7 @@ export default function DocumentListScreen() {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => {
-              // TODO: Navigate to document viewer
-              Alert.alert('View', `View: ${item.filename}`);
+              router.push(`/document/${item.id}`);
             }}
           >
             <Text style={styles.actionButtonText}>View</Text>
@@ -380,6 +380,14 @@ export default function DocumentListScreen() {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
+
+      {/* Upload FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/document/upload')}
+      >
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -589,5 +597,26 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     fontSize: 14,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  fabIcon: {
+    fontSize: 32,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
