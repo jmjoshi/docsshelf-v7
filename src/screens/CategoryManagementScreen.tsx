@@ -43,7 +43,7 @@ export default function CategoryManagementScreen() {
 
   // Form state
   const [categoryName, setCategoryName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('folder');
+  const [selectedIcon, setSelectedIcon] = useState('📁');
   const [selectedColor, setSelectedColor] = useState('#2196F3');
   const [description, setDescription] = useState('');
 
@@ -71,18 +71,20 @@ export default function CategoryManagementScreen() {
   };
 
   const handleAddCategory = () => {
+    console.log('handleAddCategory called');
     setSelectedParentId(null);
     setCategoryName('');
-    setSelectedIcon('folder');
+    setSelectedIcon('📁');
     setSelectedColor('#2196F3');
     setDescription('');
     setShowAddModal(true);
+    console.log('Modal should be visible now');
   };
 
   const handleAddSubcategory = (parentId: number) => {
     setSelectedParentId(parentId);
     setCategoryName('');
-    setSelectedIcon('folder');
+    setSelectedIcon('📁');
     setSelectedColor('#2196F3');
     setDescription('');
     setShowAddModal(true);
@@ -280,7 +282,7 @@ export default function CategoryManagementScreen() {
             ]}
             onPress={() => setSelectedIcon(icon)}
           >
-            <Text style={styles.iconOptionText}>{icon === 'folder' ? '📁' : icon}</Text>
+            <Text style={styles.iconOptionText}>{icon}</Text>
           </TouchableOpacity>
         ))}
       </View>

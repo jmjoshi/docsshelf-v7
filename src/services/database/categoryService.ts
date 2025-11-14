@@ -181,7 +181,7 @@ export async function createCategory(
       [
         input.name.trim(),
         input.description || null,
-        input.icon || 'folder',
+        input.icon || '📁',
         input.color || '#007AFF',
         input.parent_id || null,
         currentUserId,

@@ -48,58 +48,58 @@ export interface CategoryStats {
 }
 
 /**
- * Available category icons (Material Icons)
+ * Available category icons (Emoji icons for cross-platform compatibility)
  */
 export const CATEGORY_ICONS = [
-  'folder',
-  'folder-open',
-  'work',
-  'home',
-  'school',
-  'account-balance',
-  'receipt',
-  'description',
-  'assignment',
-  'article',
-  'book',
-  'bookmark',
-  'card-travel',
-  'business',
-  'car-rental',
-  'credit-card',
-  'event',
-  'health-and-safety',
-  'local-hospital',
-  'medical-services',
-  'savings',
-  'account-box',
-  'badge',
-  'contacts',
-  'mail',
-  'phone',
-  'star',
-  'favorite',
-  'label',
-  'category',
-  'shopping-cart',
-  'restaurant',
-  'fitness-center',
-  'sports',
-  'flight',
-  'hotel',
-  'beach-access',
-  'camera',
-  'music-note',
-  'movie',
-  'palette',
-  'build',
-  'settings',
-  'vpn-key',
-  'security',
-  'verified-user',
-  'gavel',
-  'policy',
-  'receipt-long',
+  '📁', // folder
+  '📂', // folder-open
+  '💼', // work
+  '🏠', // home
+  '🏫', // school
+  '🏛️', // account-balance
+  '🧾', // receipt
+  '📄', // description
+  '📋', // assignment
+  '📰', // article
+  '📚', // book
+  '🔖', // bookmark
+  '🧳', // card-travel
+  '🏢', // business
+  '🚗', // car-rental
+  '💳', // credit-card
+  '📅', // event
+  '🏥', // health
+  '⚕️', // medical
+  '🏥', // hospital
+  '💰', // savings
+  '👤', // account
+  '🎫', // badge
+  '📞', // contacts
+  '📧', // mail
+  '☎️', // phone
+  '⭐', // star
+  '❤️', // favorite
+  '🏷️', // label
+  '📦', // category
+  '🛒', // shopping
+  '🍽️', // restaurant
+  '💪', // fitness
+  '⚽', // sports
+  '✈️', // flight
+  '🏨', // hotel
+  '🏖️', // beach
+  '📷', // camera
+  '🎵', // music
+  '🎬', // movie
+  '🎨', // palette
+  '🔧', // build
+  '⚙️', // settings
+  '🔑', // key
+  '🔒', // security
+  '✅', // verified
+  '⚖️', // gavel
+  '📜', // policy
+  '🧾', // receipt-long
 ] as const;
 
 export type CategoryIcon = (typeof CATEGORY_ICONS)[number];

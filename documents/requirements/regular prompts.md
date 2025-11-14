@@ -13,3 +13,7 @@ create all unit and integration test cases for the developed feature, also do th
 Check in github repository and add summary and list of added and updated components
 ------------------
 Check in github repository and add summary and list of added and updated components - After check in lets proceed with next feature FR-LOGIN-002 from loginprd.md file. Also does the account registration saves information in local DB
+--------------------
+Check in github repository and add summary and list of added and updated components with relevant tag for identification- After check in lets proceed with next feature FR-LOGIN-003 from prd.md file. make sure this is exacly implemented as stated. Also update the context of this chat in developer_context.md document and also create a document capturing all the commands used in this chat and future chats in developing this application for future reference. Save that document in documents/requirements/regular prompts.md file
+----------------------
+Check in github repository and add summary and list of added and updated components with relevant tag for identification- After check in lets proceed with next feature FR-LOGIN-004 from prd.md file. make sure this is exacly implemented as stated. Also update the context of this chat in developer_context.md document and also update document capturing all the commands used in this chat and future chats in developing this application for future reference. Save that document in documents/requirements/regular prompts.md file

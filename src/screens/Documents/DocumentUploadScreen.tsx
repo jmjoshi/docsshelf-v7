@@ -7,26 +7,26 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-    loadCategories,
-    selectAllCategories,
+  loadCategories,
+  selectAllCategories,
 } from '../../store/slices/categorySlice';
 import {
-    selectActiveUploads,
-    selectDocumentError,
-    uploadDocumentWithProgress,
+  selectActiveUploads,
+  selectDocumentError,
+  uploadDocumentWithProgress,
 } from '../../store/slices/documentSlice';
 
 export default function DocumentUploadScreen() {
