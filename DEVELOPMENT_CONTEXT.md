@@ -3,7 +3,8 @@
 **Last Updated:** November 13, 2025  
 **Project Status:** Phase 2 - Core Document Management (95% Complete)  
 **Current Sprint:** FR-MAIN-003 (Document Scanning - 90% Complete)  
-**Recent Major Achievement:** UX Navigation Improvements - All Screens Have Back/Cancel Buttons
+**Recent Major Achievement:** Category Icon Fix - Emoji icons for cross-platform compatibility  
+**Note:** FR-LOGIN-004 (Password Policies) - Already Implemented and Complete
 
 ---
 
@@ -494,7 +495,87 @@ docsshelf-v7/
 
 ## 🔄 RECENT CHANGES & FIXES
 
-### UX Navigation Improvements - FR-UX-001 (November 13, 2025)
+### Category Icon Fix - Cross-Platform Emoji Support (November 13, 2025 - Session 2)
+
+#### Issue Resolved
+- **Problem:** User reported categories "New" button was not responding
+- **Root Cause:** CATEGORY_ICONS were defined as string names ('folder', 'work', etc.) but UI was trying to render them as emojis
+- **Investigation:** Button was actually working, but icon rendering was broken
+
+#### Changes Made (Commit: 8673fef)
+
+**1. Updated CATEGORY_ICONS (src/types/category.ts)**
+- Converted all 49 icon strings to emoji characters
+- Changed from: `'folder', 'work', 'home'...`
+- Changed to: `'📁', '💼', '🏠'...`
+- Added comments showing original icon names
+- Benefits:
+  - Cross-platform compatibility (works on all devices)
+  - No need for icon font libraries
+  - Native emoji rendering
+  - Better performance (no external assets)
+
+**2. Updated CategoryManagementScreen (src/screens/CategoryManagementScreen.tsx)**
+- Changed default icon from `'folder'` to `'📁'`
+- Removed special case logic for 'folder' icon rendering
+- Updated icon rendering: `<Text>{icon}</Text>` (was: `{icon === 'folder' ? '📁' : icon}`)
+- Added debug logging for `handleAddCategory` function
+
+**3. Updated Category Service (src/services/database/categoryService.ts)**
+- Changed default icon in `createCategory` from `'folder'` to `'📁'`
+- Ensures consistent emoji usage across the app
+
+#### Files Modified
+- src/types/category.ts (49 icons converted)
+- src/screens/CategoryManagementScreen.tsx (3 locations updated)
+- src/services/database/categoryService.ts (1 default value updated)
+
+#### Testing Results
+- ✅ Icons now render correctly as emojis
+- ✅ Category creation works with emoji icons
+- ✅ Cross-platform compatible (iOS/Android/Web)
+- ✅ No external dependencies required
+- ✅ TypeScript compiles without errors
+
+#### Impact
+- Improved visual consistency across platforms
+- Reduced dependency on icon fonts
+- Better accessibility (native emoji support)
+- Faster rendering (no font loading required)
+
+---
+
+### FR-LOGIN-004 Status Verification (November 13, 2025 - Session 2)
+
+#### Requirement Check
+- **Feature:** FR-LOGIN-004 - Password Policies
+- **Status:** ✅ Already Implemented (November 8, 2025)
+- **Verification:** Code review of passwordValidator.ts confirms implementation
+
+#### Implementation Details
+- **File:** src/utils/validators/passwordValidator.ts
+- **Rules Enforced:**
+  - Minimum 12 characters
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+  - At least one special symbol (!@#$%^&*(),.?":{}|<>)
+  - User-friendly error messages for each validation failure
+
+#### Testing
+- ✅ Validation works at registration
+- ✅ Validation works at password reset
+- ✅ Error messages display correctly
+- ✅ Integrated with RegisterScreen and forgot-password flow
+
+#### No Changes Required
+- Feature is production-ready
+- Meets all requirements from loginprd.md
+- Already tested and verified in previous sessions
+
+---
+
+### UX Navigation Improvements - FR-UX-001 (November 13, 2025 - Session 1)
 
 #### Back/Cancel Buttons Added to All Screens (Commit: 1918d17)
 - **Issue:** User reported being trapped in document upload screen with no way to cancel
