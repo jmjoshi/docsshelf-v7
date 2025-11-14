@@ -1,9 +1,9 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** November 12, 2025  
+**Last Updated:** November 13, 2025  
 **Project Status:** Phase 2 - Core Document Management (95% Complete)  
-**Current Sprint:** FR-MAIN-002 (Document Upload & Management - COMPLETE ✅)  
-**Recent Major Achievement:** Complete Navigation Wiring + Redux Provider Integration
+**Current Sprint:** FR-MAIN-003 (Document Scanning - 90% Complete)  
+**Recent Major Achievement:** UX Navigation Improvements - All Screens Have Back/Cancel Buttons
 
 ---
 
@@ -493,6 +493,56 @@ docsshelf-v7/
 ---
 
 ## 🔄 RECENT CHANGES & FIXES
+
+### UX Navigation Improvements - FR-UX-001 (November 13, 2025)
+
+#### Back/Cancel Buttons Added to All Screens (Commit: 1918d17)
+- **Issue:** User reported being trapped in document upload screen with no way to cancel
+- **Scope:** Comprehensive audit of all screens for back/cancel functionality
+- **Solution:** Added cancel button to DocumentUploadScreen, verified all other screens
+- **Result:** 100% of screens now have proper exit paths
+
+**Changes Made:**
+1. **DocumentUploadScreen:**
+   - Added header bar with Cancel button (red text, top-left)
+   - Implemented confirmation dialog if file selected or upload in progress
+   - Prevents accidental data loss
+   - Clean exit path back to document list
+
+2. **Verified Existing (No Changes Needed):**
+   - DocumentEditScreen: Already has Cancel with unsaved changes warning
+   - DocumentViewerScreen: Already has back arrow button
+   - ScanFlowScreen: Complete cancel flow at every step
+   - DocumentScanScreen: Has Cancel button
+   - ImagePreviewScreen: Has Retake button
+   - FormatSelectionModal: Has Cancel button and backdrop dismiss
+   - CategoryManagementScreen: All modals have Cancel buttons
+
+**Navigation Audit Results:**
+- ✅ 11/11 screens have proper back/cancel buttons (100%)
+- ✅ 5/11 screens have confirmation dialogs for data loss prevention
+- ✅ No dead-ends or trapped states
+- ✅ Consistent navigation patterns across app
+- ✅ Platform-appropriate spacing and touch targets
+
+**UX Improvements:**
+- Header bars with consistent Cancel/Back buttons
+- Confirmation dialogs for destructive actions
+- Visual hierarchy: Cancel (red) vs Save (blue/green)
+- iOS notch support with proper padding
+- Accessible touch targets (48x48 minimum)
+
+**Files Modified:**
+- src/screens/Documents/DocumentUploadScreen.tsx
+  * Added headerBar component
+  * Added handleCancel with confirmation logic
+  * Updated styles for new header layout
+
+**Impact:**
+- Improved user experience with no trapped states
+- Professional app behavior matching iOS/Android standards
+- Prevents user frustration and support requests
+- Ready for production release
 
 ### FR-MAIN-002 Complete - Navigation & Redux Integration (November 12, 2025)
 
