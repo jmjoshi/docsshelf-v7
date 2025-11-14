@@ -130,11 +130,41 @@ DocsShelf is a React Native mobile app (iOS/Android) for secure, offline-first d
   - Complete user flow: List → View → Edit → Save → Back
   - Upload flow: FAB → Upload → View Document → List
 
-#### FR-MAIN-003: Document Scanning (PENDING)
-- Camera-based document scanning
-- Edge detection and perspective correction
-- Multi-page scanning support
-- Image enhancement (brightness, contrast, sharpness)
+#### FR-MAIN-003: Document Scanning (IN PROGRESS - 90%)
+- ✅ Dependencies installed (expo-camera, expo-image-manipulator, expo-print)
+- ✅ Camera permissions configured (iOS NSCameraUsageDescription, Android CAMERA permission)
+- ✅ Type definitions complete (ScanFormat, CameraState, CapturedImage, etc.)
+- ✅ **Camera Service** (cameraService.ts)
+  - Permission requests and status checks
+  - Flash mode support (on/off/auto)
+  - Camera availability detection
+  - User-friendly permission error messages
+- ✅ **Image Converter Service** (imageConverter.ts - 250+ lines)
+  - JPEG conversion with compression (quality: 0.8, max: 2048x2048)
+  - GIF conversion (using compressed JPEG as substitute)
+  - PDF generation with expo-print (embedded base64 image in HTML template)
+  - File size estimation for each format
+  - MIME type and extension utilities
+- ✅ **Format Constants** (formatConstants.ts)
+  - JPEG (recommended): Best for photos
+  - PDF: Standard document format
+  - GIF: Compact file size (simulated with compressed JPEG)
+  - Format selection utilities
+- ✅ **UI Components**
+  - FormatSelectionModal: Bottom sheet with format cards
+  - DocumentScanScreen: Full camera UI with live preview, flash toggle, capture button
+  - ImagePreviewScreen: Preview with retake/confirm options, format conversion
+  - ScanFlowScreen: Coordinator managing complete scan workflow
+- ✅ **Route Integration** (app/scan.tsx, app/_layout.tsx)
+  - /scan route registered as fullScreenModal
+  - Navigation from DocumentListScreen via green "Scan" FAB
+- ✅ **Upload Integration** (DocumentUploadScreen enhanced)
+  - Accepts scanned image via route params (scannedImageUri, scannedFormat)
+  - Auto-populates upload form with scanned document
+  - Seamless flow: Scan → Preview → Upload → View
+- ⏳ Testing on physical device (camera required)
+- ⏳ Edge detection and auto-crop (future enhancement)
+- ⏳ Multi-page scanning (future enhancement)
 
 #### FR-MAIN-004: OCR & Intelligent Processing (PENDING)
 - Text extraction from images and PDFs

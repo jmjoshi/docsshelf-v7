@@ -3,29 +3,29 @@
  * Allows users to update document metadata and settings
  */
 
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  loadCategories,
-  selectAllCategories,
+    loadCategories,
+    selectAllCategories,
 } from '../../store/slices/categorySlice';
 import {
-  updateDocumentMetadata,
-  selectDocumentById,
-  selectDocumentError,
+    selectDocumentById,
+    selectDocumentError,
+    updateDocumentMetadata,
 } from '../../store/slices/documentSlice';
-import { getCurrentUserId } from '../../services/database/userService';
 
 export default function DocumentEditScreen() {
   const router = useRouter();

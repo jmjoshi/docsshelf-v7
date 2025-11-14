@@ -5,23 +5,23 @@
  */
 
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type {
-  Document,
-  DocumentFilter,
-  DocumentPickerResult,
-  DocumentStats,
-  DocumentUpdateInput,
-  DocumentUploadOptions,
-  UploadProgress,
-} from '../../types/document';
 import {
-  deleteDocument,
-  getDocuments,
-  getDocumentStats,
-  readDocument,
-  updateDocument,
-  uploadDocument,
+    deleteDocument,
+    getDocuments,
+    getDocumentStats,
+    readDocument,
+    updateDocument,
+    uploadDocument,
 } from '../../services/database/documentService';
+import type {
+    Document,
+    DocumentFilter,
+    DocumentPickerResult,
+    DocumentStats,
+    DocumentUpdateInput,
+    DocumentUploadOptions,
+    UploadProgress,
+} from '../../types/document';
 import type { RootState } from '../index';
 
 // State interface

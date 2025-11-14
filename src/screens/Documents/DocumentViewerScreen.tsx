@@ -3,27 +3,27 @@
  * Displays document content with support for multiple file types
  */
 
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  readDocumentContent,
-  removeDocument,
-  toggleFavorite,
-  selectDocumentById,
-  selectDocumentError,
+    readDocumentContent,
+    removeDocument,
+    selectDocumentById,
+    selectDocumentError,
+    toggleFavorite,
 } from '../../store/slices/documentSlice';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

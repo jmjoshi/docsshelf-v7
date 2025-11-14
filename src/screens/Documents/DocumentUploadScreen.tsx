@@ -3,34 +3,36 @@
  * Allows users to select and upload documents with encryption and progress tracking
  */
 
+import * as DocumentPicker from 'expo-document-picker';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import { useRouter } from 'expo-router';
 import { getCurrentUserId } from '../../services/database/userService';
+import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  loadCategories,
-  selectAllCategories,
+    loadCategories,
+    selectAllCategories,
 } from '../../store/slices/categorySlice';
 import {
-  uploadDocumentWithProgress,
-  selectActiveUploads,
-  selectDocumentError,
+    selectActiveUploads,
+    selectDocumentError,
+    uploadDocumentWithProgress,
 } from '../../store/slices/documentSlice';
 
 export default function DocumentUploadScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const params = useLocalSearchParams<{ scannedImageUri?: string; scannedFormat?: string }>();
   const categories = useAppSelector(selectAllCategories);
   const activeUploads = useAppSelector(selectActiveUploads);
   const error = useAppSelector(selectDocumentError);
@@ -43,7 +45,12 @@ export default function DocumentUploadScreen() {
 
   useEffect(() => {
     loadUserData();
-  }, []);
+    
+    // Handle scanned document passed from scan flow
+    if (params.scannedImageUri && params.scannedFormat) {
+      handleScannedDocument(params.scannedImageUri, params.scannedFormat);
+    }
+  }, [params.scannedImageUri]);
 
   const loadUserData = async () => {
     try {
@@ -55,6 +62,31 @@ export default function DocumentUploadScreen() {
     } catch (err) {
       console.error('Failed to load user:', err);
       Alert.alert('Error', 'Failed to load user data');
+    }
+  };
+
+  const handleScannedDocument = async (uri: string, format: string) => {
+    try {
+      const mimeType = imageConverter.getMimeType(format as any);
+      const extension = imageConverter.getFileExtension(format as any);
+      
+      // Get file info
+      const FileSystem = await import('expo-file-system');
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      
+      // Create a DocumentPickerAsset-like object for the scanned document
+      const scannedFile: DocumentPicker.DocumentPickerAsset = {
+        uri,
+        name: `Scanned_Document_${Date.now()}${extension}`,
+        mimeType,
+        size: fileInfo.exists && !fileInfo.isDirectory ? fileInfo.size || 0 : 0,
+        lastModified: Date.now(),
+      };
+      
+      setSelectedFile(scannedFile);
+    } catch (err) {
+      console.error('Error handling scanned document:', err);
+      Alert.alert('Error', 'Failed to load scanned document');
     }
   };
 
@@ -175,14 +207,42 @@ export default function DocumentUploadScreen() {
     </View>
   );
 
+  const handleCancel = () => {
+    if (selectedFile || activeUploads.length > 0) {
+      Alert.alert(
+        'Cancel Upload',
+        'Are you sure you want to cancel? Any progress will be lost.',
+        [
+          { text: 'Continue Upload', style: 'cancel' },
+          {
+            text: 'Cancel',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } else {
+      router.back();
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Upload Document</Text>
-        <Text style={styles.headerSubtitle}>
-          Select a file and provide details for secure encrypted storage
-        </Text>
+    <View style={styles.container}>
+      {/* Header with Cancel Button */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+          <Text style={styles.cancelButtonText}>✕ Cancel</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerBarTitle}>Upload Document</Text>
+        <View style={styles.headerSpacer} />
       </View>
+
+      <ScrollView style={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={styles.headerSubtitle}>
+            Select a file and provide details for secure encrypted storage
+          </Text>
+        </View>
 
       {/* File Selection */}
       <View style={styles.section}>
@@ -278,7 +338,8 @@ export default function DocumentUploadScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -286,6 +347,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    paddingTop: 50,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  headerBarTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+  },
+  cancelButton: {
+    padding: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#f44336',
+    fontWeight: '500',
+  },
+  headerSpacer: {
+    width: 70, // Same width as cancel button for centering
+  },
+  scrollContent: {
+    flex: 1,
   },
   header: {
     backgroundColor: '#fff',

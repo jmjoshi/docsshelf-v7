@@ -3,36 +3,36 @@
  * Displays all documents with search, filter, and sorting capabilities
  */
 
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  loadCategories,
-  selectAllCategories,
+    loadCategories,
+    selectAllCategories,
 } from '../../store/slices/categorySlice';
 import {
-  loadDocuments,
-  loadDocumentStats,
-  removeDocument,
-  toggleFavorite,
-  selectAllDocuments,
-  selectDocumentLoading,
-  selectDocumentError,
-  selectDocumentStats,
-  selectFavoriteDocuments,
-  selectRecentDocuments,
+    loadDocuments,
+    loadDocumentStats,
+    removeDocument,
+    selectAllDocuments,
+    selectDocumentError,
+    selectDocumentLoading,
+    selectDocumentStats,
+    selectFavoriteDocuments,
+    selectRecentDocuments,
+    toggleFavorite,
 } from '../../store/slices/documentSlice';
 import type { Document } from '../../types/document';
 
@@ -381,7 +381,15 @@ export default function DocumentListScreen() {
         </View>
       )}
 
-      {/* Upload FAB */}
+      {/* Scan FAB (top button) */}
+      <TouchableOpacity
+        style={styles.scanFab}
+        onPress={() => router.push('/scan' as any)}
+      >
+        <Text style={styles.fabIcon}>📷</Text>
+      </TouchableOpacity>
+
+      {/* Upload FAB (bottom button) */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push('/document/upload')}
@@ -597,6 +605,22 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     fontSize: 14,
+  },
+  scanFab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 90, // Position above the upload FAB
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#4CAF50', // Green for scan
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   fab: {
     position: 'absolute',
