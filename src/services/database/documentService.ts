@@ -15,7 +15,7 @@ import type {
     DocumentUploadOptions,
     DocumentWithCategory,
 } from '../../types/document';
-import { DOCUMENT_VALIDATION, SUPPORTED_MIME_TYPES } from '../../types/document';
+import { DOCUMENT_VALIDATION } from '../../types/document';
 import {
     calculateChecksum,
     decryptDocument,
@@ -90,13 +90,9 @@ function validateFile(file: DocumentPickerResult): {
     };
   }
   
-  // Check MIME type
-  if (file.mimeType && !(file.mimeType in SUPPORTED_MIME_TYPES)) {
-    return {
-      valid: false,
-      error: 'Unsupported file type',
-    };
-  }
+  // Allow all MIME types - we encrypt everything the same way
+  // No need to restrict by MIME type since encryption works on binary data
+  // MIME type validation is removed to support ALL file types securely
   
   return { valid: true };
 }
@@ -382,15 +378,26 @@ export async function readDocument(documentId: number, userId?: number): Promise
     
     // Read encrypted file
     const file = new File(document.file_path);
+    if (!file.exists) {
+      throw new Error('Document file not found on disk');
+    }
+    
     const encryptedBytes = await file.bytes();
     
-    // Decrypt
+    // Check if document has HMAC (v3 encryption) or is legacy (v2)
+    if (!document.encryption_hmac || !document.encryption_hmac_key) {
+      // Legacy document without HMAC - cannot decrypt safely
+      // This should not happen for documents uploaded with current version
+      throw new Error('Document uses legacy encryption and cannot be decrypted. Please re-upload.');
+    }
+    
+    // Decrypt with HMAC verification
     const decrypted = await decryptDocument({
       encryptedData: encryptedBytes,
       key: document.encryption_key,
       iv: document.encryption_iv,
-      hmac: document.encryption_hmac || '',
-      hmacKey: document.encryption_hmac_key || '',
+      hmac: document.encryption_hmac,
+      hmacKey: document.encryption_hmac_key,
     });
     
     // Update last accessed timestamp
@@ -402,7 +409,7 @@ export async function readDocument(documentId: number, userId?: number): Promise
     return decrypted;
   } catch (error) {
     console.error('Failed to read document:', error);
-    throw new Error('Failed to read document');
+    throw error instanceof Error ? error : new Error('Failed to read document');
   }
 }
 

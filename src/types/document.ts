@@ -93,6 +93,8 @@ export interface DocumentFilter {
 
 /**
  * Supported document MIME types
+ * Note: Validation now allows ALL file types for maximum flexibility
+ * This list is for display purposes only
  */
 export const SUPPORTED_MIME_TYPES = {
   // Images
@@ -102,6 +104,9 @@ export const SUPPORTED_MIME_TYPES = {
   'image/webp': ['.webp'],
   'image/heic': ['.heic'],
   'image/heif': ['.heif'],
+  'image/svg+xml': ['.svg'],
+  'image/bmp': ['.bmp'],
+  'image/tiff': ['.tiff', '.tif'],
   
   // PDFs
   'application/pdf': ['.pdf'],
@@ -113,15 +118,51 @@ export const SUPPORTED_MIME_TYPES = {
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
   'application/vnd.ms-powerpoint': ['.ppt'],
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+  'application/vnd.oasis.opendocument.text': ['.odt'],
+  'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
+  'application/vnd.oasis.opendocument.presentation': ['.odp'],
+  'application/rtf': ['.rtf'],
   
   // Text
   'text/plain': ['.txt'],
   'text/csv': ['.csv'],
   'text/markdown': ['.md'],
+  'text/html': ['.html', '.htm'],
+  'text/xml': ['.xml'],
+  'application/json': ['.json'],
+  'application/javascript': ['.js'],
+  'text/css': ['.css'],
+  
+  // Code files
+  'text/x-python': ['.py'],
+  'text/x-java': ['.java'],
+  'text/x-c': ['.c', '.h'],
+  'text/x-c++': ['.cpp', '.hpp'],
+  'text/x-csharp': ['.cs'],
+  'text/x-typescript': ['.ts', '.tsx'],
   
   // Archives
   'application/zip': ['.zip'],
   'application/x-rar-compressed': ['.rar'],
+  'application/x-7z-compressed': ['.7z'],
+  'application/x-tar': ['.tar'],
+  'application/gzip': ['.gz'],
+  
+  // Audio
+  'audio/mpeg': ['.mp3'],
+  'audio/wav': ['.wav'],
+  'audio/ogg': ['.ogg'],
+  'audio/aac': ['.aac'],
+  
+  // Video
+  'video/mp4': ['.mp4'],
+  'video/mpeg': ['.mpeg', '.mpg'],
+  'video/quicktime': ['.mov'],
+  'video/x-msvideo': ['.avi'],
+  'video/webm': ['.webm'],
+  
+  // Other
+  'application/octet-stream': ['.bin'], // Generic binary
 } as const;
 
 export type SupportedMimeType = keyof typeof SUPPORTED_MIME_TYPES;

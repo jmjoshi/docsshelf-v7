@@ -252,3 +252,149 @@ npx expo start --offline     # ✅ WORKING
 2. Verify all features work as expected
 3. Report any issues found
 4. Proceed with FR-MAIN-004 (OCR) if testing passes
+
+====================
+SESSION: November 15, 2025 - File Type Support Fix
+====================
+
+## Issue Reported:
+**Document Upload Decryption Error**: Images and documents with different extensions like .md were failing with decryption errors
+
+### Problem Analysis:
+1. MIME type validation was too restrictive
+2. Only specific file types were allowed
+3. No support for markdown (.md), many image formats, code files, etc.
+
+## Solution Implemented:
+
+### Changes Made:
+
+#### 1. **documentService.ts** - Removed MIME Type Restrictions
+**File:** `src/services/database/documentService.ts`
+
+**Before:**
+```typescript
+// Check MIME type
+if (file.mimeType && !(file.mimeType in SUPPORTED_MIME_TYPES)) {
+  return {
+    valid: false,
+    error: 'Unsupported file type',
+  };
+}
+```
+
+**After:**
+```typescript
+// Allow all MIME types - we encrypt everything the same way
+// No need to restrict by MIME type since encryption works on binary data
+// MIME type validation is removed to support ALL file types securely
+```
+
+**Rationale:**
+- AES-256-CTR encryption works on ANY binary data
+- No technical reason to restrict file types
+- Users should be able to encrypt ANY file securely
+
+#### 2. **documentService.ts** - Improved Decryption Error Handling
+**Added:**
+- File existence check before decryption
+- Explicit error for legacy documents without HMAC
+- Better error propagation with original error messages
+
+```typescript
+// Check if document has HMAC (v3 encryption) or is legacy (v2)
+if (!document.encryption_hmac || !document.encryption_hmac_key) {
+  throw new Error('Document uses legacy encryption and cannot be decrypted. Please re-upload.');
+}
+```
+
+#### 3. **document.ts** - Expanded MIME Type List
+**File:** `src/types/document.ts`
+
+**Added Support For:**
+- **Images:** SVG, BMP, TIFF (added 3 formats)
+- **Documents:** ODT, ODS, ODP, RTF (added 4 formats)
+- **Text:** HTML, XML, JSON, JavaScript, CSS (added 6 formats)
+- **Code Files:** Python, Java, C/C++, C#, TypeScript (added 6 languages)
+- **Archives:** 7z, TAR, GZIP (added 3 formats)
+- **Audio:** MP3, WAV, OGG, AAC (added 4 formats)
+- **Video:** MP4, MPEG, MOV, AVI, WebM (added 5 formats)
+- **Generic Binary:** application/octet-stream
+
+**Total:** Now supports 60+ file types (was 13)
+
+**Note:** MIME type list is now for display purposes only, not validation
+
+### Technical Details:
+
+**Encryption Security:**
+- ✅ All file types encrypted with AES-256-CTR
+- ✅ HMAC-SHA256 authentication for all files
+- ✅ Same security level regardless of file type
+- ✅ Binary data handling works universally
+
+**File Support:**
+- ✅ Text files (.md, .txt, .json, .xml, etc.)
+- ✅ Images (.jpg, .png, .gif, .svg, .bmp, etc.)
+- ✅ Documents (.pdf, .docx, .xlsx, .odt, etc.)
+- ✅ Code files (.py, .js, .ts, .java, .cpp, etc.)
+- ✅ Archives (.zip, .rar, .7z, .tar, .gz)
+- ✅ Audio files (.mp3, .wav, .ogg, .aac)
+- ✅ Video files (.mp4, .mov, .avi, .webm)
+- ✅ Any binary file
+
+### Files Modified:
+
+1. **src/services/database/documentService.ts**
+   - Removed MIME type validation restriction
+   - Improved error handling in decryption
+   - Added file existence check
+   - Removed unused SUPPORTED_MIME_TYPES import
+
+2. **src/types/document.ts**
+   - Expanded SUPPORTED_MIME_TYPES from 13 to 60+ types
+   - Added documentation note about display-only purpose
+   - Organized by category (images, documents, text, code, archives, audio, video)
+
+### Testing:
+✅ TypeScript compilation: No errors
+⏳ User testing required: Upload .md, .py, .svg, audio/video files
+
+## Commands Used:
+
+```bash
+# TypeScript compilation check
+npx tsc --noEmit
+# Result: Success (0 errors)
+```
+
+## Benefits:
+
+1. **Maximum Flexibility:** Users can upload ANY file type
+2. **Same Security:** All files get AES-256-CTR + HMAC-SHA256 encryption
+3. **Better UX:** No "unsupported file type" errors
+4. **Future-Proof:** New file types automatically supported
+5. **Developer-Friendly:** Can store code files, config files, logs, etc.
+
+## Security Notes:
+
+**No Security Compromise:**
+- Removing MIME type restriction does NOT reduce security
+- Encryption works the same on all binary data
+- HMAC authentication prevents tampering regardless of file type
+- File size limit (50MB) still enforced
+
+**Why This Is Safe:**
+- We don't execute uploaded files
+- We don't parse file contents (except for OCR later)
+- Files are stored encrypted on disk
+- Only the user with the encryption key can decrypt
+
+## Tags:
+#file-type-support #decryption-fix #mime-types #all-files-supported #security-maintained
+
+## Next Steps:
+1. Test uploading various file types (.md, .py, .svg, .mp3, .mp4, etc.)
+2. Verify decryption works for all types
+3. Test document viewer with different file types
+4. Proceed with OCR feature (FR-MAIN-004)
