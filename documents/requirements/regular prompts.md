@@ -761,3 +761,141 @@ git push origin master
 2. Upload and view a document - verify no warnings
 3. Check Redux DevTools - should be much faster
 4. Proceed with next feature or testing
+
+====================
+SESSION: November 15, 2025 (Continued) - Scan Camera Flow Fix
+====================
+
+## Issue Encountered:
+**Camera Not Opening After Format Selection**: User selects format (JPEG/PDF/GIF) but camera doesn't open
+
+### Error Details:
+```
+- User clicks camera button (📷) in Documents screen
+- Format selection modal appears
+- User selects JPEG, PDF, or GIF
+- Modal closes
+- Nothing happens - camera doesn't open
+- No errors in logs
+```
+
+### Root Cause:
+- Format selection modal was conditionally rendered with `currentStep === 'format-selection'`
+- When format selected, `setCurrentStep('camera')` was called immediately
+- Modal unmounted instantly, preventing smooth transition
+- Camera screen tried to render while modal was still closing
+- Race condition between modal closing and camera mounting
+
+## Solution Implemented:
+
+### Changes Made:
+
+#### **ScanFlowScreen.tsx** - Fixed Modal and State Transition
+
+**Change 1: Added delay for smooth transition**
+```typescript
+// Before:
+const handleFormatSelected = (format: ScanFormat) => {
+  setSelectedFormat(format);
+  setCurrentStep('camera'); // Immediate - causes race condition
+};
+
+// After:
+const handleFormatSelected = (format: ScanFormat) => {
+  setSelectedFormat(format);
+  // Small delay to allow modal to close smoothly before camera opens
+  setTimeout(() => {
+    setCurrentStep('camera');
+  }, 300);
+};
+```
+
+**Change 2: Fixed modal visibility control**
+```typescript
+// Before:
+{currentStep === 'format-selection' && (
+  <FormatSelectionModal visible={true} ... />
+)}
+
+// After:
+<FormatSelectionModal 
+  visible={currentStep === 'format-selection'} 
+  ... 
+/>
+```
+
+### Why This Works:
+
+1. **Smooth Transition:** 300ms delay allows modal close animation to complete
+2. **Proper Visibility:** Modal's `visible` prop controlled by state, not conditional rendering
+3. **No Race Condition:** Camera mounts after modal fully closes
+4. **Better UX:** User sees smooth modal-to-camera transition
+
+### Technical Details:
+
+**Flow Sequence:**
+1. User taps format (e.g., "JPEG")
+2. `onSelectFormat` called in modal
+3. Modal starts closing animation
+4. `setSelectedFormat` updates format state
+5. `setTimeout` waits 300ms
+6. `setCurrentStep('camera')` switches to camera
+7. Camera requests permissions
+8. Camera view displays
+
+**Modal Behavior:**
+- Modal always mounted in component tree
+- Visibility controlled by `visible` prop
+- Allows React Native's built-in animation to complete
+- No abrupt unmounting
+
+### Files Modified:
+
+1. **src/screens/Scan/ScanFlowScreen.tsx**
+   - Added 300ms delay in `handleFormatSelected`
+   - Changed modal from conditional render to controlled visibility
+   - Improved state transition flow
+
+### Testing:
+✅ TypeScript compilation: No errors
+⏳ User testing: Test camera opens after selecting format
+
+## Commands Used:
+
+```bash
+# TypeScript compilation check
+npx tsc --noEmit
+# Result: Success (0 errors)
+
+# Git commit
+git add .
+git commit -m "fix: Camera not opening after format selection..."
+# Result: Commit 0007d2e
+
+# Git push
+git push origin master
+# Result: SUCCESS
+```
+
+## Benefits:
+
+1. **Smooth UX:** No jarring transitions between screens
+2. **Reliable:** Eliminates race condition
+3. **Debuggable:** Clear state flow with intentional delay
+4. **Performant:** Uses native modal animations
+
+## Git Commit:
+- Commit: 0007d2e
+- Files changed: 1
+- Lines added: 10
+- Lines removed: 9
+- Status: Pushed to master
+
+## Tags:
+#scan-fix #camera-flow #modal-transition #race-condition-fix
+
+## Next Actions:
+1. **Reload the app** - Camera should now open after format selection
+2. Test full scan flow: Select format → Take photo → Preview → Upload
+3. Test all formats (JPEG, PDF, GIF)
+4. Verify camera permissions work correctly
