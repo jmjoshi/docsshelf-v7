@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "start:offline": "expo start --offline",
     "start:dev": "expo start --clear",
     "start:prod": "expo start --no-dev --minify",
     "reset-project": "node ./scripts/reset-project.js",
