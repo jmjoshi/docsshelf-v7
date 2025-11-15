@@ -17,9 +17,9 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { readDocument } from '../../services/database/documentService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-    readDocumentContent,
     removeDocument,
     selectDocumentById,
     selectDocumentError,
@@ -51,13 +51,15 @@ export default function DocumentViewerScreen() {
 
     setIsDecrypting(true);
     try {
-      const result = await dispatch(readDocumentContent(documentId)).unwrap();
+      // Read document directly from service (don't store in Redux to avoid serialization issues)
+      const content = await readDocument(documentId);
+      
       // Convert Uint8Array to string for text files, or keep as Uint8Array for binary
       if (document.mime_type.startsWith('text/')) {
         const decoder = new TextDecoder();
-        setDecryptedContent(decoder.decode(result.content));
+        setDecryptedContent(decoder.decode(content));
       } else {
-        setDecryptedContent(result.content);
+        setDecryptedContent(content);
       }
     } catch (err) {
       console.error('Failed to load document:', err);

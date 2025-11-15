@@ -113,13 +113,17 @@ export const uploadDocumentWithProgress = createAsyncThunk(
 
 /**
  * Read document content (decrypt and return)
+ * NOTE: This does NOT store content in Redux state (to avoid serialization issues)
+ * Use the readDocument service directly in components that need document content
  */
 export const readDocumentContent = createAsyncThunk(
   'documents/read',
   async (documentId: number, { rejectWithValue }) => {
     try {
-      const content = await readDocument(documentId);
-      return { documentId, content };
+      // Read the document but don't return content to Redux
+      // Component should call readDocument() directly
+      await readDocument(documentId);
+      return { documentId }; // Only return ID, not content
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to read document');
     }
