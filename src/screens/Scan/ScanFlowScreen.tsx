@@ -28,7 +28,10 @@ export default function ScanFlowScreen() {
   // Step 1: Format Selection
   const handleFormatSelected = (format: ScanFormat) => {
     setSelectedFormat(format);
-    setCurrentStep('camera');
+    // Small delay to allow modal to close smoothly before camera opens
+    setTimeout(() => {
+      setCurrentStep('camera');
+    }, 300);
   };
 
   const handleCancelFormatSelection = () => {
@@ -65,14 +68,12 @@ export default function ScanFlowScreen() {
   return (
     <View style={styles.container}>
       {/* Format Selection Modal */}
-      {currentStep === 'format-selection' && (
-        <FormatSelectionModal
-          visible={true}
-          onClose={handleCancelFormatSelection}
-          onSelectFormat={handleFormatSelected}
-          selectedFormat={selectedFormat}
-        />
-      )}
+      <FormatSelectionModal
+        visible={currentStep === 'format-selection'}
+        onClose={handleCancelFormatSelection}
+        onSelectFormat={handleFormatSelected}
+        selectedFormat={selectedFormat}
+      />
 
       {/* Camera Screen */}
       {currentStep === 'camera' && (
