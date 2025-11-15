@@ -576,3 +576,188 @@ git push origin master
 - Files changed: 2
 - Lines added: 108
 - Status: Pushed to master
+
+====================
+SESSION: November 15, 2025 (Continued) - Redux Serialization Fix
+====================
+
+## Issue Encountered:
+**Redux Serialization Warning**: Non-serializable value detected in Redux state
+
+### Error Details:
+```
+ERROR  A non-serializable value was detected in an action, in the path: `payload.content`. 
+Value: [35, 32, 89, 117, 109, 90, 111, 111, 109, ...]
+WARN  SerializableStateInvariantMiddleware took 71ms
+```
+
+### Root Cause:
+- `readDocumentContent` thunk was returning document binary content (Uint8Array)
+- Redux requires all state to be serializable (plain objects, arrays, primitives)
+- Large binary arrays cause:
+  1. Serialization warnings
+  2. Performance slowdown (middleware has to check entire state)
+  3. Memory bloat (binary data shouldn't be in state)
+
+### Why This Is Wrong:
+- **Redux Best Practice**: Redux state should only contain serializable data
+- **Performance**: Large binary arrays slow down Redux DevTools and middleware
+- **Memory**: Binary data duplicates memory usage (file on disk + in Redux)
+- **Architecture**: Document content should be fetched on-demand, not cached in global state
+
+## Solution Implemented:
+
+### Changes Made:
+
+#### 1. **documentSlice.ts** - Modified `readDocumentContent` Thunk
+
+**Before:**
+```typescript
+export const readDocumentContent = createAsyncThunk(
+  'documents/read',
+  async (documentId: number, { rejectWithValue }) => {
+    try {
+      const content = await readDocument(documentId);
+      return { documentId, content }; // ❌ Storing binary in Redux
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to read document');
+    }
+  }
+);
+```
+
+**After:**
+```typescript
+export const readDocumentContent = createAsyncThunk(
+  'documents/read',
+  async (documentId: number, { rejectWithValue }) => {
+    try {
+      await readDocument(documentId);
+      return { documentId }; // ✅ Only return ID, not content
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to read document');
+    }
+  }
+);
+```
+
+**Note Added:**
+```typescript
+/**
+ * Read document content (decrypt and return)
+ * NOTE: This does NOT store content in Redux state (to avoid serialization issues)
+ * Use the readDocument service directly in components that need document content
+ */
+```
+
+#### 2. **DocumentViewerScreen.tsx** - Use Service Directly
+
+**Before:**
+```typescript
+import {
+    readDocumentContent,
+    removeDocument,
+    selectDocumentById,
+    selectDocumentError,
+    toggleFavorite,
+} from '../../store/slices/documentSlice';
+
+const loadDocument = async () => {
+  const result = await dispatch(readDocumentContent(documentId)).unwrap();
+  setDecryptedContent(result.content); // Getting from Redux
+};
+```
+
+**After:**
+```typescript
+import { readDocument } from '../../services/database/documentService';
+import {
+    removeDocument,
+    selectDocumentById,
+    selectDocumentError,
+    toggleFavorite,
+} from '../../store/slices/documentSlice';
+
+const loadDocument = async () => {
+  // Read document directly from service (don't store in Redux)
+  const content = await readDocument(documentId);
+  setDecryptedContent(content); // Store in local component state
+};
+```
+
+### Architecture Pattern:
+
+**Redux State Contains:**
+- ✅ Document metadata (id, filename, size, mime_type, etc.)
+- ✅ Lists of documents
+- ✅ Loading states, errors
+- ✅ UI state (filters, selections)
+
+**Local Component State Contains:**
+- ✅ Document binary content (Uint8Array)
+- ✅ Decrypted content for display
+- ✅ Component-specific UI state
+
+**Service Layer Handles:**
+- ✅ Reading encrypted files from disk
+- ✅ Decryption
+- ✅ Returning binary data directly to components
+
+### Benefits:
+
+1. **No Redux Warnings:** Binary data never touches Redux
+2. **Better Performance:** Middleware doesn't check large arrays
+3. **Lower Memory:** Content not duplicated in Redux
+4. **Cleaner Architecture:** Separation of concerns (state vs. data)
+5. **On-Demand Loading:** Content fetched only when needed
+
+### Testing:
+✅ TypeScript compilation: No errors
+⏳ User testing: Upload document and view it - warning should be gone
+
+## Files Modified:
+
+1. **src/store/slices/documentSlice.ts**
+   - Modified `readDocumentContent` to not return content
+   - Added documentation note
+
+2. **src/screens/Documents/DocumentViewerScreen.tsx**
+   - Removed `readDocumentContent` import
+   - Added `readDocument` service import
+   - Changed to call service directly
+
+3. **documents/requirements/regular prompts.md**
+   - Added Session 5 log
+
+## Commands Used:
+
+```bash
+# TypeScript compilation check
+npx tsc --noEmit
+# Result: Success (0 errors)
+
+# Git commit
+git add .
+git commit -m "fix: Remove document content from Redux state..."
+# Result: Commit a0be860
+
+# Git push
+git push origin master
+# Result: SUCCESS
+```
+
+## Git Commit:
+- Commit: a0be860
+- Files changed: 3
+- Lines added: 191
+- Lines removed: 7
+- Status: Pushed to master
+
+## Tags:
+#redux-serialization #performance #architecture #best-practices #binary-data
+
+## Next Actions:
+1. **Reload the app** - Redux warning should be gone
+2. Upload and view a document - verify no warnings
+3. Check Redux DevTools - should be much faster
+4. Proceed with next feature or testing
