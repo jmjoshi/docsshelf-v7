@@ -218,11 +218,50 @@ export async function initializeDatabase(): Promise<void> {
       // Run migrations
       console.log(`Migrating database from version ${currentVersion} to ${DATABASE_VERSION}`);
       await runMigrations(db, currentVersion);
+    } else {
+      // Even if version is current, verify HMAC columns exist (fix for failed migrations)
+      console.log('Database version is current, verifying schema integrity...');
+      await verifySchemaIntegrity(db);
     }
 
     isInitialized = true;
   } catch (error) {
     console.error('Database initialization failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Verify schema integrity (checks for missing columns from failed migrations)
+ */
+async function verifySchemaIntegrity(db: SQLite.SQLiteDatabase): Promise<void> {
+  try {
+    // Check if documents table has HMAC columns
+    const tableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(documents)');
+    const columnNames = tableInfo.map(col => col.name);
+    
+    const hasHmac = columnNames.includes('encryption_hmac');
+    const hasHmacKey = columnNames.includes('encryption_hmac_key');
+    
+    if (!hasHmac || !hasHmacKey) {
+      console.log('⚠️  Missing HMAC columns detected, adding them now...');
+      
+      if (!hasHmac) {
+        console.log('Adding encryption_hmac column...');
+        await db.execAsync('ALTER TABLE documents ADD COLUMN encryption_hmac TEXT;');
+      }
+      
+      if (!hasHmacKey) {
+        console.log('Adding encryption_hmac_key column...');
+        await db.execAsync('ALTER TABLE documents ADD COLUMN encryption_hmac_key TEXT;');
+      }
+      
+      console.log('✅ Schema integrity verified and fixed');
+    } else {
+      console.log('✅ Schema integrity verified - all required columns exist');
+    }
+  } catch (error) {
+    console.error('Schema verification failed:', error);
     throw error;
   }
 }
