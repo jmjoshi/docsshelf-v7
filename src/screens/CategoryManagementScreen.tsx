@@ -5,27 +5,27 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { getCurrentUserId } from '../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-    createCategory,
-    deleteCategory,
-    loadCategories,
-    selectCategoryError,
-    selectCategoryLoading,
-    selectCategoryTree,
-    setSelectedCategory,
-    updateCategory,
+  createCategory,
+  deleteCategory,
+  loadCategories,
+  selectCategoryError,
+  selectCategoryLoading,
+  selectCategoryTree,
+  setSelectedCategory,
+  updateCategory,
 } from '../store/slices/categorySlice';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CategoryTreeNode } from '../types/category';
 
