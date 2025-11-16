@@ -1,28 +1,28 @@
-# FR-MAIN-012: Data Backup and Sync - Implementation Plan
+# FR-MAIN-012: Cloud Sync Across Devices - Implementation Plan
 
-**Feature:** Data Backup and Sync  
+**Feature:** Cloud-Based Document Sync Across Logged-In Devices  
 **Priority:** High  
-**Estimated Complexity:** Very High (6-8 weeks)  
-**Status:** Planning Phase
+**Estimated Complexity:** High (3-4 weeks)  
+**Status:** In Development
+
+**Note:** External storage backup features moved to FR-MAIN-013 (wired) and FR-MAIN-014 (wireless)
 
 ---
 
-## Requirements Summary
+## Requirements Summary (Updated from PRD)
 
 **User Story:**  
-As a user, I want my documents to be backed up and synced across devices, storage devices such as USB drive, external drive, memory stick.
+As a user, I want my documents to be backed up and synced across devices.
 
 **Expected Behavior:**
-- Automatic backup of documents to:
-  - Cloud storage (AWS S3, Google Drive, iCloud)
-  - External storage devices (USB drives, external drives, memory sticks)
-- Sync across all logged-in devices
+- Automatic backup of documents to cloud storage
+- Sync across all logged-in devices seamlessly
 - Support multiple connection methods:
-  - WiFi (network-based sync)
-  - Bluetooth (local device-to-device)
-  - Wired connections:
-    - FireWire/Lightning/USB-C for iOS devices
-    - USB-C for Android devices
+  - Cloud sync via internet
+  - WiFi direct sync between devices on same network
+  - Bluetooth sync for nearby devices
+- Real-time or scheduled sync options
+- Conflict resolution when same document edited on multiple devices
 
 ---
 

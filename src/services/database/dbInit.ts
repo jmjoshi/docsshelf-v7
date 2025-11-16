@@ -8,7 +8,7 @@ import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
 // Database version - increment when schema changes
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -412,6 +412,37 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
       `);
       
       console.log('Migration to version 3 completed');
+    }
+
+    // Migration from version 3 to 4: Add backup_history table
+    if (fromVersion < 4) {
+      console.log('Migrating to version 4: Adding backup_history table');
+      
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS backup_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          backup_type TEXT NOT NULL,
+          backup_location TEXT,
+          backup_filename TEXT NOT NULL,
+          backup_size INTEGER,
+          document_count INTEGER,
+          category_count INTEGER,
+          backup_hash TEXT,
+          status TEXT DEFAULT 'completed',
+          error_message TEXT,
+          created_at INTEGER DEFAULT (strftime('%s', 'now')),
+          restored_at INTEGER,
+          user_id INTEGER,
+          notes TEXT
+        );
+      `);
+      
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_backup_history_created 
+        ON backup_history(created_at DESC);
+      `);
+      
+      console.log('Migration to version 4 completed');
     }
     
     await setDatabaseVersion(db, DATABASE_VERSION);
