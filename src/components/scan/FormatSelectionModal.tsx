@@ -31,8 +31,9 @@ export default function FormatSelectionModal({
   selectedFormat,
 }: FormatSelectionModalProps) {
   const handleSelectFormat = (format: ScanFormat) => {
+    console.log('[FormatSelectionModal] Format selected:', format);
     onSelectFormat(format);
-    onClose();
+    // Don't call onClose() - the parent will handle navigation to camera screen
   };
 
   return (

@@ -17,6 +17,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getFormatLabel } from '../../services/scan/formatConstants';
 import { imageConverter } from '../../services/scan/imageConverter';
 import type { ScanFormat } from '../../types/scan.types';
@@ -26,6 +27,7 @@ interface ImagePreviewScreenProps {
   format: ScanFormat;
   onRetake: () => void;
   onConfirm: (processedUri: string) => void;
+  onCancel?: () => void;
 }
 
 export default function ImagePreviewScreen({
@@ -33,6 +35,7 @@ export default function ImagePreviewScreen({
   format,
   onRetake,
   onConfirm,
+  onCancel,
 }: ImagePreviewScreenProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedUri, setProcessedUri] = useState<string | null>(null);
@@ -92,17 +95,31 @@ export default function ImagePreviewScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          Scanned as {getFormatLabel(format)}
-        </Text>
-        {isProcessing && (
-          <Text style={styles.processingText}>
-            Converting to {getFormatLabel(format)}...
-          </Text>
-        )}
+        <View style={styles.headerContent}>
+          {onCancel && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onCancel}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+          )}
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>
+              Scanned as {getFormatLabel(format)}
+            </Text>
+            {isProcessing && (
+              <Text style={styles.processingText}>
+                Converting to {getFormatLabel(format)}...
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
       </View>
 
       {/* Image Preview */}
@@ -172,7 +189,7 @@ export default function ImagePreviewScreen({
           </Text>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -182,10 +199,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingHorizontal: 20,
     paddingBottom: 16,
+    paddingTop: 16,
     backgroundColor: '#1a1a1a',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  cancelButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {

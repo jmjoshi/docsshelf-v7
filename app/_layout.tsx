@@ -13,7 +13,22 @@ import { initializeDatabase } from '../src/services/database/dbInit';
 import { store } from '../src/store';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Suppress splash screen initialization errors
+});
+
+// Suppress splash screen error messages in console (common on iOS with modals)
+const originalError = console.error;
+console.error = (...args: any[]) => {
+  if (
+    typeof args[0] === 'string' &&
+    args[0].includes('No native splash screen registered')
+  ) {
+    // Suppress this specific error
+    return;
+  }
+  originalError(...args);
+};
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -44,14 +59,18 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!isLoading) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {
+        // Suppress splash screen errors (common on iOS with modals)
+      });
     }
   }, [isLoading]);
 
   // Fallback: Force hide splash screen after 10 seconds
   useEffect(() => {
     const timeout = setTimeout(() => {
-      SplashScreen.hideAsync().catch(console.error);
+      SplashScreen.hideAsync().catch(() => {
+        // Suppress splash screen errors
+      });
     }, 10000);
     return () => clearTimeout(timeout);
   }, []);

@@ -5,11 +5,12 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
-import { CameraView } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Linking,
     Platform,
     StatusBar,
     StyleSheet,
@@ -17,7 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { cameraService } from '../../services/scan/cameraService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getFormatLabel } from '../../services/scan/formatConstants';
 import type { ScanFormat } from '../../types/scan.types';
 
@@ -34,27 +35,90 @@ export default function DocumentScanScreen({
 }: DocumentScanScreenProps) {
   const cameraRef = useRef<any>(null);
   
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  // Use the camera permissions hook (recommended for expo-camera v17)
+  const [permission, requestPermission] = useCameraPermissions();
+  
   const [flashMode, setFlashMode] = useState<'on' | 'off'>('off');
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
 
   // Request permissions on mount
   useEffect(() => {
-    requestPermissions();
-  }, []);
-
-  const requestPermissions = async () => {
-    const granted = await cameraService.requestPermissions();
-    setHasPermission(granted);
-
-    if (!granted) {
-      // User denied permissions, go back
-      setTimeout(() => {
-        onCancel();
-      }, 1000);
+    console.log('[DocumentScanScreen] Component mounted, format:', format);
+    console.log('[DocumentScanScreen] Current permission state:', permission);
+    
+    // Only run once when permission state is loaded
+    if (!permission) {
+      return;
     }
-  };
+
+    // If permission not granted yet, request it
+    if (!permission.granted) {
+      if (permission.canAskAgain) {
+        console.log('[DocumentScanScreen] Requesting permissions...');
+        
+        // Set a timeout in case the permission request hangs
+        const timeoutId = setTimeout(() => {
+          console.error('[DocumentScanScreen] Permission request timed out');
+          Alert.alert(
+            'Camera Permission Timeout',
+            'Camera permission request timed out. Please try again or check your device settings.',
+            [
+              { text: 'Cancel', onPress: onCancel },
+              { text: 'Retry', onPress: () => requestPermission() }
+            ]
+          );
+        }, 10000); // 10 second timeout
+
+        requestPermission()
+          .then((result) => {
+            clearTimeout(timeoutId);
+            console.log('[DocumentScanScreen] Permission result:', result);
+            if (!result.granted) {
+              console.log('[DocumentScanScreen] Permission denied, cancelling...');
+              Alert.alert(
+                'Camera Access Denied',
+                'Camera access is required to scan documents.',
+                [{ text: 'OK', onPress: onCancel }]
+              );
+            }
+          })
+          .catch((error) => {
+            clearTimeout(timeoutId);
+            console.error('[DocumentScanScreen] Error requesting permission:', error);
+            Alert.alert(
+              'Permission Error',
+              'Failed to request camera permission. Please try again.',
+              [
+                { text: 'Cancel', onPress: onCancel },
+                { text: 'Retry', onPress: () => requestPermission() }
+              ]
+            );
+          });
+      } else {
+        // Permission permanently denied
+        console.log('[DocumentScanScreen] Permission permanently denied');
+        Alert.alert(
+          'Camera Access Required',
+          'Please enable camera access in Settings to scan documents.',
+          [
+            { text: 'Cancel', onPress: onCancel },
+            { 
+              text: 'Open Settings', 
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+                onCancel();
+              }
+            }
+          ]
+        );
+      }
+    }
+  }, [permission]);
 
   const handleCapture = async () => {
     if (!cameraRef.current || isCapturing || !cameraReady) {
@@ -94,35 +158,62 @@ export default function DocumentScanScreen({
     setCameraReady(true);
   };
 
+  console.log('[DocumentScanScreen] Rendering, permission:', permission?.granted, 'cameraReady:', cameraReady);
+
   // Loading state while checking permissions
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Requesting camera access...</Text>
+        <Text style={styles.loadingText}>Loading camera...</Text>
       </View>
     );
   }
 
-  // Permission denied
-  if (hasPermission === false) {
+  // Permission denied or waiting for response
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
         <Ionicons name="camera" size={64} color="#999" />
-        <Text style={styles.errorText}>Camera access denied</Text>
-        <Text style={styles.errorSubtext}>
-          Please enable camera access in your device settings to scan documents.
+        <Text style={styles.errorText}>
+          {permission.status === 'undetermined' ? 'Requesting Camera Access' : 'Camera Access Required'}
         </Text>
-        <TouchableOpacity style={styles.backButton} onPress={onCancel}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
+        <Text style={styles.errorSubtext}>
+          {permission.status === 'undetermined' 
+            ? 'A permission dialog should appear. Please tap "Allow" to continue.' 
+            : 'Please enable camera access in Settings to scan documents.'}
+        </Text>
+        {permission.status !== 'undetermined' && (
+          <>
+            <TouchableOpacity 
+              style={[styles.backButton, { marginBottom: 12 }]} 
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }}
+            >
+              <Text style={styles.backButtonText}>Open Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.backButton} onPress={onCancel}>
+              <Text style={styles.backButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        {permission.status === 'undetermined' && (
+          <TouchableOpacity style={styles.backButton} onPress={onCancel}>
+            <Text style={styles.backButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
 
   // Camera view
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
       {/* Camera Preview */}
@@ -132,7 +223,10 @@ export default function DocumentScanScreen({
         facing="back"
         flash={flashMode}
         onCameraReady={handleCameraReady}
-      >
+      />
+      
+      {/* Camera Overlay - outside CameraView to avoid warning */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {/* Top Bar */}
         <View style={styles.topBar}>
           <TouchableOpacity
@@ -193,7 +287,7 @@ export default function DocumentScanScreen({
             Position document within frame and tap to capture
           </Text>
         </View>
-      </CameraView>
+      </View>
 
       {/* Camera not ready overlay */}
       {!cameraReady && (
@@ -204,7 +298,7 @@ export default function DocumentScanScreen({
           </Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -223,7 +317,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight || 40,
+    paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

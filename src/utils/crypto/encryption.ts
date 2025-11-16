@@ -137,10 +137,18 @@ export async function verifyChecksum(data: Uint8Array, expectedChecksum: string)
 
 /**
  * Base64 encode Uint8Array
+ * Processes data in chunks to avoid stack overflow with large files
  */
 function base64Encode(data: Uint8Array): string {
-  // Convert Uint8Array to base64 string
-  const binary = String.fromCharCode(...data);
+  // Process in chunks to avoid "Maximum call stack size exceeded" for large files
+  const CHUNK_SIZE = 8192; // 8KB chunks
+  let binary = '';
+  
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    const chunk = data.subarray(i, Math.min(i + CHUNK_SIZE, data.length));
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  
   return btoa(binary);
 }
 

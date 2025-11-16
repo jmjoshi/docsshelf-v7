@@ -2,10 +2,11 @@
  * Camera Service
  * Handles camera permissions and image capture for document scanning
  * Part of FR-MAIN-003: Document Scanning Feature
+ * Uses expo-camera v17+ API
  */
 
-import { Camera, FlashMode } from 'expo-camera';
-import { Alert, Platform } from 'react-native';
+import { Camera } from 'expo-camera';
+import { Alert, Linking, Platform } from 'react-native';
 import type { CameraPermissionStatus } from '../../types/scan.types';
 
 class CameraService {
@@ -15,34 +16,53 @@ class CameraService {
    */
   async requestPermissions(): Promise<boolean> {
     try {
-      const { status } = await Camera.requestCameraPermissionsAsync();
+      console.log('[CameraService] Requesting camera permissions...');
+      const { status, canAskAgain, granted } = await Camera.requestCameraPermissionsAsync();
+      
+      console.log('[CameraService] Permission result:', { status, canAskAgain, granted });
       
       if (status !== 'granted') {
-        Alert.alert(
-          'Camera Permission Required',
-          'DocsShelf needs access to your camera to scan documents. Please enable camera access in your device settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Open Settings', 
-              onPress: () => {
-                if (Platform.OS === 'ios') {
-                  // On iOS, user needs to manually go to Settings
-                  Alert.alert(
-                    'Enable Camera Access',
-                    'Go to Settings > DocsShelf > Camera and enable access.'
-                  );
+        if (canAskAgain) {
+          Alert.alert(
+            'Camera Permission Required',
+            'DocsShelf needs access to your camera to scan documents.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Grant Permission', 
+                onPress: async () => {
+                  await this.requestPermissions();
                 }
               }
-            }
-          ]
-        );
+            ]
+          );
+        } else {
+          // Permission permanently denied, need to open settings
+          Alert.alert(
+            'Camera Access Denied',
+            'Please enable camera access in Settings to scan documents.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Open Settings', 
+                onPress: () => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                }
+              }
+            ]
+          );
+        }
         return false;
       }
 
+      console.log('[CameraService] Camera permission granted');
       return true;
     } catch (error) {
-      console.error('Error requesting camera permissions:', error);
+      console.error('[CameraService] Error requesting camera permissions:', error);
       Alert.alert(
         'Permission Error',
         'Failed to request camera permissions. Please try again.'
@@ -63,7 +83,7 @@ class CameraService {
       if (status === 'denied') return 'denied';
       return 'undetermined';
     } catch (error) {
-      console.error('Error checking camera permissions:', error);
+      console.error('[CameraService] Error checking camera permissions:', error);
       return 'denied';
     }
   }
@@ -78,7 +98,7 @@ class CameraService {
       const { status } = await Camera.getCameraPermissionsAsync();
       return status !== undefined;
     } catch (error) {
-      console.error('Error checking camera availability:', error);
+      console.error('[CameraService] Error checking camera availability:', error);
       return false;
     }
   }
@@ -87,15 +107,15 @@ class CameraService {
    * Get supported flash modes for the device
    * @returns Array of supported flash modes
    */
-  getSupportedFlashModes(): FlashMode[] {
+  getSupportedFlashModes(): Array<'on' | 'off' | 'auto'> {
     // All devices support off mode
     return ['off', 'on', 'auto'];
   }
 
   /**
-   * Convert flash mode string to expo-camera FlashMode enum
+   * Convert flash mode string to valid flash mode
    */
-  getFlashModeValue(mode: string): FlashMode {
+  getFlashModeValue(mode: string): 'on' | 'off' | 'auto' {
     switch (mode) {
       case 'on':
         return 'on';

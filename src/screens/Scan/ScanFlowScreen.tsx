@@ -6,7 +6,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import FormatSelectionModal from '../../components/scan/FormatSelectionModal';
 import { getRecommendedFormat } from '../../services/scan/formatConstants';
@@ -25,55 +25,85 @@ export default function ScanFlowScreen() {
   );
   const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
 
+  // Debug current step changes
+  useEffect(() => {
+    console.log('[ScanFlowScreen] Current step changed to:', currentStep);
+  }, [currentStep]);
+
   // Step 1: Format Selection
   const handleFormatSelected = (format: ScanFormat) => {
+    console.log('[ScanFlowScreen] Format selected:', format);
     setSelectedFormat(format);
     // Small delay to allow modal to close smoothly before camera opens
     setTimeout(() => {
+      console.log('[ScanFlowScreen] Transitioning to camera screen');
       setCurrentStep('camera');
     }, 300);
   };
 
   const handleCancelFormatSelection = () => {
+    console.log('[ScanFlowScreen] Format selection cancelled');
     router.back();
   };
 
   // Step 2: Camera
   const handleImageCaptured = (imageUri: string) => {
+    console.log('[ScanFlowScreen] Image captured:', imageUri);
     setCapturedImageUri(imageUri);
     setCurrentStep('preview');
   };
 
   const handleCancelCamera = () => {
+    console.log('[ScanFlowScreen] Camera cancelled, returning to format selection');
     setCurrentStep('format-selection');
   };
 
   // Step 3: Preview
   const handleRetake = () => {
+    console.log('[ScanFlowScreen] Retaking photo');
     setCapturedImageUri(null);
     setCurrentStep('camera');
   };
 
-  const handleConfirmImage = (processedUri: string) => {
-    // Navigate to upload screen with scanned document
-    router.push({
-      pathname: '/document/upload',
-      params: {
-        scannedImageUri: processedUri,
-        scannedFormat: selectedFormat,
-      },
-    });
+  const handleCancelPreview = () => {
+    console.log('[ScanFlowScreen] Preview cancelled, going back to documents');
+    router.back();
   };
+
+  const handleConfirmImage = (processedUri: string) => {
+    console.log('[ScanFlowScreen] Image confirmed, navigating to upload');
+    
+    // Use replace instead of push to ensure clean navigation
+    // Add small delay to ensure preview screen unmounts cleanly
+    setTimeout(() => {
+      console.log('[ScanFlowScreen] Executing navigation with params:', {
+        uri: processedUri,
+        format: selectedFormat,
+      });
+      
+      router.replace({
+        pathname: '/document/upload',
+        params: {
+          scannedImageUri: processedUri,
+          scannedFormat: selectedFormat,
+        },
+      });
+    }, 100);
+  };
+
+  console.log('[ScanFlowScreen] Rendering with step:', currentStep);
 
   return (
     <View style={styles.container}>
       {/* Format Selection Modal */}
-      <FormatSelectionModal
-        visible={currentStep === 'format-selection'}
-        onClose={handleCancelFormatSelection}
-        onSelectFormat={handleFormatSelected}
-        selectedFormat={selectedFormat}
-      />
+      {currentStep === 'format-selection' && (
+        <FormatSelectionModal
+          visible={true}
+          onClose={handleCancelFormatSelection}
+          onSelectFormat={handleFormatSelected}
+          selectedFormat={selectedFormat}
+        />
+      )}
 
       {/* Camera Screen */}
       {currentStep === 'camera' && (
@@ -91,6 +121,7 @@ export default function ScanFlowScreen() {
           format={selectedFormat}
           onRetake={handleRetake}
           onConfirm={handleConfirmImage}
+          onCancel={handleCancelPreview}
         />
       )}
     </View>

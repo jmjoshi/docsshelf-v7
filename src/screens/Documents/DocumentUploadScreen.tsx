@@ -5,7 +5,7 @@
 
 import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -30,9 +31,14 @@ import {
 } from '../../store/slices/documentSlice';
 
 export default function DocumentUploadScreen() {
+  console.log('[DocumentUploadScreen] Component mounting/rendering');
+  
   const dispatch = useAppDispatch();
   const router = useRouter();
   const params = useLocalSearchParams<{ scannedImageUri?: string; scannedFormat?: string }>();
+  
+  console.log('[DocumentUploadScreen] Params received:', params);
+  
   const categories = useAppSelector(selectAllCategories);
   const activeUploads = useAppSelector(selectActiveUploads);
   const error = useAppSelector(selectDocumentError);
@@ -42,15 +48,22 @@ export default function DocumentUploadScreen() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('Uncategorized');
   const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  
+  // Track if we've already processed the scanned document
+  const processedUriRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadUserData();
-    
-    // Handle scanned document passed from scan flow
-    if (params.scannedImageUri && params.scannedFormat) {
+  }, []);
+
+  useEffect(() => {
+    // Handle scanned document passed from scan flow (only once per unique URI)
+    if (params.scannedImageUri && params.scannedFormat && 
+        params.scannedImageUri !== processedUriRef.current) {
+      processedUriRef.current = params.scannedImageUri;
       handleScannedDocument(params.scannedImageUri, params.scannedFormat);
     }
-  }, [params.scannedImageUri]);
+  }, [params.scannedImageUri, params.scannedFormat]);
 
   const loadUserData = async () => {
     try {
@@ -67,12 +80,15 @@ export default function DocumentUploadScreen() {
 
   const handleScannedDocument = async (uri: string, format: string) => {
     try {
+      console.log('[DocumentUploadScreen] Handling scanned document:', uri, format);
       const mimeType = imageConverter.getMimeType(format as any);
       const extension = imageConverter.getFileExtension(format as any);
       
-      // Get file info
-      const FileSystem = await import('expo-file-system');
+      // Get file info using legacy FileSystem API (required for expo-file-system v17)
+      const FileSystem = await import('expo-file-system/legacy');
       const fileInfo = await FileSystem.getInfoAsync(uri);
+      
+      console.log('[DocumentUploadScreen] File info:', fileInfo);
       
       // Create a DocumentPickerAsset-like object for the scanned document
       const scannedFile: DocumentPicker.DocumentPickerAsset = {
@@ -83,10 +99,11 @@ export default function DocumentUploadScreen() {
         lastModified: Date.now(),
       };
       
+      console.log('[DocumentUploadScreen] Scanned file created:', scannedFile);
       setSelectedFile(scannedFile);
     } catch (err) {
       console.error('Error handling scanned document:', err);
-      Alert.alert('Error', 'Failed to load scanned document');
+      Alert.alert('Error', 'Failed to load scanned document. Please try again.');
     }
   };
 
@@ -164,6 +181,13 @@ export default function DocumentUploadScreen() {
             setSelectedCategoryName('Uncategorized');
           },
         },
+        {
+          text: 'Done',
+          onPress: () => {
+            router.push('/(tabs)/documents');
+          },
+          style: 'default',
+        },
       ]);
     } catch (err) {
       console.error('Upload failed:', err);
@@ -227,7 +251,7 @@ export default function DocumentUploadScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header with Cancel Button */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
@@ -339,7 +363,7 @@ export default function DocumentUploadScreen() {
         </View>
       </Modal>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -353,7 +377,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#fff',
-    paddingTop: 50,
+    paddingTop: 15,
     paddingBottom: 15,
     paddingHorizontal: 15,
     borderBottomWidth: 1,

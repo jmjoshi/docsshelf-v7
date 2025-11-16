@@ -63,7 +63,7 @@ npm install expo-local-authentication
 # Start Expo development server
 npm start
 
-# Start with cache cleared (recommended after major changes)
+# Start with cache cleared (RECOMMENDED - use this by default)
 npx expo start --clear
 
 # Start in offline mode (bypass version checks)
@@ -71,6 +71,9 @@ npx expo start --offline
 
 # Start in tunnel mode (for network issues)
 npx expo start --tunnel
+
+# Start fresh (clear Metro bundler and all caches)
+Remove-Item -Recurse -Force .expo, node_modules\.cache; npx expo start --clear
 ```
 
 ### Platform-Specific Launches
@@ -496,6 +499,8 @@ git push origin master
 ```
 
 ### Fixing Stuck/Frozen App
+
+**Android Emulator:**
 ```powershell
 # 1. Clear app data on device
 adb shell pm clear host.exp.exponent
@@ -510,6 +515,22 @@ emulator -avd Pixel_5 -wipe-data
 
 # 5. Restart development server
 npx expo start --clear
+```
+
+**iOS Physical Device:**
+```
+See: documents/IOS_CLEANUP_GUIDE.md for complete instructions
+
+Quick reset:
+1. Force quit Expo Go (swipe up, swipe away)
+2. On dev machine: Ctrl+C, then npx expo start --clear
+3. Reopen Expo Go and scan QR code
+
+Complete reset:
+1. Delete Expo Go app from iPhone
+2. Reinstall from App Store
+3. Run: npx expo start --clear
+4. Scan QR code
 ```
 
 ### Resolving Metro Bundler Errors
