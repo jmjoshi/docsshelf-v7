@@ -1,3 +1,9 @@
+// Polyfills for jszip (must be first)
+import { Buffer } from 'buffer';
+import process from 'process';
+global.Buffer = Buffer;
+global.process = process;
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
