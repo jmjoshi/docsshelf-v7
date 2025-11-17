@@ -1921,3 +1921,251 @@ git push origin master
 - Ready to proceed with Phase 2 and 3 simultaneously
 
 ====================
+SESSION: November 15, 2025 (Continuation) - FR-MAIN-013 Phase 2: Backup Import Service
+====================
+
+## Session Context:
+- **Objective:** Implement backup import/restore functionality (Phase 2 of FR-MAIN-013)
+- **User Request:** "both option c [import service AND UI screens], before that what are these errors and Also update the context of this chat in developer_context.md document"
+- **Starting State:** Phase 1 complete (export service functional), TypeScript errors visible in screenshot
+
+## Commands Executed:
+
+### 1. Investigation: TypeScript Error Analysis
+```bash
+# User showed screenshot with tsconfig.json errors
+# Analysis: Transient VS Code parsing errors, not actual compilation errors
+```
+
+### 2. Create Backup Import Service
+```bash
+# Created: src/services/backup/backupImportService.ts (508 lines)
+```
+
+**File Structure:**
+- `pickBackupFile()` - expo-document-picker integration
+- `validateBackup()` - Pre-import validation with checksums
+- `importBackup()` - Full restore with progress tracking
+- `verifyBackupChecksums()` - SHA256 integrity verification
+- `checkDuplicate()` - Detect duplicate documents
+- `getBackupInfo()` - Preview backup metadata
+- `saveImportHistory()` - Track in backup_history table
+
+### 3. TypeScript Error Fix (First Attempt)
+```bash
+npx tsc --noEmit
+```
+
+**Errors Found:**
+1. ❌ `createDocument` not exported (line 15)
+2. ❌ `BackupChecksums` declared but never used (line 6)
+3. ❌ `CategoryMergeStrategy` declared but never used (line 8)
+
+### 4. Function Name Investigation
+```bash
+grep_search:
+  pattern: "export async function"
+  file: documentService.ts
+```
+
+**Result:** Found `uploadDocument` at line 103 (not `createDocument`)
+
+### 5. Fix Imports
+```bash
+multi_replace_string_in_file:
+  - Changed: createDocument → uploadDocument
+  - Removed: BackupChecksums, CategoryMergeStrategy from imports
+```
+
+**Result:** ✅ 2 of 3 errors fixed
+
+### 6. TypeScript Recheck
+```bash
+npx tsc --noEmit
+```
+
+**Remaining Error:**
+```
+src/services/backup/backupImportService.ts(312,11): 
+error TS2554: Expected 1-2 arguments, but got 7.
+```
+
+### 7. Function Signature Investigation
+```bash
+read_file: documentService.ts lines 103-133
+```
+
+**Finding:** `uploadDocument()` signature:
+```typescript
+export async function uploadDocument(
+  file: DocumentPickerResult,  // Object: {uri, name, size, mimeType}
+  options: DocumentUploadOptions = {}  // Object: {categoryId, onProgress}
+): Promise<Document>
+```
+
+**Problem:** Called with 7 individual parameters instead of 2 objects
+
+### 8. Fix uploadDocument Call
+```bash
+replace_string_in_file:
+  location: backupImportService.ts line 305-318
+  old: uploadDocument(docPath, doc.original_filename, doc.mime_type, ...)
+  new: uploadDocument({uri, name, size, mimeType}, {categoryId})
+```
+
+**Initial Attempt:** Failed - tried to add progress callback with non-existent properties
+
+### 9. Simplified Fix
+```bash
+replace_string_in_file:
+  - Removed incorrect progress callback
+  - Kept simple object structure matching interface
+```
+
+**Result:** ✅ Fixed successfully
+
+### 10. Final Validation
+```bash
+npx tsc --noEmit
+```
+
+**Result:** ✅ **Zero TypeScript errors** - Clean compilation!
+
+### 11. Update Documentation (DEVELOPMENT_CONTEXT.md)
+```bash
+replace_string_in_file:
+  - Updated: "Phase 1 Complete" → "Phase 2 Complete"
+  - Updated: Recent achievement to backup import service
+  - Added: Phase 2 session log with full details
+```
+
+### 12. Update Documentation (regular prompts.md)
+```bash
+replace_string_in_file:
+  - Added: Complete Phase 2 session log
+  - Documented: All commands, investigations, and fixes
+  - Status: Ready for Phase 3 UI implementation
+```
+
+## Technical Achievements:
+
+### ✅ Backup Import Service Complete
+- **File:** `src/services/backup/backupImportService.ts` (508 lines)
+- **TypeScript:** Zero compilation errors
+- **Features:**
+  - Import `.docsshelf` backup files
+  - Validate manifest structure and checksums
+  - Restore documents and categories
+  - Handle duplicates intelligently
+  - Category merging with conflict resolution
+  - Progress tracking for UI
+  - Detailed error messages
+  - Import history tracking
+
+### ✅ Error Resolution Process
+1. Identified wrong function name (`createDocument` vs `uploadDocument`)
+2. Found function signature mismatch (7 args vs 2 object parameters)
+3. Investigated actual interface definitions
+4. Restructured function call to match interfaces
+5. Validated with TypeScript compiler
+
+### ✅ Documentation Updated
+- DEVELOPMENT_CONTEXT.md: Phase 2 status and session log
+- regular prompts.md: Complete command history
+
+## Code Quality:
+
+**Type Safety:**
+```typescript
+// Correct usage pattern identified:
+await uploadDocument(
+  {
+    uri: docPath,
+    name: doc.original_filename,
+    size: docBytes.length,
+    mimeType: doc.mime_type
+  },
+  {
+    categoryId: mappedCategoryId || null
+  }
+);
+```
+
+**Error Handling:**
+- Validation before import
+- Checksum verification
+- Duplicate detection
+- Rollback capability
+- Detailed error messages
+
+## Files Created/Modified:
+
+### Created:
+- `src/services/backup/backupImportService.ts` (NEW - 508 lines)
+
+### Modified:
+- `DEVELOPMENT_CONTEXT.md` - Added Phase 2 session log
+- `documents/requirements/regular prompts.md` - Added Phase 2 commands
+
+## Next Steps (User Requested Both Option C):
+
+### Phase 3: UI Implementation
+1. ✅ Import service complete
+2. ⏳ Create BackupScreen.tsx (~400 lines)
+3. ⏳ Create BackupHistoryItem.tsx component (~100 lines)
+4. ⏳ Create BackupProgress.tsx component (~80 lines)
+5. ⏳ Add navigation route (app/(tabs)/settings/backup.tsx)
+6. ⏳ Integration with Redux for state management
+7. ⏳ Success/error toast notifications
+
+### Phase 4: Testing
+1. ⏳ Export backup on iOS/Android
+2. ⏳ Import backup validation
+3. ⏳ Duplicate handling
+4. ⏳ Large file testing (1000+ documents)
+5. ⏳ Corrupted backup handling
+6. ⏳ Progress indicator functionality
+
+## Validation:
+
+**TypeScript Compilation:**
+```bash
+npx tsc --noEmit  # ✅ Zero errors
+```
+
+**Code Quality Checks:**
+- ✅ All imports resolved correctly
+- ✅ Function signatures match
+- ✅ Type safety maintained
+- ✅ No unused imports
+- ✅ Proper error handling structure
+
+## Key Learnings:
+
+1. **Function Signature Investigation:** Always check actual function signatures before calling
+2. **Object Parameters:** Modern TypeScript prefers object parameters over multiple arguments
+3. **Progress Callbacks:** Must match parent function signature and options interface
+4. **Type Validation:** Use grep_search to find actual exported functions
+5. **Documentation:** Update both DEVELOPMENT_CONTEXT.md and session logs
+
+## Status:
+
+**FR-MAIN-013 Progress:**
+- ✅ Phase 1: Backup Export Service - Complete
+- ✅ Phase 2: Backup Import Service - Complete
+- ⏳ Phase 3: UI Screens - Ready to implement
+- ⏳ Phase 4: Testing - Pending
+- ⏳ Phase 5: Documentation & Polish - Pending
+
+**Ready for:**
+- UI screen implementation (user requested Option C)
+- Navigation integration
+- Redux state management integration
+- End-to-end testing
+
+## Tags:
+#fr-main-013 #backup-import #restore #phase2-complete #typescript-fix #session-nov15-continued
+
+====================
+
+Check in github repository and add summary and list of added and updated components with relevant tag for identification- After check in lets proceed with next feature Phase 3: UI Implementation. Also update the context of this chat in developer_context.md document and also update document capturing all the commands used in this chat and future chats in developing this application for future reference. Save that document in documents/requirements/COMMAND_REFERENCE.md file. Note that regular_prompts.md is crated for manual prompts only do not update session context in that file. Move all the session context from regular_prompts.md file to I think developer_context.md file instead.

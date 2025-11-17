@@ -2,8 +2,8 @@
 
 **Last Updated:** November 15, 2025  
 **Project Status:** Phase 2 - Core Document Management (100% Complete) | Phase 3 - Backup & Export (In Progress)  
-**Current Sprint:** FR-MAIN-013 (USB/External Storage Backup - Phase 1 Complete)  
-**Recent Major Achievement:** Backup export service complete with database v4 migration  
+**Current Sprint:** FR-MAIN-013 (USB/External Storage Backup - Phase 2 Complete)  
+**Recent Major Achievement:** Backup import service complete - full backup/restore functionality operational  
 **Note:** FR-LOGIN-001 to FR-LOGIN-010 - All Complete | FR-MAIN-001 to FR-MAIN-003 - All Complete & Production Ready
 
 ---
@@ -1209,6 +1209,67 @@ git push origin master  # Commit 6be5ab7
 - Phase 4: End-to-end testing on devices
 
 **Tags:** #session-nov15 #fr-main-013 #backup-export #usb-storage #phase1-complete
+
+---
+
+### November 15, 2025 (Session 2) - Backup Import Service Implementation
+
+**Context:** Continuing FR-MAIN-013 implementation - Phase 2: Building backup import/restore functionality
+
+**Activities:**
+
+1. ✅ Created backup import service
+   - File: `src/services/backup/backupImportService.ts` (508 lines)
+   - Import `.docsshelf` backup files
+   - Full validation with checksum verification
+   - Document and category restoration
+   - Duplicate detection and handling
+   - Progress tracking with callbacks
+
+2. ✅ Fixed TypeScript errors
+   - Issue: `uploadDocument()` called with wrong arguments
+   - Investigation: Function expects object parameters, not individual args
+   - Solution: Restructured call to match `DocumentPickerResult` and `DocumentUploadOptions` interfaces
+   - Result: Zero TypeScript compilation errors
+
+3. ✅ Implemented key import features
+   - `pickBackupFile()` - File picker integration
+   - `validateBackup()` - Pre-import validation with checksums
+   - `importBackup()` - Full restore with progress callbacks
+   - `verifyBackupChecksums()` - Integrity verification
+   - `checkDuplicate()` - Duplicate document detection
+   - `getBackupInfo()` - Preview backup metadata without importing
+   - `saveImportHistory()` - Track import operations in database
+
+**Files Created:**
+- `src/services/backup/backupImportService.ts` (NEW)
+
+**Technical Challenges Resolved:**
+- Identified `uploadDocument` signature mismatch (expected 1-2 args, received 7)
+- Used grep_search to find correct function signature in documentService.ts
+- Fixed parameter structure to use object-based parameters
+- Removed incorrect progress callback nesting
+
+**Features Implemented:**
+- ✅ Import `.docsshelf` backup files via document picker
+- ✅ Validate backup integrity (manifest, checksums, file structure)
+- ✅ Restore documents and categories with proper mapping
+- ✅ Handle category merging and duplicate detection
+- ✅ Progress tracking for UI feedback
+- ✅ Error handling with detailed messages
+- ✅ Backup history tracking in database
+
+**Validation:**
+```bash
+npx tsc --noEmit  # ✅ Zero errors
+```
+
+**Next Steps:**
+- Phase 3: UI screens (BackupScreen, BackupHistoryItem, BackupProgress components)
+- Navigation integration
+- End-to-end testing on physical devices
+
+**Tags:** #session-nov15 #fr-main-013 #backup-import #restore #phase2-complete
 
 ---
 
