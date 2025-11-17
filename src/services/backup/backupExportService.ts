@@ -101,11 +101,22 @@ export async function createBackup(
         // Save to backup directory
         const backupFilename = `doc_${doc.id}.enc`;
         const documentPath = `${documentsDir}${backupFilename}`;
+        
+        // Convert Uint8Array to base64 string using Buffer polyfill
+        const base64Content = Buffer.from(content).toString('base64');
+        
+        // Write file as base64
         await FileSystem.writeAsStringAsync(
           documentPath,
-          Buffer.from(content).toString('base64'),
-          { encoding: 'base64' as any }
+          base64Content,
+          { encoding: FileSystem.EncodingType.Base64 }
         );
+        
+        // Verify file was written
+        const fileInfo = await FileSystem.getInfoAsync(documentPath);
+        if (!fileInfo.exists) {
+          throw new Error(`Failed to write document file: ${backupFilename}`);
+        }
 
         documents.push({
           id: doc.id,
@@ -206,7 +217,9 @@ export async function createBackup(
       // Add all documents
       for (const doc of documents) {
         const docPath = `${documentsDir}${doc.filename}`;
-        const docContent = await FileSystem.readAsStringAsync(docPath, { encoding: 'base64' });
+        const docContent = await FileSystem.readAsStringAsync(docPath, { 
+          encoding: FileSystem.EncodingType.Base64 
+        });
         zip.file(`documents/${doc.filename}`, docContent, { base64: true });
       }
       
