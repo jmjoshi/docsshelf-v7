@@ -9,8 +9,14 @@ const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
 export const Colors = {
+  primary: '#007AFF',
+  secondary: '#34C759',
+  error: '#FF3B30',
+  warning: '#FF9500',
+  success: '#34C759',
   light: {
     text: '#11181C',
+    textSecondary: '#687076',
     background: '#fff',
     tint: tintColorLight,
     icon: '#687076',
@@ -19,6 +25,7 @@ export const Colors = {
   },
   dark: {
     text: '#ECEDEE',
+    textSecondary: '#9BA1A6',
     background: '#151718',
     tint: tintColorDark,
     icon: '#9BA1A6',
