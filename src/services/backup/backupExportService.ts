@@ -5,7 +5,7 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { zip } from 'react-native-zip-archive';
+import JSZip from 'jszip';
 import { getDatabase } from '../database/dbInit';
 import { getDocuments, readDocument } from '../database/documentService';
 import { getCategories } from '../database/categoryService';
@@ -188,7 +188,38 @@ export async function createBackup(
       const zipFilename = `backup_${new Date().toISOString().split('T')[0]}_${Date.now()}${BACKUP_FILE_EXTENSION}`;
       const zipPath = `${FileSystem.cacheDirectory}${zipFilename}`;
       
-      await zip(backupDir, zipPath);
+      // Create ZIP using JSZip
+      const zip = new JSZip();
+      
+      // Add manifest
+      const manifestContent = await FileSystem.readAsStringAsync(manifestPath);
+      zip.file('manifest.json', manifestContent);
+      
+      // Add database
+      const databaseContent = await FileSystem.readAsStringAsync(databasePath);
+      zip.file('database.json', databaseContent);
+      
+      // Add checksums
+      const checksumContent = await FileSystem.readAsStringAsync(checksumPath);
+      zip.file('checksum.sha256', checksumContent);
+      
+      // Add all documents
+      for (const doc of documents) {
+        const docPath = `${documentsDir}${doc.filename}`;
+        const docContent = await FileSystem.readAsStringAsync(docPath, { encoding: 'base64' });
+        zip.file(`documents/${doc.filename}`, docContent, { base64: true });
+      }
+      
+      // Generate ZIP file
+      const zipBase64 = await zip.generateAsync({ 
+        type: 'base64',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+      
+      // Write ZIP to file system
+      await FileSystem.writeAsStringAsync(zipPath, zipBase64, { encoding: 'base64' });
+      
       finalBackupPath = zipPath;
     } else {
       // Just rename directory (no compression)

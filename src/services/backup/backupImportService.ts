@@ -5,7 +5,7 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
-import { unzip } from 'react-native-zip-archive';
+import JSZip from 'jszip';
 import { getDatabase } from '../database/dbInit';
 import { uploadDocument } from '../database/documentService';
 import { createCategory, getCategories } from '../database/categoryService';
@@ -58,14 +58,17 @@ export async function validateBackup(backupPath: string): Promise<BackupValidati
   try {
     // Extract backup to temp directory
     const extractDir = `${FileSystem.cacheDirectory}backup_extract_${Date.now()}/`;
-    await unzip(backupPath, extractDir);
+    await FileSystem.makeDirectoryAsync(extractDir, { intermediates: true });
+    
+    // Read and extract ZIP using JSZip
+    const zipBase64 = await FileSystem.readAsStringAsync(backupPath, { encoding: 'base64' });
+    const zip = await JSZip.loadAsync(zipBase64, { base64: true });
 
     // Read manifest
-    const manifestPath = `${extractDir}manifest.json`;
-    const manifestExists = await FileSystem.getInfoAsync(manifestPath);
-    
-    if (!manifestExists.exists) {
+    const manifestFile = zip.file('manifest.json');
+    if (!manifestFile) {
       errors.push('Backup manifest not found');
+      await FileSystem.deleteAsync(extractDir, { idempotent: true });
       return {
         valid: false,
         errors,
@@ -73,8 +76,11 @@ export async function validateBackup(backupPath: string): Promise<BackupValidati
       };
     }
 
-    const manifestContent = await FileSystem.readAsStringAsync(manifestPath);
+    const manifestContent = await manifestFile.async('string');
     const manifest: BackupManifest = JSON.parse(manifestContent);
+    
+    // Save manifest to temp dir for later checksum verification
+    await FileSystem.writeAsStringAsync(`${extractDir}manifest.json`, manifestContent);
 
     // Validate manifest structure
     if (!manifest.backup_version || !manifest.app_version) {
@@ -95,13 +101,29 @@ export async function validateBackup(backupPath: string): Promise<BackupValidati
     }
 
     // Verify checksums if present
-    const checksumPath = `${extractDir}checksum.sha256`;
-    const checksumExists = await FileSystem.getInfoAsync(checksumPath);
+    const checksumFile = zip.file('checksum.sha256');
     
     let checksumValid = false;
-    if (checksumExists.exists) {
+    if (checksumFile) {
       try {
-        const checksumContent = await FileSystem.readAsStringAsync(checksumPath);
+        const checksumContent = await checksumFile.async('string');
+        // Save checksum file for verification
+        await FileSystem.writeAsStringAsync(`${extractDir}checksum.sha256`, checksumContent);
+        // Also save database.json for checksum verification
+        const databaseFile = zip.file('database.json');
+        if (databaseFile) {
+          const databaseContent = await databaseFile.async('string');
+          await FileSystem.writeAsStringAsync(`${extractDir}database.json`, databaseContent);
+        }
+        // Extract documents to temp dir for checksum verification
+        await FileSystem.makeDirectoryAsync(`${extractDir}documents/`, { intermediates: true });
+        for (const doc of manifest.documents) {
+          const docFile = zip.file(`documents/${doc.filename}`);
+          if (docFile) {
+            const docContent = await docFile.async('base64');
+            await FileSystem.writeAsStringAsync(`${extractDir}documents/${doc.filename}`, docContent, { encoding: 'base64' });
+          }
+        }
         checksumValid = await verifyBackupChecksums(extractDir, checksumContent, manifest);
         
         if (!checksumValid) {
@@ -115,12 +137,10 @@ export async function validateBackup(backupPath: string): Promise<BackupValidati
       warnings.push('No checksums found - cannot verify integrity');
     }
 
-    // Verify document files exist
+    // Verify document files exist in ZIP
     for (const doc of manifest.documents) {
-      const docPath = `${extractDir}documents/${doc.filename}`;
-      const docExists = await FileSystem.getInfoAsync(docPath);
-      
-      if (!docExists.exists) {
+      const docFile = zip.file(`documents/${doc.filename}`);
+      if (!docFile) {
         errors.push(`Document file missing: ${doc.filename}`);
       }
     }
@@ -183,12 +203,19 @@ export async function importBackup(
       percentage: 0,
     });
 
-    // Extract backup
+    // Extract backup using JSZip
     extractDir = `${FileSystem.cacheDirectory}backup_import_${Date.now()}/`;
-    await unzip(backupPath, extractDir);
+    await FileSystem.makeDirectoryAsync(extractDir, { intermediates: true });
+    
+    const zipBase64 = await FileSystem.readAsStringAsync(backupPath, { encoding: 'base64' });
+    const zip = await JSZip.loadAsync(zipBase64, { base64: true });
 
-    // Read manifest
-    const manifestContent = await FileSystem.readAsStringAsync(`${extractDir}manifest.json`);
+    // Read manifest from ZIP
+    const manifestFile = zip.file('manifest.json');
+    if (!manifestFile) {
+      throw new Error('Backup manifest not found');
+    }
+    const manifestContent = await manifestFile.async('string');
     const manifest: BackupManifest = JSON.parse(manifestContent);
 
     onProgress?.({
@@ -300,10 +327,19 @@ export async function importBackup(
         continue;
       }
 
-      // Read document file
-      const docPath = `${extractDir}documents/${doc.filename}`;
-      const docContent = await FileSystem.readAsStringAsync(docPath);
+      // Read document file from ZIP
+      const docFile = zip.file(`documents/${doc.filename}`);
+      if (!docFile) {
+        errors.push(`Document file not found: ${doc.filename}`);
+        continue;
+      }
+      const docContent = await docFile.async('base64');
       const docBytes = Uint8Array.from(Buffer.from(docContent, 'base64'));
+      
+      // Save to temp location for uploadDocument
+      const docPath = `${extractDir}documents/${doc.filename}`;
+      await FileSystem.makeDirectoryAsync(`${extractDir}documents/`, { intermediates: true });
+      await FileSystem.writeAsStringAsync(docPath, docContent, { encoding: 'base64' });
 
       // Import document
       try {
