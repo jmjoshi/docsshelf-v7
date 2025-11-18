@@ -4,12 +4,11 @@
  */
 
 import React from 'react';
-import Svg, { Path, Rect, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Rect, G, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
 
 interface LogoProps {
   size?: number;
-  variant?: 'full' | 'icon';
   style?: ViewStyle;
 }
 
@@ -17,12 +16,9 @@ interface LogoProps {
  * DocsShelf Icon - Stylized bookshelf with documents
  * Represents organized, secure document storage
  */
-export function DocsShelfLogo({ size = 120, variant = 'icon', style }: LogoProps) {
-  const iconSize = size;
-  const viewBox = variant === 'full' ? '0 0 200 60' : '0 0 60 60';
-
+export function DocsShelfLogo({ size = 120, style }: LogoProps) {
   return (
-    <Svg width={variant === 'full' ? size * 3.33 : iconSize} height={iconSize} viewBox={viewBox} style={style}>
+    <Svg width={size} height={size} viewBox="0 0 60 60" style={style}>
       <Defs>
         {/* Gradient for modern look */}
         <LinearGradient id="shelfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -76,18 +72,7 @@ export function DocsShelfLogo({ size = 120, variant = 'icon', style }: LogoProps
         </G>
       </G>
 
-      {/* Full logo with text */}
-      {variant === 'full' && (
-        <G id="text" transform="translate(70, 0)">
-          {/* "DocsShelf" text */}
-          <text x="0" y="25" fontFamily="system-ui, -apple-system, sans-serif" fontSize="24" fontWeight="bold" fill="#111827">
-            DocsShelf
-          </text>
-          <text x="0" y="45" fontFamily="system-ui, -apple-system, sans-serif" fontSize="12" fill="#6B7280">
-            Secure Document Storage
-          </text>
-        </G>
-      )}
+      {/* Note: Full logo variant with text requires React Native Text component separately */}
     </Svg>
   );
 }
@@ -107,7 +92,7 @@ export function DocsShelfMascot({ size = 80 }: { size?: number }) {
       </Defs>
 
       {/* Background circle */}
-      <circle cx="40" cy="40" r="38" fill="url(#mascotBg)" />
+      <Circle cx="40" cy="40" r="38" fill="url(#mascotBg)" />
       
       {/* Simplified shelf icon */}
       <G transform="translate(20, 20)">
@@ -120,7 +105,7 @@ export function DocsShelfMascot({ size = 80 }: { size?: number }) {
         <Rect x="29" y="12" width="7" height="20" rx="1" fill="#10B981" />
         
         {/* Lock */}
-        <circle cx="20" cy="30" r="5" fill="#2563EB" opacity="0.9" />
+        <Circle cx="20" cy="30" r="5" fill="#2563EB" opacity="0.9" />
         <Rect x="18" y="28" width="4" height="2" rx="1" fill="#FFFFFF" />
       </G>
     </Svg>
