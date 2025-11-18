@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { generateSalt, hashPassword } from '../../utils/crypto/passwordHash';
+import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../utils/auth/secureStoreKeys';
 import { logger } from '../../utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../utils/validators/emailValidator';
 import { validatePassword } from '../../utils/validators/passwordValidator';
@@ -37,10 +38,10 @@ export default function RegisterScreen() {
       // Hash the password using PBKDF2-SHA256
       const passwordHash = await hashPassword(password, salt);
       
-      // Store email, salt, and hashed password securely
-      await SecureStore.setItemAsync('user_email', sanitizedEmail);
-      await SecureStore.setItemAsync('user_salt', salt);
-      await SecureStore.setItemAsync('user_password_hash', passwordHash);
+      // Store email, salt, and hashed password securely per-user
+      await SecureStore.setItemAsync(CURRENT_USER_EMAIL_KEY, sanitizedEmail);
+      await SecureStore.setItemAsync(getUserSaltKey(sanitizedEmail), salt);
+      await SecureStore.setItemAsync(getUserPasswordHashKey(sanitizedEmail), passwordHash);
       
       setEmail('');
       setPassword('');

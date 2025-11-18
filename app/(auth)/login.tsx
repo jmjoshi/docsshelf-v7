@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
+import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -72,20 +73,12 @@ function LoginScreenContent() {
     setLoading(true);
     
     try {
-      // Retrieve stored credentials
-      const storedEmail = await SecureStore.getItemAsync('user_email');
-      const storedSalt = await SecureStore.getItemAsync('user_salt');
-      const storedHash = await SecureStore.getItemAsync('user_password_hash');
+      // Check if user exists in database first
+      const { userExists } = await import('../../src/services/database/userService');
+      const accountExists = await userExists(sanitizedEmail);
       
-      if (!storedEmail || !storedSalt || !storedHash) {
-        setError('No account found. Please register first.');
-        setLoading(false);
-        return;
-      }
-      
-      // Verify email matches
-      if (storedEmail !== sanitizedEmail) {
-        // Record failed attempt
+      if (!accountExists) {
+        // Record failed attempt for non-existent account
         const isLocked = await recordFailedAttempt(sanitizedEmail);
         const attempts = await isAccountLocked(sanitizedEmail);
         
@@ -94,6 +87,16 @@ function LoginScreenContent() {
         } else {
           setError(`Invalid email or password. ${attempts.attemptsRemaining} attempts remaining.`);
         }
+        setLoading(false);
+        return;
+      }
+      
+      // Retrieve stored credentials for this specific user
+      const storedSalt = await SecureStore.getItemAsync(getUserSaltKey(sanitizedEmail));
+      const storedHash = await SecureStore.getItemAsync(getUserPasswordHashKey(sanitizedEmail));
+      
+      if (!storedSalt || !storedHash) {
+        setError('Account credentials not found. Please contact support.');
         setLoading(false);
         return;
       }
@@ -111,13 +114,15 @@ function LoginScreenContent() {
         const mfaRequired = await isMFARequired(sanitizedEmail);
         
         if (mfaRequired) {
-          // Store email for MFA verification
+          // Store email for MFA verification and set as current user
           await SecureStore.setItemAsync('pending_mfa_email', sanitizedEmail);
+          await SecureStore.setItemAsync(CURRENT_USER_EMAIL_KEY, sanitizedEmail);
           // Navigate to MFA verification
           router.push('/(auth)/mfa-verify' as any);
         } else {
           // Login without MFA - user has skipped or hasn't set it up yet
           // MFA setup is optional and can be configured in settings
+          await SecureStore.setItemAsync(CURRENT_USER_EMAIL_KEY, sanitizedEmail);
           await login();
           // Navigation to tabs will be handled by the root layout
         }

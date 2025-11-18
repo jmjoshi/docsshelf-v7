@@ -6,6 +6,7 @@
 
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
+import { getUserPasswordHashKey, getUserSaltKey } from '../../utils/auth/secureStoreKeys';
 
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
@@ -141,9 +142,9 @@ export async function resetPassword(
   const sanitizedEmail = sanitizeEmailForKey(email);
   
   try {
-    // Update password in SecureStore
-    await SecureStore.setItemAsync('user_salt', newSalt);
-    await SecureStore.setItemAsync('user_password_hash', newPasswordHash);
+    // Update password in SecureStore for this specific user
+    await SecureStore.setItemAsync(getUserSaltKey(email), newSalt);
+    await SecureStore.setItemAsync(getUserPasswordHashKey(email), newPasswordHash);
     
     // Mark token as used
     const data = await SecureStore.getItemAsync(`password_reset_${sanitizedEmail}`);

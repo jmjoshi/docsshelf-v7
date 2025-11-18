@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
+import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
@@ -138,10 +139,10 @@ function RegisterScreenContent() {
       
       await createUser(userProfile);
       
-      // Store authentication credentials securely
-      await SecureStore.setItemAsync('user_email', sanitizedEmail);
-      await SecureStore.setItemAsync('user_salt', salt);
-      await SecureStore.setItemAsync('user_password_hash', passwordHash);
+      // Store authentication credentials securely per-user
+      await SecureStore.setItemAsync(CURRENT_USER_EMAIL_KEY, sanitizedEmail); // Keep current user
+      await SecureStore.setItemAsync(getUserSaltKey(sanitizedEmail), salt);
+      await SecureStore.setItemAsync(getUserPasswordHashKey(sanitizedEmail), passwordHash);
       
       // Clear form
       setFirstName('');
