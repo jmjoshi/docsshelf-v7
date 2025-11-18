@@ -72,12 +72,10 @@ export async function createBackup(
         }));
     }
 
-    // Collect documents
+    // Collect documents (store in memory, not filesystem)
     let documents: BackupDocumentMetadata[] = [];
-    const documentsDir = `${backupDir}documents/`;
     
     if (includeDocuments) {
-      await FileSystem.makeDirectoryAsync(documentsDir, { intermediates: true });
       
       const allDocuments = await getDocuments();
       const filteredDocs = allDocuments.filter(
@@ -95,28 +93,14 @@ export async function createBackup(
           percentage: Math.round((i + 1) / filteredDocs.length * 30),
         });
 
-        // Read document content (already encrypted)
+        // Read document content (already encrypted - Uint8Array)
         const content = await readDocument(doc.id);
         
-        // Save to backup directory
+        // Don't save to temp directory - we'll add directly to ZIP from memory
         const backupFilename = `doc_${doc.id}.enc`;
-        const documentPath = `${documentsDir}${backupFilename}`;
         
-        // Convert Uint8Array to base64 string using Buffer polyfill
+        // Convert Uint8Array to base64 for storage in memory
         const base64Content = Buffer.from(content).toString('base64');
-        
-        // Write file as base64
-        await FileSystem.writeAsStringAsync(
-          documentPath,
-          base64Content,
-          { encoding: FileSystem.EncodingType.Base64 }
-        );
-        
-        // Verify file was written
-        const fileInfo = await FileSystem.getInfoAsync(documentPath);
-        if (!fileInfo.exists) {
-          throw new Error(`Failed to write document file: ${backupFilename}`);
-        }
 
         documents.push({
           id: doc.id,
@@ -128,7 +112,8 @@ export async function createBackup(
           is_favorite: doc.is_favorite,
           created_at: parseInt(doc.created_at),
           updated_at: parseInt(doc.updated_at),
-        });
+          _base64Content: base64Content, // Store content in memory for ZIP creation
+        } as any);
       }
     }
 
@@ -214,13 +199,13 @@ export async function createBackup(
       const checksumContent = await FileSystem.readAsStringAsync(checksumPath);
       zip.file('checksum.sha256', checksumContent);
       
-      // Add all documents
-      for (const doc of documents) {
-        const docPath = `${documentsDir}${doc.filename}`;
-        const docContent = await FileSystem.readAsStringAsync(docPath, { 
-          encoding: FileSystem.EncodingType.Base64 
-        });
-        zip.file(`documents/${doc.filename}`, docContent, { base64: true });
+      // Add all documents from memory (no file I/O needed)
+      for (const doc of documents as any[]) {
+        if (doc._base64Content) {
+          zip.file(`documents/${doc.filename}`, doc._base64Content, { base64: true });
+          // Clean up memory
+          delete doc._base64Content;
+        }
       }
       
       // Generate ZIP file
@@ -354,12 +339,13 @@ async function generateChecksums(
   const databaseBytes = new TextEncoder().encode(databaseContent);
   checksums['database.json'] = await calculateChecksum(databaseBytes);
 
-  // Checksum each document
-  for (const doc of documents) {
-    const docPath = `${backupDir}documents/${doc.filename}`;
-    const docContent = await FileSystem.readAsStringAsync(docPath);
-    const docBytes = new TextEncoder().encode(docContent);
-    checksums.documents[doc.filename] = await calculateChecksum(docBytes);
+  // Checksum each document from memory
+  for (const doc of documents as any[]) {
+    if (doc._base64Content) {
+      // Decode base64 to get original bytes for checksum
+      const docBytes = Buffer.from(doc._base64Content, 'base64');
+      checksums.documents[doc.filename] = await calculateChecksum(docBytes);
+    }
   }
 
   return checksums;
