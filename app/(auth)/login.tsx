@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { DocsShelfMascot } from '../../components/branding/Logo';
+import { Colors, Shadows, BorderRadius, Spacing, Typography } from '../../constants/colors';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { formatLockoutTime, isAccountLocked, recordFailedAttempt, resetFailedAttempts } from '../../src/services/auth/accountSecurityService';
@@ -158,10 +160,15 @@ function LoginScreenContent() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+      <View style={styles.header}>
+        <DocsShelfMascot size={100} />
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Sign in to your DocsShelf account</Text>
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={Colors.text.placeholder}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -171,6 +178,7 @@ function LoginScreenContent() {
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor={Colors.text.placeholder}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -221,56 +229,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
+    padding: Spacing['2xl'],
+    backgroundColor: Colors.background.paper,
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: Spacing['3xl'],
+  },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
     textAlign: 'center',
+    color: Colors.text.primary,
+  },
+  subtitle: {
+    fontSize: Typography.fontSize.sm,
+    marginBottom: Spacing.lg,
+    textAlign: 'center',
+    color: Colors.text.secondary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 16,
+    borderColor: Colors.border.main,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    fontSize: Typography.fontSize.base,
+    backgroundColor: Colors.background.default,
+    color: Colors.text.primary,
+    ...Shadows.sm,
   },
   error: {
-    color: 'red',
-    marginBottom: 12,
+    color: Colors.error.main,
+    marginBottom: Spacing.md,
     textAlign: 'center',
+    backgroundColor: Colors.error.light,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
   },
   linkContainer: {
-    marginTop: 20,
+    marginTop: Spacing.xl,
     alignItems: 'center',
   },
   linkText: {
-    color: '#007AFF',
-    fontSize: 14,
+    color: Colors.primary.main,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
   },
   forgotPasswordContainer: {
-    marginTop: 16,
+    marginTop: Spacing.lg,
     alignItems: 'center',
   },
   forgotPasswordText: {
-    color: '#007AFF',
-    fontSize: 14,
+    color: Colors.primary.main,
+    fontSize: Typography.fontSize.sm,
     textDecorationLine: 'underline',
   },
   loadingContainer: {
-    padding: 20,
+    padding: Spacing.xl,
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 14,
+    marginTop: Spacing.md,
+    color: Colors.text.secondary,
+    fontSize: Typography.fontSize.sm,
   },
 });

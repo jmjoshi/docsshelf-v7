@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { DocsShelfMascot } from '../../components/branding/Logo';
+import { Colors, Shadows, BorderRadius, Spacing, Typography } from '../../constants/colors';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { createUser, userExists } from '../../src/services/database/userService';
@@ -182,14 +184,18 @@ function RegisterScreenContent() {
       contentContainerStyle={styles.contentContainer}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Please provide your information</Text>
+      <View style={styles.header}>
+        <DocsShelfMascot size={80} />
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Join DocsShelf for secure document management</Text>
+      </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
         <TextInput
           style={styles.input}
           placeholder="First Name *"
+          placeholderTextColor={Colors.text.placeholder}
           autoCapitalize="words"
           value={firstName}
           onChangeText={setFirstName}
@@ -198,6 +204,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Last Name *"
+          placeholderTextColor={Colors.text.placeholder}
           autoCapitalize="words"
           value={lastName}
           onChangeText={setLastName}
@@ -206,6 +213,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Email *"
+          placeholderTextColor={Colors.text.placeholder}
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -219,6 +227,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Mobile Phone * (Required)"
+          placeholderTextColor={Colors.text.placeholder}
           keyboardType="phone-pad"
           value={mobilePhone}
           onChangeText={setMobilePhone}
@@ -227,6 +236,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Home Phone (Optional)"
+          placeholderTextColor={Colors.text.placeholder}
           keyboardType="phone-pad"
           value={homePhone}
           onChangeText={setHomePhone}
@@ -235,6 +245,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Work Phone (Optional)"
+          placeholderTextColor={Colors.text.placeholder}
           keyboardType="phone-pad"
           value={workPhone}
           onChangeText={setWorkPhone}
@@ -247,6 +258,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Password *"
+          placeholderTextColor={Colors.text.placeholder}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -258,6 +270,7 @@ function RegisterScreenContent() {
         <TextInput
           style={styles.input}
           placeholder="Confirm Password *"
+          placeholderTextColor={Colors.text.placeholder}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -301,76 +314,89 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.paper,
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   contentContainer: {
-    padding: 24,
-    paddingBottom: 40,
+    padding: Spacing['2xl'],
+    paddingBottom: Spacing['4xl'],
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: Spacing['3xl'],
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
     textAlign: 'center',
-    color: '#000',
+    color: Colors.text.primary,
   },
   subtitle: {
-    fontSize: 14,
-    marginBottom: 24,
+    fontSize: Typography.fontSize.sm,
+    marginBottom: Spacing['2xl'],
     textAlign: 'center',
-    color: '#666',
+    color: Colors.text.secondary,
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.sm,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.md,
+    color: Colors.text.primary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderColor: Colors.border.main,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    fontSize: Typography.fontSize.base,
+    backgroundColor: Colors.background.default,
+    color: Colors.text.primary,
+    ...Shadows.sm,
   },
   passwordHint: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 12,
-    marginTop: -8,
-    paddingHorizontal: 4,
+    fontSize: Typography.fontSize.xs,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.md,
+    marginTop: -Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.xs,
   },
   error: {
-    color: '#d32f2f',
-    marginBottom: 16,
+    color: Colors.error.main,
+    marginBottom: Spacing.lg,
     textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    backgroundColor: Colors.error.light,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
   },
   linkContainer: {
-    marginTop: 20,
+    marginTop: Spacing.xl,
     alignItems: 'center',
   },
   linkText: {
-    color: '#007AFF',
-    fontSize: 16,
+    color: Colors.primary.main,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
   },
   loadingContainer: {
-    padding: 20,
+    padding: Spacing.xl,
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 14,
+    marginTop: Spacing.md,
+    color: Colors.text.secondary,
+    fontSize: Typography.fontSize.sm,
   },
 });
