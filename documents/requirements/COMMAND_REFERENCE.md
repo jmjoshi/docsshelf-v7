@@ -1,7 +1,7 @@
 # DocsShelf Development Command Reference
 **Project:** DocsShelf v7 - Secure Document Management App  
 **Framework:** React Native + Expo (SDK 54)  
-**Last Updated:** November 13, 2025
+**Last Updated:** November 17, 2025
 
 This document captures all essential commands used during the development of DocsShelf v7, organized by category for future reference.
 
@@ -824,6 +824,239 @@ npx expo start --clear
 
 ---
 
+## November 17, 2025 - Session 4: jszip Polyfills & Memory-Based Backup
+
+### Context
+Testing FR-MAIN-013 backup in Expo Go revealed additional compatibility issues with jszip dependencies and iOS file I/O problems. Required Node.js polyfills and architectural refactor to memory-based approach.
+
+### Commands Executed
+
+```powershell
+# Start Expo development server for testing
+npx expo start --clear
+
+# Issue discovered: jszip requires Node.js modules not in React Native
+# Error: "Your JavaScript code tried to access a native module that doesn't exist"
+
+# Install Node.js polyfills for jszip compatibility
+npm install buffer process readable-stream
+
+# TypeScript validation
+npx tsc --noEmit  # ✅ Zero errors
+
+# Commit polyfill integration
+git add metro.config.js "app/_layout.tsx" package.json package-lock.json
+git commit -m "fix(FR-MAIN-013): Add Node.js polyfills for jszip React Native compatibility
+
+- Install buffer, process, readable-stream packages
+- Configure Metro bundler resolver for Node.js core modules
+- Inject Buffer and process globals in app entry point
+- Enable jszip to work in React Native environment
+
+Technical details:
+- Metro resolver maps stream → readable-stream, buffer → buffer/, process → process/browser
+- Global polyfills must load before any other modules
+- Required for jszip ZIP compression/decompression in React Native
+
+Fixes runtime error: 'native module doesn't exist'
+Tag: FR-MAIN-013-POLYFILLS"
+
+git push origin master  # Commit: 22a448c
+
+# Test backup export - new issue discovered
+# Error: "File not readable" after ZIP extraction
+# Root cause: File encoding parameter incorrect
+
+# Fix file encoding in backupExportService
+# Changed 'base64' string to FileSystem.EncodingType.Base64 enum
+# Added file verification after write operations
+
+# TypeScript validation
+npx tsc --noEmit  # ✅ Zero errors
+
+# Commit encoding fix
+git add "src/services/backup/backupExportService.ts"
+git commit -m "fix(FR-MAIN-013): Fix file encoding and add verification
+
+- Use FileSystem.EncodingType.Base64 enum instead of string
+- Add file existence verification after write operations
+- Apply to manifest.json, database.json, and document files
+- Ensure reliable file I/O on iOS
+
+Fixes: 'File not readable' error during ZIP extraction
+Tag: FR-MAIN-013-ENCODING"
+
+git push origin master  # Commit: a02ce23
+
+# Test again - encoding fix didn't resolve iOS file I/O issues
+# Decision: Refactor to memory-based approach
+# Remove intermediate temp file operations for documents
+
+# Refactor backupExportService to use in-memory document storage
+# Remove: FileSystem.makeDirectoryAsync, writeAsStringAsync, readAsStringAsync
+# Add: _base64Content property to store encrypted data in RAM
+# Modify: ZIP creation to use memory instead of file system
+
+# TypeScript validation
+npx tsc --noEmit  # ✅ Zero errors
+
+# Commit memory-based refactor
+git add "src/services/backup/backupExportService.ts"
+git commit -m "fix(FR-MAIN-013): Use memory-based approach for backup export - avoid file I/O issues
+
+Architectural change:
+- Store encrypted documents in memory (_base64Content) instead of temp files
+- Add documents directly to ZIP from memory
+- Remove temp directory creation and file read/write for documents
+- Keep temp files only for small JSON/text (manifest, database, checksums)
+
+Benefits:
+- Eliminates iOS file system permission issues
+- Faster performance (no disk I/O for documents)
+- More reliable (no intermediate file corruption)
+- Simpler code (fewer file operations)
+
+Technical details:
+- Documents stored as base64 in _base64Content property temporarily
+- Checksums generated from memory buffers
+- ZIP accepts base64 strings directly
+- Memory freed immediately after adding to ZIP
+
+Changes: -34 lines, +20 lines
+Tag: FR-MAIN-013-MEMORY"
+
+git push origin master  # Commit: 32e5a02
+
+# Update documentation with memory-based architecture
+git add DEVELOPMENT_CONTEXT.md
+git commit -m "docs: Document memory-based backup architecture and polyfill integration"
+git push origin master  # Commit: 3b3d777
+
+# Test backup export on physical iPhone
+# Result: ✅ Success - backup created, shared, extracted, all files readable
+
+# Start development server for continued testing
+npx expo start --offline  # Use offline mode to skip version check
+```
+
+**Issue Timeline:**
+1. Runtime error: jszip missing Node.js modules
+2. Fix: Install polyfills (buffer, process, readable-stream), configure Metro
+3. File encoding error: "File not readable"
+4. Fix: Use FileSystem.EncodingType.Base64 enum
+5. Persistent file I/O issues on iOS
+6. Final fix: Memory-based approach (eliminate temp files for documents)
+
+**Files Modified:**
+- `metro.config.js` - Node.js module resolver configuration
+- `app/_layout.tsx` - Global Buffer and process polyfill injection
+- `src/services/backup/backupExportService.ts` - Memory-based document handling
+- `package.json` - Added buffer, process, readable-stream dependencies
+
+**Key Architectural Change:**
+- **Before:** Encrypt → Write temp files → Read files → Add to ZIP → Delete temp dir
+- **After:** Encrypt → Store in memory → Add to ZIP → Free memory
+- **Benefit:** No iOS file I/O issues, faster, more reliable
+
+**Status:** ✅ FR-MAIN-013 Complete, Production Ready, Expo Go Compatible, iOS File I/O Fixed
+
+**Tags:** #session-nov17 #polyfills #memory-architecture #ios-fix
+
+---
+
+## November 17, 2025 - Session 5: Login Attempt Counter Per-Account Fix
+
+### Context
+User discovered bug where failed login attempts were not properly isolated per account. When Account X failed login and then logged in successfully, the counter didn't reset. When Account Y tried to login, it inherited Account X's failed attempt count.
+
+**Root Cause:** Credentials stored with single keys (`user_salt`, `user_password_hash`) instead of per-user keys, causing multiple users to overwrite each other's credentials.
+
+### Commands Executed
+
+```powershell
+# Check current repository state
+git status
+
+# Analyze authentication flow
+# Discovered: SecureStore using single keys for all users
+# Problem: User Y registration overwrites User X credentials
+
+# Create utility for per-user SecureStore keys
+# New file: src/utils/auth/secureStoreKeys.ts
+# Functions: sanitizeEmailForKey, getUserSaltKey, getUserPasswordHashKey
+
+# Update authentication files to use per-user keys
+# Modified files:
+# - app/(auth)/register.tsx
+# - app/(auth)/login.tsx
+# - src/services/auth/passwordRecoveryService.ts
+# - src/screens/Auth/RegisterScreen.tsx
+
+# TypeScript validation
+npx tsc --noEmit  # ✅ Zero errors
+
+# Stage all authentication changes
+git add "app/(auth)/login.tsx" "app/(auth)/register.tsx" "src/screens/Auth/RegisterScreen.tsx" "src/services/auth/passwordRecoveryService.ts" "src/utils/auth/"
+
+# Commit per-account tracking fix
+git commit -m "fix(auth): Fix login attempt counter per-account tracking
+
+- Store credentials per-user using email-based keys instead of single user_salt/user_password_hash
+- Create secureStoreKeys utility for consistent key generation
+- Fix issue where failed attempts were counted across different accounts
+- Reset failed attempts only for the account that successfully logs in
+- Update registration, login, and password recovery to use per-user keys
+
+Fixes:
+- Login attempts now tracked separately per email address
+- Successful login resets counter only for that specific account
+- Multiple user accounts can coexist on same device
+
+Tag: FR-LOGIN-005-FIX"
+
+git push origin master  # Commit: 8fb332c
+
+# Update documentation
+# DEVELOPMENT_CONTEXT.md - Add Session 5 details
+# COMMAND_REFERENCE.md - Add this session's commands
+```
+
+**Problem Fixed:**
+- ❌ Before: Single `user_salt` and `user_password_hash` keys (last user overwrites)
+- ✅ After: Per-user keys like `user_john_at_example.com_salt`
+
+**Example SecureStore Keys:**
+```
+user_email: "john@example.com"                     # Current user
+user_john_at_example.com_salt: "abc123..."         # John's salt
+user_john_at_example.com_password_hash: "def456..." # John's hash
+user_jane_at_test.com_salt: "xyz789..."            # Jane's salt
+user_jane_at_test.com_password_hash: "uvw012..."   # Jane's hash
+failed_attempts_john_at_example.com: "{...}"       # John's attempts
+failed_attempts_jane_at_test.com: "{...}"          # Jane's attempts
+```
+
+**Files Created/Modified:**
+- `src/utils/auth/secureStoreKeys.ts` - NEW utility for key generation
+- `app/(auth)/login.tsx` - Per-user credential retrieval
+- `app/(auth)/register.tsx` - Per-user credential storage
+- `src/services/auth/passwordRecoveryService.ts` - Per-user password reset
+- `src/screens/Auth/RegisterScreen.tsx` - Legacy screen consistency
+
+**Changes:** 5 files changed, 82 insertions(+), 25 deletions(-)
+
+**Benefits:**
+- ✅ True multi-account support on single device
+- ✅ Per-account security tracking (lockouts, attempts)
+- ✅ Consistent key naming across all auth flows
+- ✅ No credential overwrites or cross-account contamination
+
+**Status:** ✅ FR-LOGIN-005 Enhanced, Multi-User Support Complete
+
+**Tags:** #session-nov17 #security-fix #multi-account #per-user-credentials
+
+---
+
 ### Summary of Recent Commits
 
 | Commit ID | Date | Feature | Status |
@@ -834,5 +1067,10 @@ npx expo start --clear
 | 7dd4f6b | Nov 16, 2025 | FR-MAIN-013 Phase 3 (UI) | ✅ |
 | b86ac6c | Nov 16, 2025 | Documentation Update | ✅ |
 | 7b82c73 | Nov 16, 2025 | jszip Refactoring (Expo Compatible) | ✅ |
+| 22a448c | Nov 17, 2025 | Node.js Polyfills for jszip | ✅ |
+| a02ce23 | Nov 17, 2025 | File Encoding Fix | ✅ |
+| 32e5a02 | Nov 17, 2025 | Memory-Based Backup Architecture | ✅ |
+| 3b3d777 | Nov 17, 2025 | Documentation Update | ✅ |
+| 8fb332c | Nov 17, 2025 | Per-Account Login Attempt Tracking | ✅ |
 
 ```
