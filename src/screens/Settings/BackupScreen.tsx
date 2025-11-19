@@ -24,6 +24,7 @@ import {
   importBackup,
   getBackupInfo,
 } from '../../services/backup/backupImportService';
+import { initializeDatabase, isDatabaseInitialized } from '../../services/database/dbInit';
 import type { BackupProgress, BackupHistory, BackupStats } from '../../types/backup';
 import BackupHistoryItem from '../../components/backup/BackupHistoryItem';
 import BackupProgressModal from '../../components/backup/BackupProgressModal';
@@ -47,6 +48,12 @@ export default function BackupScreen() {
   const loadData = async () => {
     try {
       setIsLoadingHistory(true);
+      
+      // Ensure database is initialized before querying backup tables
+      if (!isDatabaseInitialized()) {
+        await initializeDatabase();
+      }
+      
       const [historyData, statsData] = await Promise.all([
         getBackupHistory(),
         getBackupStats(),
@@ -71,6 +78,11 @@ export default function BackupScreen() {
         message: 'Starting backup...',
         percentage: 0,
       });
+
+      // Ensure database is initialized before creating backup
+      if (!isDatabaseInitialized()) {
+        await initializeDatabase();
+      }
 
       const result = await createBackup(
         {
@@ -174,6 +186,11 @@ export default function BackupScreen() {
         message: 'Starting import...',
         percentage: 0,
       });
+
+      // Ensure database is initialized before importing backup
+      if (!isDatabaseInitialized()) {
+        await initializeDatabase();
+      }
 
       const result = await importBackup(
         fileUri,
