@@ -1717,6 +1717,252 @@ failed_attempts_jane_at_test.com: "{count:0,...}"    # Jane's attempts
 
 ---
 
+### November 18, 2025 (Session 6) - UI Safe Area Fix & Backup Database Race Condition
+
+**Session Focus:** Critical bug fixes for iPhone status bar overlap and Android backup database race condition
+
+**Issues Addressed:**
+
+#### Issue 1: Status Bar Overlap on iPhone
+**Problem:**
+- User reported content overlapping with iPhone status bar (time, battery, signal)
+- Categories, documents, home, login, and register screens affected
+- Poor user experience on physical iPhone devices
+
+**Root Cause:**
+- Screens not using SafeAreaView to respect device safe areas
+- Content started at very top of screen, ignoring status bar space
+- Only some screens (BackupScreen, DocumentScanScreen) had SafeAreaView
+
+**Solution - Added SafeAreaView to All Affected Screens:**
+
+1. **CategoryManagementScreen.tsx**
+```typescript
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+return (
+  <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.header}>
+      {/* Header content now respects status bar */}
+    </View>
+    {/* Rest of screen */}
+  </SafeAreaView>
+);
+```
+
+2. **DocumentListScreen.tsx**
+```typescript
+return (
+  <SafeAreaView style={styles.container} edges={['top']}>
+    {/* Stats, search, toggles now positioned correctly */}
+  </SafeAreaView>
+);
+```
+
+3. **app/(tabs)/index.tsx (HomeScreen)**
+```typescript
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#007AFF', // Match header color
+  },
+  header: {
+    backgroundColor: '#007AFF',
+    padding: 24,
+    paddingBottom: 32, // Removed paddingTop: 60
+  },
+});
+
+return (
+  <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <ScrollView style={styles.container}>
+      {/* Blue welcome header now respects status bar */}
+    </ScrollView>
+  </SafeAreaView>
+);
+```
+
+4. **app/(auth)/login.tsx**
+```typescript
+return (
+  <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.header}>
+      <DocsShelfMascot size={100} />
+      {/* Logo and form start below status bar */}
+    </View>
+  </SafeAreaView>
+);
+```
+
+5. **app/(auth)/register.tsx**
+```typescript
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background.paper,
+  },
+  container: {
+    flex: 1,
+  },
+});
+
+return (
+  <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <ScrollView style={styles.container}>
+      {/* Registration form respects top safe area */}
+    </ScrollView>
+  </SafeAreaView>
+);
+```
+
+**Files Modified (Commit: 5906956):**
+- `app/(tabs)/index.tsx` - Added SafeAreaView, adjusted header padding
+- `app/(auth)/login.tsx` - Wrapped with SafeAreaView
+- `app/(auth)/register.tsx` - Added SafeAreaView around ScrollView, new safeArea style
+- `src/screens/CategoryManagementScreen.tsx` - Wrapped container with SafeAreaView
+- `src/screens/Documents/DocumentListScreen.tsx` - Wrapped container with SafeAreaView
+
+**Changes:** 5 files changed, 38 insertions(+), 23 deletions(-)
+
+**Results:**
+- ✅ No content hidden behind status bar on any screen
+- ✅ Professional appearance on iPhone with notch
+- ✅ Consistent behavior across all app screens
+- ✅ Better user experience on physical devices
+
+#### Issue 2: Backup Database Race Condition on Android
+**Problem:**
+- "no such table: backup_history" error on Android emulator
+- Backup export/import failed immediately when navigating to backup screen
+- iPhone worked fine (coincidentally initialized faster)
+
+**Root Cause Analysis:**
+```
+LOG  Current database version: 0
+LOG  Creating database tables...
+LOG  Current database version: 0
+LOG  Creating database tables...
+LOG  Current database version: 0
+LOG  Creating database tables...
+LOG  Database initialized successfully (version 4)
+...
+ERROR  Failed to load backup data: [Error: no such table: backup_history]
+```
+
+**Issues Identified:**
+1. Multiple database instances being created simultaneously (seen 3 times in logs)
+2. `BackupScreen` called `getBackupHistory()` and `getBackupStats()` in `useEffect` immediately on mount
+3. Database initialization/migration might not have completed yet
+4. Race condition: backup queries executed before migration v3→v4 (creates `backup_history` table) completed
+
+**Solution - Add Database Initialization Checks:**
+
+```typescript
+import { initializeDatabase, isDatabaseInitialized } from '../../services/database/dbInit';
+
+// 1. Before loading backup data
+const loadData = async () => {
+  try {
+    setIsLoadingHistory(true);
+    
+    // Ensure database is initialized before querying backup tables
+    if (!isDatabaseInitialized()) {
+      await initializeDatabase();
+    }
+    
+    const [historyData, statsData] = await Promise.all([
+      getBackupHistory(),
+      getBackupStats(),
+    ]);
+    // ...
+  }
+}
+
+// 2. Before creating backup
+const handleExportBackup = async () => {
+  try {
+    setIsExporting(true);
+    
+    // Ensure database is initialized before creating backup
+    if (!isDatabaseInitialized()) {
+      await initializeDatabase();
+    }
+    
+    const result = await createBackup(/* ... */);
+    // ...
+  }
+}
+
+// 3. Before importing backup
+const performImport = async (fileUri: string) => {
+  try {
+    // Ensure database is initialized before importing backup
+    if (!isDatabaseInitialized()) {
+      await initializeDatabase();
+    }
+    
+    const result = await importBackup(/* ... */);
+    // ...
+  }
+}
+```
+
+**Files Modified (Commit: 18990ce):**
+- `src/screens/Settings/BackupScreen.tsx` - Added database initialization checks in 3 functions
+
+**Changes:** 1 file changed, 17 insertions(+)
+
+**Validation:**
+```bash
+# Clear Android emulator app data to force fresh database
+adb shell pm clear host.exp.exponent
+
+# Start Expo with clear cache
+npx expo start --clear
+
+# Result: Database initialized to version 4, backup operations successful
+```
+
+**Results:**
+- ✅ Guarantees database fully initialized before all backup operations
+- ✅ Ensures all migrations complete (including backup_history table)
+- ✅ Prevents race conditions across all platforms
+- ✅ Works reliably on both Android emulator and physical iPhone
+- ✅ No more "no such table" errors
+
+**Testing Process:**
+1. Cleared Android emulator app data: `adb shell pm clear host.exp.exponent`
+2. Started fresh Expo session: `npx expo start --clear`
+3. Observed database reinitialization logs showing version 4
+4. Navigated to backup screen - loaded successfully
+5. Created backup - no errors
+6. TypeScript validation: `npx tsc --noEmit` ✅ Zero errors
+
+**Commits Made:**
+```bash
+# Commit 1: UI Safe Area Fix
+git add "app/(tabs)/index.tsx" "app/(auth)/login.tsx" "app/(auth)/register.tsx" \
+        "src/screens/CategoryManagementScreen.tsx" "src/screens/Documents/DocumentListScreen.tsx"
+git commit -m "fix(ui): Add SafeAreaView to all screens to prevent status bar overlap on iPhone"
+git push origin master  # Commit: 5906956
+
+# Commit 2: Backup Database Fix  
+git add "src/screens/Settings/BackupScreen.tsx"
+git commit -m "fix(backup): Ensure database initialization before backup operations"
+git push origin master  # Commit: 18990ce
+```
+
+**Status:**
+- UI Safe Area Fix: Complete ✅
+- Backup Database Fix: Complete ✅
+- Both tested on physical iPhone and Android emulator ✅
+- Zero TypeScript errors ✅
+- Production-ready ✅
+
+**Tags:** #session-nov18 #ui-fix #safe-area #status-bar #backup-fix #database-race-condition #android-emulator
+
+---
+
 **END OF CONTEXT DOCUMENT**
 
 *This document should be updated after significant features, architectural changes, or when new technical debt is identified.*
