@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
 import { Colors, Shadows, BorderRadius, Spacing, Typography } from '../../constants/colors';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
@@ -179,11 +180,12 @@ function RegisterScreenContent() {
   }
 
   return (
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.contentContainer}
-      keyboardShouldPersistTaps="handled"
-    >
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+      >
       <View style={styles.header}>
         <DocsShelfMascot size={80} />
         <Text style={styles.title}>Create Account</Text>
@@ -299,7 +301,8 @@ function RegisterScreenContent() {
       >
         <Text style={styles.linkText}>Already have an account? Login</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -312,9 +315,12 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Colors.background.paper,
+  },
+  container: {
+    flex: 1,
   },
   centerContent: {
     justifyContent: 'center',

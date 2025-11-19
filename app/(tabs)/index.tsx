@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { getCurrentUserProfile } from '../../src/services/database/userService';
 import { UserProfile } from '../../src/types/user';
@@ -71,14 +72,15 @@ export default function HomeScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          Welcome{userProfile ? `, ${userProfile.firstName}` : ''}! 👋
-        </Text>
-        <Text style={styles.subtitleText}>DocsShelf - Your Document Manager</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>
+            Welcome{userProfile ? `, ${userProfile.firstName}` : ''}! 👋
+          </Text>
+          <Text style={styles.subtitleText}>DocsShelf - Your Document Manager</Text>
+        </View>
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
@@ -122,11 +124,16 @@ export default function HomeScreen() {
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>DocsShelf v1.0.0</Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -134,7 +141,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#007AFF',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 32,
   },
   welcomeText: {

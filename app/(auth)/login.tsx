@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
 import { Colors, Shadows, BorderRadius, Spacing, Typography } from '../../constants/colors';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
@@ -159,7 +160,7 @@ function LoginScreenContent() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <DocsShelfMascot size={100} />
         <Text style={styles.title}>Welcome Back</Text>
@@ -213,7 +214,7 @@ function LoginScreenContent() {
       >
         <Text style={styles.linkText}>Don't have an account? Register</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

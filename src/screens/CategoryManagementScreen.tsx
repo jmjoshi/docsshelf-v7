@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentUserId } from '../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -314,7 +315,7 @@ export default function CategoryManagementScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Categories</Text>
         <View style={styles.headerButtons}>
@@ -409,7 +410,7 @@ export default function CategoryManagementScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
