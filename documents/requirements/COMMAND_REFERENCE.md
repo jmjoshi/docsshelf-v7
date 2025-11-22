@@ -1314,3 +1314,297 @@ const loadData = async () => {
 | 18990ce | Nov 18, 2025 | Backup Database Race Condition Fix | ✅ |
 
 ```
+
+| 5557391 | Nov 22, 2025 | First Android Build - Local Build Setup | ? |
+
+---
+
+## ?? Android Build Commands (Added: Nov 22, 2025)
+
+Complete workflow for building and deploying Android APKs locally.
+
+### Prerequisites Verification
+
+```powershell
+# Verify Java installation (required: Java 17)
+java -version
+
+# Check Android SDK location
+echo $env:ANDROID_HOME
+
+# Verify ADB is accessible
+adb --version
+```
+
+### Generate Android Native Code
+
+```powershell
+# First time - generate Android project
+npx expo prebuild --platform android
+
+# Clean prebuild (removes android folder, regenerates from scratch)
+npx expo prebuild --platform android --clean
+```
+
+### Gradle Build Commands
+
+```powershell
+# Navigate to Android directory
+cd android
+
+# Build release APK (unsigned, for testing)
+.\gradlew assembleRelease
+
+# Build debug APK
+.\gradlew assembleDebug
+
+# Build release AAB (for Play Store)
+.\gradlew bundleRelease
+
+# Clean build cache
+.\gradlew clean
+
+# Build with error details
+.\gradlew assembleRelease --stacktrace
+
+# Return to project root
+cd ..
+```
+
+### Locate Build Outputs
+
+```powershell
+# Find all APK files
+Get-ChildItem -Path "android\app\build\outputs\apk" -Recurse -Filter "*.apk"
+
+# Release APK location
+# android\app\build\outputs\apk\release\app-release.apk
+
+# Get APK information
+$apk = Get-Item "android\app\build\outputs\apk\release\app-release.apk"
+Write-Host "Size: $([math]::Round($apk.Length/1MB,2)) MB"
+Write-Host "Created: $($apk.LastWriteTime)"
+
+# Copy APK to project root
+Copy-Item "android\app\build\outputs\apk\release\app-release.apk" "docsshelf-v1.0.0-release.apk"
+```
+
+---
+
+## ?? ADB Commands for Physical Device Testing
+
+### Device Management
+
+```powershell
+# List all connected devices
+adb devices
+
+# List with detailed device information
+adb devices -l
+
+# Example output:
+# R9ZX90HXSVA    device product:m05s model:SM_M055F device:m05s
+```
+
+### Device Information
+
+```powershell
+# Get device model
+adb shell getprop ro.product.model
+# Example: SM-M055F
+
+# Get Android version
+adb shell getprop ro.build.version.release
+# Example: 15
+
+# Get API level
+adb shell getprop ro.build.version.sdk
+# Example: 35
+
+# Get manufacturer
+adb shell getprop ro.product.manufacturer
+# Example: samsung
+
+# Check boot status
+adb shell getprop sys.boot_completed
+# Output: 1 (booted)
+```
+
+### App Installation
+
+```powershell
+# Install APK on default device
+adb install -r <apk-file>
+
+# Install on specific device (use serial from adb devices)
+adb -s <device-serial> install -r <apk-file>
+
+# Example: Samsung Galaxy M05
+adb -s R9ZX90HXSVA install -r docsshelf-v1.0.0-release.apk
+```
+
+### Launch App
+
+```powershell
+# Launch app main activity
+adb shell am start -n com.docsshelf.app/.MainActivity
+
+# Launch on specific device
+adb -s <device-serial> shell am start -n com.docsshelf.app/.MainActivity
+
+# Example:
+adb -s R9ZX90HXSVA shell am start -n com.docsshelf.app/.MainActivity
+```
+
+### Troubleshooting
+
+```powershell
+# Clear app data (reset app)
+adb shell pm clear com.docsshelf.app
+
+# Uninstall app
+adb uninstall com.docsshelf.app
+
+# View app logs
+adb logcat | Select-String "docsshelf"
+
+# View crash logs
+adb logcat -b crash
+```
+
+---
+
+## ?? Git Commands for Build Artifacts
+
+### Exclude Large Files
+
+```powershell
+# APK files are too large for GitHub (>100 MB limit)
+# Remove from git tracking if accidentally added
+git rm --cached <file-name>
+
+# Add to .gitignore
+echo "*.apk" >> .gitignore
+echo "*.aab" >> .gitignore
+
+# Commit .gitignore
+git add .gitignore
+git commit -m "chore: Exclude build artifacts from git"
+```
+
+### Build Milestone Tagging
+
+```powershell
+# Create annotated tag for build milestone
+git tag -a "v1.0.0-first-android-build" -m "First Android Build - Physical Device Testing
+
+- APK Size: 116.42 MB
+- Device: Samsung Galaxy M05 (Android 15)
+- Installation: ADB over USB
+- Status: Successful"
+
+# Push tag to remote
+git push origin --tags
+```
+
+---
+
+## ?? Complete Build & Deploy Workflow (Nov 22, 2025)
+
+This is the exact sequence of commands used for the first successful Android build:
+
+```powershell
+# 1. Verify prerequisites
+java -version                    # ? openjdk version "17.0.2"
+echo $env:ANDROID_HOME          # ? C:\Users\...\Android\Sdk
+adb --version                    # ? Android Debug Bridge version 1.0.41
+
+# 2. Generate Android native code (first time only)
+npx expo prebuild --platform android --clean
+
+# 3. Build release APK
+cd android
+.\gradlew assembleRelease
+cd ..
+# Build time: 2h 41m (first build downloads all dependencies)
+
+# 4. Locate and copy APK
+$apk = Get-Item "android\app\build\outputs\apk\release\app-release.apk"
+Write-Host "APK Size: $([math]::Round($apk.Length/1MB,2)) MB"  # 116.42 MB
+Copy-Item "android\app\build\outputs\apk\release\app-release.apk" "docsshelf-v1.0.0-release.apk"
+
+# 5. Test on emulator (optional)
+adb devices                      # ? emulator-5554 device
+adb -s emulator-5554 install -r docsshelf-v1.0.0-release.apk
+adb shell am start -n com.docsshelf.app/.MainActivity
+
+# 6. Connect physical device
+# Enable USB Debugging on phone first:
+# Settings ? About Phone ? Tap Build Number 7x ? Developer Options ? USB Debugging ON
+adb devices -l                   # ? R9ZX90HXSVA device
+
+# 7. Install on physical device
+adb -s R9ZX90HXSVA install -r docsshelf-v1.0.0-release.apk
+# Output: Success
+
+# 8. Launch app
+adb -s R9ZX90HXSVA shell am start -n com.docsshelf.app/.MainActivity
+
+# 9. Get device information (for documentation)
+adb -s R9ZX90HXSVA shell getprop ro.product.model         # SM-M055F
+adb -s R9ZX90HXSVA shell getprop ro.build.version.release # 15
+adb -s R9ZX90HXSVA shell getprop ro.build.version.sdk     # 35
+adb -s R9ZX90HXSVA shell getprop ro.product.manufacturer  # samsung
+
+# 10. Commit to git
+git add -A
+git rm --cached docsshelf-v1.0.0-release.apk  # Exclude APK (too large)
+echo "*.apk" >> .gitignore
+echo "*.aab" >> .gitignore
+git add .gitignore
+git commit -m "feat(build): First Android build - Local build setup and physical device testing"
+git tag -a "v1.0.0-first-android-build" -m "First Android Build..."
+git push origin master --tags --force
+```
+
+### Subsequent Builds (Faster)
+
+```powershell
+# After first build, subsequent builds are much faster (~3-5 minutes)
+cd android
+.\gradlew clean
+.\gradlew assembleRelease
+cd ..
+
+# Copy updated APK
+Copy-Item "android\app\build\outputs\apk\release\app-release.apk" "docsshelf-v1.0.0-release.apk" -Force
+
+# Reinstall on device
+adb -s <device-serial> install -r docsshelf-v1.0.0-release.apk
+```
+
+---
+
+## ?? Build Performance Metrics
+
+### First Android Build (Nov 22, 2025)
+
+- **Build Time:** 2 hours 41 minutes (includes downloading all Gradle dependencies)
+- **APK Size:** 116.42 MB
+- **Output:** android\app\build\outputs\apk\release\app-release.apk
+- **Platform:** Windows 10, PowerShell 5.1
+- **Java Version:** openjdk 17.0.2
+- **Gradle Version:** 8.3 (from Android wrapper)
+- **Target Device:** Samsung Galaxy M05 (Android 15, API 35)
+
+### Expected Future Build Times
+
+- **Incremental Builds:** 3-5 minutes (with Gradle cache)
+- **Clean Builds:** 10-15 minutes
+- **Full Rebuilds:** 15-20 minutes
+
+---
+
+**Last Updated:** November 22, 2025  
+**Next Update:** iOS build commands or production signing workflow
+
