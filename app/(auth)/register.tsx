@@ -1,15 +1,15 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
-import { Colors, Shadows, BorderRadius, Spacing, Typography } from '../../constants/colors';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/colors';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { createUser, userExists } from '../../src/services/database/userService';
 import { UserProfile } from '../../src/types/user';
+import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
 import { generateSalt, hashPassword } from '../../src/utils/crypto/passwordHash';
 import { logger } from '../../src/utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';

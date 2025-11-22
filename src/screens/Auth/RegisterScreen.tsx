@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { generateSalt, hashPassword } from '../../utils/crypto/passwordHash';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../utils/auth/secureStoreKeys';
+import { generateSalt, hashPassword } from '../../utils/crypto/passwordHash';
 import { logger } from '../../utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../utils/validators/emailValidator';
 import { validatePassword } from '../../utils/validators/passwordValidator';

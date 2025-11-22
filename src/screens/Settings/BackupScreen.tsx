@@ -1,33 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  createBackup,
-  shareBackup,
-  getBackupHistory,
-  getBackupStats,
-} from '../../services/backup/backupExportService';
-import {
-  pickBackupFile,
-  importBackup,
-  getBackupInfo,
-} from '../../services/backup/backupImportService';
-import { initializeDatabase, isDatabaseInitialized } from '../../services/database/dbInit';
-import type { BackupProgress, BackupHistory, BackupStats } from '../../types/backup';
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import BackupHistoryItem from '../../components/backup/BackupHistoryItem';
 import BackupProgressModal from '../../components/backup/BackupProgressModal';
+import {
+    createBackup,
+    getBackupHistory,
+    getBackupStats,
+    shareBackup,
+} from '../../services/backup/backupExportService';
+import {
+    getBackupInfo,
+    importBackup,
+    pickBackupFile,
+} from '../../services/backup/backupImportService';
+import { initializeDatabase, isDatabaseInitialized } from '../../services/database/dbInit';
+import type { BackupHistory, BackupProgress, BackupStats } from '../../types/backup';
 
 export default function BackupScreen() {
   const colorScheme = useColorScheme();

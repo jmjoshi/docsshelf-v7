@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import Svg, { Path, Rect, G, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 interface LogoProps {
   size?: number;

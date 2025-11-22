@@ -6,23 +6,23 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import JSZip from 'jszip';
+import { Platform } from 'react-native';
+import {
+    BACKUP_FILE_EXTENSION,
+    BACKUP_VERSION,
+    BackupCategoryMetadata,
+    BackupChecksums,
+    BackupDocumentMetadata,
+    BackupExportOptions,
+    BackupExportResult,
+    BackupManifest,
+    BackupProgress,
+    MAX_BACKUP_SIZE_WARNING,
+} from '../../types/backup';
+import { calculateChecksum } from '../../utils/crypto/encryption';
+import { getCategories } from '../database/categoryService';
 import { getDatabase } from '../database/dbInit';
 import { getDocuments, readDocument } from '../database/documentService';
-import { getCategories } from '../database/categoryService';
-import { calculateChecksum } from '../../utils/crypto/encryption';
-import {
-  BackupManifest,
-  BackupExportOptions,
-  BackupExportResult,
-  BackupProgress,
-  BackupDocumentMetadata,
-  BackupCategoryMetadata,
-  BackupChecksums,
-  BACKUP_FILE_EXTENSION,
-  BACKUP_VERSION,
-  MAX_BACKUP_SIZE_WARNING,
-} from '../../types/backup';
-import { Platform } from 'react-native';
 
 /**
  * Create a backup package of all documents and categories

@@ -3,22 +3,22 @@
  * Handles importing and restoring backups from .docsshelf files
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import JSZip from 'jszip';
+import {
+    BACKUP_FILE_EXTENSION,
+    BackupImportOptions,
+    BackupImportResult,
+    BackupManifest,
+    BackupProgress,
+    BackupValidationResult,
+    DuplicateCheckResult,
+} from '../../types/backup';
+import { calculateChecksum } from '../../utils/crypto/encryption';
+import { createCategory, getCategories } from '../database/categoryService';
 import { getDatabase } from '../database/dbInit';
 import { uploadDocument } from '../database/documentService';
-import { createCategory, getCategories } from '../database/categoryService';
-import { calculateChecksum } from '../../utils/crypto/encryption';
-import {
-  BackupManifest,
-  BackupImportOptions,
-  BackupImportResult,
-  BackupValidationResult,
-  BackupProgress,
-  BACKUP_FILE_EXTENSION,
-  DuplicateCheckResult,
-} from '../../types/backup';
 
 /**
  * Pick a backup file from device storage
