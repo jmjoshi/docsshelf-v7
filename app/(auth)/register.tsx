@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/colors';
@@ -28,6 +28,8 @@ function RegisterScreenContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [dbReady, setDbReady] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
   // Initialize database on component mount
   useEffect(() => {
@@ -118,6 +120,17 @@ function RegisterScreenContent() {
       return;
     }
     
+    // Check legal consent
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Service to continue');
+      return;
+    }
+    
+    if (!agreedToPrivacy) {
+      setError('You must agree to the Privacy Policy to continue');
+      return;
+    }
+    
     setError('');
     setLoading(true);
     
@@ -156,6 +169,8 @@ function RegisterScreenContent() {
       setWorkPhone('');
       setPassword('');
       setConfirmPassword('');
+      setAgreedToTerms(false);
+      setAgreedToPrivacy(false);
       
       logger.info('User registration successful', { email: sanitizedEmail });
       Alert.alert('Success', 'Account created successfully! Now let\'s secure your account with two-factor authentication.', [
@@ -167,7 +182,7 @@ function RegisterScreenContent() {
     } finally {
       setLoading(false);
     }
-  }, [firstName, lastName, email, mobilePhone, homePhone, workPhone, password, confirmPassword, dbReady]);
+  }, [firstName, lastName, email, mobilePhone, homePhone, workPhone, password, confirmPassword, dbReady, agreedToTerms, agreedToPrivacy]);
 
   // Show loading while database initializes
   if (!dbReady) {
@@ -280,6 +295,62 @@ function RegisterScreenContent() {
         />
       </View>
 
+      <View style={styles.legalSection}>
+        <Text style={styles.legalTitle}>Legal Agreements</Text>
+        
+        <TouchableOpacity 
+          style={styles.checkboxContainer} 
+          onPress={() => setAgreedToTerms(!agreedToTerms)}
+          disabled={loading}
+        >
+          <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+            {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <View style={styles.checkboxTextContainer}>
+            <Text style={styles.checkboxText}>
+              I agree to the{' '}
+              <Text 
+                style={styles.link}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Linking.openURL('https://github.com/jmjoshi/docsshelf-v7/blob/master/documents/legal/TERMS_OF_SERVICE.md');
+                }}
+              >
+                Terms of Service
+              </Text>
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.checkboxContainer} 
+          onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+          disabled={loading}
+        >
+          <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+            {agreedToPrivacy && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <View style={styles.checkboxTextContainer}>
+            <Text style={styles.checkboxText}>
+              I agree to the{' '}
+              <Text 
+                style={styles.link}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Linking.openURL('https://github.com/jmjoshi/docsshelf-v7/blob/master/documents/legal/PRIVACY_POLICY.md');
+                }}
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <Text style={styles.legalNote}>
+          By registering, you acknowledge that you have read and understood our data handling practices. All your documents are stored locally and encrypted on your device.
+        </Text>
+      </View>
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
       
       {loading ? (
@@ -291,7 +362,7 @@ function RegisterScreenContent() {
         <Button 
           title="Register" 
           onPress={handleRegister}
-          disabled={loading}
+          disabled={loading || !agreedToTerms || !agreedToPrivacy}
         />
       )}
       <TouchableOpacity 
@@ -404,5 +475,69 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     color: Colors.text.secondary,
     fontSize: Typography.fontSize.sm,
+  },
+  legalSection: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xl,
+    padding: Spacing.lg,
+    backgroundColor: Colors.background.default,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border.main,
+  },
+  legalTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.md,
+    color: Colors.text.primary,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: Colors.border.main,
+    borderRadius: BorderRadius.sm,
+    marginRight: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background.paper,
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.primary.main,
+    borderColor: Colors.primary.main,
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: Typography.fontWeight.bold,
+  },
+  checkboxTextContainer: {
+    flex: 1,
+    paddingTop: 2,
+  },
+  checkboxText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text.primary,
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.sm,
+  },
+  link: {
+    color: Colors.primary.main,
+    fontWeight: Typography.fontWeight.medium,
+    textDecorationLine: 'underline',
+  },
+  legalNote: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.text.secondary,
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.xs,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.main,
   },
 });
