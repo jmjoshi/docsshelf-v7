@@ -61,6 +61,7 @@ export interface BackupCategoryMetadata {
 export interface BackupHistory {
   id: number;
   backup_type: 'export' | 'import'; // Type of operation
+  encryption_type: 'encrypted' | 'unencrypted'; // FR-MAIN-013A: Track encryption status
   backup_location: 'usb' | 'files_app' | 'downloads' | 'other'; // Where backup was saved/loaded
   backup_filename: string; // Backup filename
   backup_size: number; // Size in bytes
@@ -72,6 +73,8 @@ export interface BackupHistory {
   created_at: number; // Unix timestamp
   restored_at?: number; // Unix timestamp (for imports)
   user_id?: number; // For future multi-user support
+  user_consent?: boolean; // FR-MAIN-013A: User acknowledged security risks for unencrypted
+  document_ids?: string; // FR-MAIN-013A: JSON array of selected document IDs
   notes?: string; // User notes
 }
 
@@ -240,3 +243,88 @@ export const MAX_BACKUP_SIZE_WARNING = 500 * 1024 * 1024;
  * Chunk size for streaming large backups (8 MB)
  */
 export const BACKUP_CHUNK_SIZE = 8 * 1024 * 1024;
+
+// ============================================
+// FR-MAIN-013A: Unencrypted Backup Types
+// ============================================
+
+/**
+ * Unencrypted backup options (FR-MAIN-013A)
+ * Creates plain file backups WITHOUT encryption
+ */
+export interface UnencryptedBackupOptions {
+  documentIds: number[]; // Specific documents to backup
+  includeCategories?: boolean; // Include category structure (default: false)
+  userId: number; // User ID for filtering
+  userConsent: boolean; // User acknowledged security risks
+}
+
+/**
+ * Unencrypted backup result (FR-MAIN-013A)
+ */
+export interface UnencryptedBackupResult {
+  success: boolean;
+  backupFolderUri: string; // URI to backup folder for sharing
+  fileCount: number; // Number of files exported
+  totalSizeBytes: number; // Total size in bytes
+  timestamp: string; // ISO 8601 timestamp
+  documentIds: number[]; // IDs of exported documents
+  error?: string; // Error message if failed
+}
+
+/**
+ * Unencrypted backup progress (FR-MAIN-013A)
+ */
+export interface UnencryptedBackupProgress {
+  currentFile: string; // Current file being processed
+  filesCompleted: number; // Files completed so far
+  totalFiles: number; // Total files to process
+  bytesCompleted: number; // Bytes completed so far
+  totalBytes: number; // Total bytes to process
+  percentComplete: number; // Percentage (0-100)
+  estimatedTimeRemaining?: number; // Seconds remaining (optional)
+}
+
+/**
+ * Unencrypted backup manifest (FR-MAIN-013A)
+ * Stored as manifest.json in backup folder
+ */
+export interface UnencryptedBackupManifest {
+  backup_version: string; // "1.0"
+  app_version: string; // App version
+  created_at: string; // ISO 8601 timestamp
+  device_platform: 'ios' | 'android';
+  encryption_type: 'unencrypted'; // Always 'unencrypted'
+  warning: string; // Security warning text
+  document_count: number;
+  total_size_bytes: number;
+  documents: UnencryptedDocumentMetadata[];
+  categories?: UnencryptedCategoryMetadata[]; // Optional
+}
+
+/**
+ * Unencrypted document metadata (FR-MAIN-013A)
+ */
+export interface UnencryptedDocumentMetadata {
+  id: number; // Original document ID
+  filename: string; // Plain filename (no .enc extension)
+  original_filename: string; // Same as filename for unencrypted
+  size: number; // File size in bytes
+  mime_type: string; // MIME type
+  category_name?: string; // Human-readable category name
+  is_favorite: boolean;
+  created_at: string; // ISO 8601 timestamp
+  updated_at: string; // ISO 8601 timestamp
+}
+
+/**
+ * Unencrypted category metadata (FR-MAIN-013A)
+ */
+export interface UnencryptedCategoryMetadata {
+  id: number;
+  name: string;
+  parent_name?: string; // Parent category name (human-readable)
+  icon: string;
+  color: string;
+  created_at: string; // ISO 8601 timestamp
+}

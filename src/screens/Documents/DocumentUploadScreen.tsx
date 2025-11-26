@@ -4,6 +4,7 @@
  */
 
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -85,8 +86,7 @@ export default function DocumentUploadScreen() {
       const extension = imageConverter.getFileExtension(format as any);
       
       // Get file info using legacy FileSystem API (required for expo-file-system v17)
-      const FileSystem = await import('expo-file-system/legacy');
-      const fileInfo = await FileSystem.getInfoAsync(uri);
+      const fileInfo = await FileSystemLegacy.getInfoAsync(uri);
       
       console.log('[DocumentUploadScreen] File info:', fileInfo);
       

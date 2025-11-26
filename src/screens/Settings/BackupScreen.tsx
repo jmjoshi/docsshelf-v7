@@ -249,7 +249,7 @@ export default function BackupScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      edges={['top', 'left', 'right']}>
+      edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <IconSymbol name="chevron.left" size={24} color={Colors[colorScheme ?? 'light'].text} />
@@ -270,7 +270,7 @@ export default function BackupScreen() {
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: Colors.primary }]}>
-                  {stats.totalBackups}
+                  {stats.totalBackups || 0}
                 </Text>
                 <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
                   Total Backups
@@ -278,7 +278,7 @@ export default function BackupScreen() {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: Colors.primary }]}>
-                  {formatBytes(stats.totalBackupSize)}
+                  {formatBytes(stats.totalBackupSize || 0)}
                 </Text>
                 <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
                   Total Size
@@ -309,7 +309,7 @@ export default function BackupScreen() {
                 <IconSymbol name="arrow.down.doc.fill" size={24} color="#ffffff" />
                 <Text style={styles.actionButtonText}>Export Backup</Text>
                 <Text style={styles.actionButtonSubtext}>
-                  Create backup of all documents
+                  Create encrypted backup of all documents
                 </Text>
               </>
             )}
@@ -330,6 +330,21 @@ export default function BackupScreen() {
                 </Text>
               </>
             )}
+          </TouchableOpacity>
+
+          {/* FR-MAIN-013A: Unencrypted Backup Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.warningActionButton]}
+            onPress={() => router.push('/settings/unencrypted-backup' as any)}
+            disabled={isExporting || isImporting}>
+            <View style={styles.warningBadge}>
+              <IconSymbol name="exclamationmark.triangle.fill" size={16} color="#FF6B6B" />
+            </View>
+            <IconSymbol name="doc.text" size={24} color="#FF6B6B" />
+            <Text style={[styles.actionButtonText, { color: '#FF6B6B' }]}>Plain File Backup</Text>
+            <Text style={[styles.actionButtonSubtext, { color: '#D63031' }]}>
+              Unencrypted backup for USB/external storage
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -446,13 +461,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     fontFamily: Fonts.rounded,
+    textAlign: 'center',
   },
   statLabel: {
     fontSize: 12,
     marginTop: 4,
+    textAlign: 'center',
   },
   actionsSection: {
     gap: 12,
@@ -468,6 +485,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  warningActionButton: {
+    backgroundColor: '#FFF5F5',
+    borderWidth: 2,
+    borderColor: '#FF6B6B',
+  },
+  warningBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
   },
   actionButtonText: {
     color: '#ffffff',

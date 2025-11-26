@@ -8,7 +8,7 @@ import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
 // Database version - increment when schema changes
-const DATABASE_VERSION = 4;
+const DATABASE_VERSION = 5;
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -212,6 +212,34 @@ export async function initializeDatabase(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at);
       `);
 
+      // Create backup_history table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS backup_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          backup_type TEXT NOT NULL,
+          backup_location TEXT,
+          backup_filename TEXT NOT NULL,
+          backup_size INTEGER,
+          document_count INTEGER,
+          category_count INTEGER,
+          backup_hash TEXT,
+          status TEXT DEFAULT 'completed',
+          error_message TEXT,
+          created_at INTEGER DEFAULT (strftime('%s', 'now')),
+          restored_at INTEGER,
+          user_id INTEGER,
+          notes TEXT,
+          encryption_type TEXT DEFAULT 'encrypted',
+          user_consent INTEGER DEFAULT 0,
+          document_ids TEXT
+        );
+      `);
+      
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_backup_history_created 
+        ON backup_history(created_at DESC);
+      `);
+
       await setDatabaseVersion(db, DATABASE_VERSION);
       console.log(`Database initialized successfully (version ${DATABASE_VERSION})`);
     } else if (currentVersion < DATABASE_VERSION) {
@@ -232,7 +260,7 @@ export async function initializeDatabase(): Promise<void> {
 }
 
 /**
- * Verify schema integrity (checks for missing columns from failed migrations)
+ * Verify schema integrity (checks for missing columns/tables from failed migrations)
  */
 async function verifySchemaIntegrity(db: SQLite.SQLiteDatabase): Promise<void> {
   try {
@@ -255,11 +283,64 @@ async function verifySchemaIntegrity(db: SQLite.SQLiteDatabase): Promise<void> {
         console.log('Adding encryption_hmac_key column...');
         await db.execAsync('ALTER TABLE documents ADD COLUMN encryption_hmac_key TEXT;');
       }
-      
-      console.log('✅ Schema integrity verified and fixed');
-    } else {
-      console.log('✅ Schema integrity verified - all required columns exist');
     }
+    
+    // Check if backup_history table exists
+    const tables = await db.getAllAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_history'"
+    );
+    
+    if (tables.length === 0) {
+      console.log('⚠️  Missing backup_history table, creating it now...');
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS backup_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          backup_type TEXT NOT NULL,
+          backup_location TEXT,
+          backup_filename TEXT NOT NULL,
+          backup_size INTEGER,
+          document_count INTEGER,
+          category_count INTEGER,
+          backup_hash TEXT,
+          status TEXT DEFAULT 'completed',
+          error_message TEXT,
+          created_at INTEGER DEFAULT (strftime('%s', 'now')),
+          restored_at INTEGER,
+          user_id INTEGER,
+          notes TEXT,
+          encryption_type TEXT DEFAULT 'encrypted',
+          user_consent INTEGER DEFAULT 0,
+          document_ids TEXT
+        );
+      `);
+      
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_backup_history_created 
+        ON backup_history(created_at DESC);
+      `);
+      console.log('✅ backup_history table created');
+    } else {
+      // Table exists, check if it has the new columns from v5 migration
+      const backupTableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(backup_history)');
+      const backupColumns = backupTableInfo.map(col => col.name);
+      
+      if (!backupColumns.includes('encryption_type')) {
+        console.log('⚠️  Missing encryption_type column, adding it now...');
+        await db.execAsync('ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT \'encrypted\';');
+      }
+      
+      if (!backupColumns.includes('user_consent')) {
+        console.log('⚠️  Missing user_consent column, adding it now...');
+        await db.execAsync('ALTER TABLE backup_history ADD COLUMN user_consent INTEGER DEFAULT 0;');
+      }
+      
+      if (!backupColumns.includes('document_ids')) {
+        console.log('⚠️  Missing document_ids column, adding it now...');
+        await db.execAsync('ALTER TABLE backup_history ADD COLUMN document_ids TEXT;');
+      }
+    }
+    
+    console.log('✅ Schema integrity verified - all required tables and columns exist');
   } catch (error) {
     console.error('Schema verification failed:', error);
     throw error;
@@ -443,6 +524,41 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
       `);
       
       console.log('Migration to version 4 completed');
+    }
+
+    // Migration from version 4 to 5: Add FR-MAIN-013A unencrypted backup fields
+    if (fromVersion < 5) {
+      console.log('Migrating to version 5: Adding unencrypted backup support (FR-MAIN-013A)');
+      
+      // Check if columns already exist to avoid duplicate column errors
+      const backupTableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(backup_history)');
+      const backupColumns = backupTableInfo.map(col => col.name);
+      
+      // Add encryption_type column (default 'encrypted' for existing backups)
+      if (!backupColumns.includes('encryption_type')) {
+        await db.execAsync(`
+          ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT 'encrypted';
+        `);
+        console.log('Added encryption_type column');
+      }
+      
+      // Add user_consent column for unencrypted backups
+      if (!backupColumns.includes('user_consent')) {
+        await db.execAsync(`
+          ALTER TABLE backup_history ADD COLUMN user_consent INTEGER DEFAULT 0;
+        `);
+        console.log('Added user_consent column');
+      }
+      
+      // Add document_ids column for selective backups (JSON array of document IDs)
+      if (!backupColumns.includes('document_ids')) {
+        await db.execAsync(`
+          ALTER TABLE backup_history ADD COLUMN document_ids TEXT;
+        `);
+        console.log('Added document_ids column');
+      }
+      
+      console.log('Migration to version 5 completed');
     }
     
     await setDatabaseVersion(db, DATABASE_VERSION);
