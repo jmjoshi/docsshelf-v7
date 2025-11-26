@@ -21,11 +21,6 @@ import {
     getBackupStats,
     shareBackup,
 } from '../../services/backup/backupExportService';
-import {
-    getBackupInfo,
-    importBackup,
-    pickBackupFile,
-} from '../../services/backup/backupImportService';
 import { initializeDatabase, isDatabaseInitialized } from '../../services/database/dbInit';
 import type { BackupHistory, BackupProgress, BackupStats } from '../../types/backup';
 
@@ -34,7 +29,7 @@ export default function BackupScreen() {
   const isDark = colorScheme === 'dark';
   
   const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
+  const [isImporting] = useState(false);
   const [progress, setProgress] = useState<BackupProgress | null>(null);
   const [showProgress, setShowProgress] = useState(false);
   const [history, setHistory] = useState<BackupHistory[]>([]);
@@ -132,106 +127,7 @@ export default function BackupScreen() {
     }
   };
 
-  const handleImportBackup = async () => {
-    try {
-      // Pick backup file
-      const fileUri = await pickBackupFile();
-      if (!fileUri) {
-        return; // User cancelled
-      }
 
-      // Get backup info
-      setIsImporting(true);
-      const manifest = await getBackupInfo(fileUri);
-      
-      if (!manifest) {
-        Alert.alert(
-          'Invalid Backup',
-          'This file is not a valid backup'
-        );
-        setIsImporting(false);
-        return;
-      }
-
-      // Show confirmation dialog
-      Alert.alert(
-        'Import Backup',
-        `This backup contains:\n\n` +
-        `• ${manifest.document_count || 0} documents\n` +
-        `• ${manifest.category_count || 0} categories\n` +
-        `• Created: ${formatDate(manifest.created_at || '')}\n` +
-        `• Size: ${formatBytes(manifest.total_size_bytes || 0)}\n\n` +
-        `Import this backup?`,
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => setIsImporting(false) },
-          {
-            text: 'Import',
-            onPress: () => performImport(fileUri),
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to read backup file');
-      setIsImporting(false);
-    }
-  };
-
-  const performImport = async (fileUri: string) => {
-    try {
-      setShowProgress(true);
-      setProgress({
-        stage: 'collecting',
-        current: 0,
-        total: 100,
-        message: 'Starting import...',
-        percentage: 0,
-      });
-
-      // Ensure database is initialized before importing backup
-      if (!isDatabaseInitialized()) {
-        await initializeDatabase();
-      }
-
-      const result = await importBackup(
-        fileUri,
-        {
-          skipDuplicates: true,
-          mergeCategories: true,
-          replaceExisting: false,
-        },
-        (progressData: BackupProgress) => {
-          setProgress(progressData);
-        }
-      );
-
-      setShowProgress(false);
-      setProgress(null);
-
-      if (result.success) {
-        Alert.alert(
-          'Import Complete',
-          `Successfully imported:\n\n` +
-          `• ${result.documentsImported} documents\n` +
-          `• ${result.categoriesImported} categories\n` +
-          (result.documentsSkipped > 0 ? `\nSkipped ${result.documentsSkipped} duplicates` : '') +
-          (result.warnings && result.warnings.length > 0 ? `\n\nWarnings: ${result.warnings.length}` : ''),
-          [{ text: 'OK', onPress: () => loadData() }]
-        );
-      } else {
-        Alert.alert(
-          'Import Failed',
-          (result.errors && result.errors[0]) || 'Unknown error occurred' +
-          (result.errors && result.errors.length > 0 ? `\n\nErrors:\n${result.errors.join('\n')}` : '')
-        );
-      }
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to import backup');
-      setShowProgress(false);
-      setProgress(null);
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -317,19 +213,13 @@ export default function BackupScreen() {
 
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: Colors.secondary }]}
-            onPress={handleImportBackup}
+            onPress={() => router.push('/settings/restore' as any)}
             disabled={isExporting || isImporting}>
-            {isImporting ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <>
-                <IconSymbol name="arrow.up.doc.fill" size={24} color="#ffffff" />
-                <Text style={styles.actionButtonText}>Import Backup</Text>
-                <Text style={styles.actionButtonSubtext}>
-                  Restore from backup file
-                </Text>
-              </>
-            )}
+            <IconSymbol name="arrow.clockwise.circle.fill" size={24} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Restore Backup</Text>
+            <Text style={styles.actionButtonSubtext}>
+              Restore from encrypted backup file
+            </Text>
           </TouchableOpacity>
 
           {/* FR-MAIN-013A: Unencrypted Backup Button */}

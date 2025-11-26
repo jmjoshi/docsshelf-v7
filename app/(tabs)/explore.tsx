@@ -3,7 +3,7 @@ import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { router } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
@@ -12,28 +12,36 @@ export default function SettingsScreen() {
 
   const settingsItems = [
     {
-      id: 'backup',
-      title: 'Backup & Restore',
-      subtitle: 'Export and import your data',
-      icon: 'archivebox.fill' as any,
-      color: Colors.primary,
-      onPress: () => router.push('/settings/backup' as any),
+      id: 'profile',
+      title: 'Profile',
+      subtitle: 'Manage your personal information',
+      icon: 'person.circle.fill' as any,
+      color: '#007AFF',
+      onPress: () => router.push('/settings/profile' as any),
     },
     {
       id: 'security',
       title: 'Security',
-      subtitle: 'Password, encryption, biometrics',
+      subtitle: 'Password, MFA, and biometrics',
       icon: 'lock.shield.fill' as any,
       color: '#ff9500',
-      onPress: () => Alert.alert('Coming Soon', 'Security settings will be available soon'),
+      onPress: () => router.push('/settings/security' as any),
     },
     {
-      id: 'storage',
-      title: 'Storage',
-      subtitle: 'Manage app data and cache',
-      icon: 'internaldrive.fill' as any,
+      id: 'preferences',
+      title: 'Preferences',
+      subtitle: 'App settings and appearance',
+      icon: 'slider.horizontal.3' as any,
       color: '#5ac8fa',
-      onPress: () => Alert.alert('Coming Soon', 'Storage management will be available soon'),
+      onPress: () => router.push('/settings/preferences' as any),
+    },
+    {
+      id: 'backup',
+      title: 'Backup & Restore',
+      subtitle: 'Export and import your data',
+      icon: 'archivebox.fill' as any,
+      color: '#4CAF50',
+      onPress: () => router.push('/settings/backup' as any),
     },
     {
       id: 'about',
@@ -41,7 +49,7 @@ export default function SettingsScreen() {
       subtitle: 'App version and information',
       icon: 'info.circle.fill',
       color: '#8e8e93',
-      onPress: () => Alert.alert('DocsShelf v7', 'Version 1.0.0\n\nSecure document management app with end-to-end encryption'),
+      onPress: () => router.push('/settings/about' as any),
     },
   ];
 

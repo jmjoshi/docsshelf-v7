@@ -86,9 +86,9 @@ function LoginScreenContent() {
         const attempts = await isAccountLocked(sanitizedEmail);
         
         if (isLocked) {
-          setError('Account locked due to multiple failed attempts. Check your email for details.');
+          setError(`Account ${sanitizedEmail} locked due to multiple failed attempts. Check your email for details.`);
         } else {
-          setError(`Invalid email or password. ${attempts.attemptsRemaining} attempts remaining.`);
+          setError(`Invalid email or password for ${sanitizedEmail}. ${attempts.attemptsRemaining} attempts remaining.`);
         }
         setLoading(false);
         return;
@@ -108,7 +108,8 @@ function LoginScreenContent() {
       const isValid = await verifyPassword(password, storedSalt, storedHash);
       
       if (isValid) {
-        // Reset failed attempts on successful login
+        // Reset failed attempts immediately on successful password verification
+        // This ensures the counter is reset even if MFA verification happens next
         await resetFailedAttempts(sanitizedEmail);
         logger.info('User login successful', { email: sanitizedEmail });
         
@@ -136,9 +137,9 @@ function LoginScreenContent() {
         
         if (isLocked) {
           const timeRemaining = formatLockoutTime(attempts.remainingTime);
-          setError(`Account locked for ${timeRemaining}. Check your email for details.`);
+          setError(`Account ${sanitizedEmail} locked for ${timeRemaining}. Check your email for details.`);
         } else {
-          setError(`Invalid email or password. ${attempts.attemptsRemaining} attempts remaining.`);
+          setError(`Invalid email or password for ${sanitizedEmail}. ${attempts.attemptsRemaining} attempts remaining.`);
         }
       }
     } catch (err) {

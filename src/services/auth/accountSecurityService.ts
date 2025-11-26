@@ -54,6 +54,7 @@ export async function recordFailedAttempt(email: string): Promise<boolean> {
   try {
     const attempts = await getFailedAttempts(email);
     const newCount = attempts.count + 1;
+    console.log(`[AccountSecurity] Recording failed attempt for ${email}: count ${attempts.count} -> ${newCount}`);
     
     let lockedUntil: number | undefined;
     if (newCount >= MAX_FAILED_ATTEMPTS) {
@@ -87,7 +88,9 @@ export async function resetFailedAttempts(email: string): Promise<void> {
   const key = `failed_attempts_${sanitizedEmail}`;
   
   try {
+    const previousAttempts = await getFailedAttempts(email);
     await SecureStore.deleteItemAsync(key);
+    console.log(`[AccountSecurity] Reset failed attempts for ${email}: ${previousAttempts.count} failures cleared`);
   } catch (error) {
     console.error('Failed to reset failed attempts:', error);
   }
