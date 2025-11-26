@@ -1605,6 +1605,176 @@ adb -s <device-serial> install -r docsshelf-v1.0.0-release.apk
 
 ---
 
-**Last Updated:** November 22, 2025  
-**Next Update:** iOS build commands or production signing workflow
+## 🔒 FR-MAIN-013A: Unencrypted Backup Implementation (Nov 23-26, 2025)
+
+### Database Migration Commands
+
+```powershell
+# Check database initialization
+# Database automatically migrates on app launch from v4 → v5
+
+# Verify schema integrity (happens automatically)
+# - Checks if backup_history table exists
+# - Checks if encryption_type, user_consent, document_ids columns exist
+# - Adds missing columns if needed
+```
+
+### Bug Fix Testing Commands
+
+```powershell
+# Test backup with binary files
+npx expo start --clear
+
+# Monitor logs for errors
+# iOS: Xcode Console or Expo Go logs
+# Android: adb logcat | findstr "UnencryptedBackup"
+
+# Test image backup issues
+# - Check for "file is not readable" errors
+# - Check for "Maximum call stack size exceeded" errors
+# - Verify exported images display correctly
+
+# Database migration testing
+# 1. Clear app data to force fresh database
+adb shell pm clear host.exp.exponent  # Expo Go
+adb shell pm clear com.docsshelf.app   # Production app
+
+# 2. Restart app and check database version
+# Should show: "Current database version: 5"
+```
+
+### File System Commands (expo-file-system/legacy)
+
+```typescript
+// Read binary files with base64 encoding
+await FileSystem.readAsStringAsync(path, { encoding: 'base64' });
+
+// Write binary files
+await FileSystem.writeAsStringAsync(path, base64Content, { 
+  encoding: FileSystem.EncodingType.Base64 
+});
+
+// Static import (not dynamic)
+import * as FileSystemLegacy from 'expo-file-system/legacy';
+```
+
+### Git Commands for Bug Fixes
+
+```powershell
+# Stage modified files
+git add src/services/database/dbInit.ts
+git add src/services/backup/unencryptedBackupService.ts
+git add src/screens/Settings/BackupScreen.tsx
+git add src/screens/Documents/DocumentUploadScreen.tsx
+git add src/types/backup.ts
+
+# Commit with detailed message
+git commit -m "feat: Implement FR-MAIN-013A unencrypted USB backup with fixes
+
+## FR-MAIN-013A: Plain File Backup (Unencrypted)
+
+### Added Components
+- SecurityWarningModal.tsx - 360+ line warning modal
+- UnencryptedBackupScreen.tsx - 555+ line document selection UI  
+- unencryptedBackupService.ts - 446+ line service
+- app/settings/unencrypted-backup.tsx - Route integration
+
+### Database Updates (v4→v5)
+- Added encryption_type, user_consent, document_ids columns
+- Fixed duplicate column errors with existence checks
+
+### Bug Fixes
+- Fixed binary file reading with base64 encoding
+- Fixed stack overflow with chunked processing
+- Fixed image artifacts with proper base64 conversion
+- Fixed DocumentUploadScreen dynamic import
+- Fixed BackupScreen statistics display
+- Fixed SafeAreaView for bottom tab visibility
+
+#FR-MAIN-013A #backup #unencrypted #bug-fix"
+
+# Push to repository
+git push origin master
+```
+
+### Testing Binary File Backup
+
+```powershell
+# 1. Scan document with camera
+# Navigate to: Documents tab → Scan button (green FAB)
+
+# 2. Select documents for backup
+# Navigate to: Settings → Backup & Restore → Plain File Backup
+
+# 3. Acknowledge security warning
+# Check "I understand and accept the risks"
+# Click "Accept and Continue"
+
+# 4. Select documents
+# Search for specific files
+# Select documents (e.g., scanned images)
+# Click "Create Backup"
+
+# 5. Share backup folder
+# iOS: Share to Files app → Save to USB drive
+# Android: Share to Files → Select USB drive
+
+# 6. Verify exported files
+# Extract backup folder
+# Open images to verify no vertical stripes
+# Check manifest.json for metadata
+```
+
+### Database Column Existence Checks
+
+```sql
+-- Check if column exists before adding
+PRAGMA table_info(backup_history);
+
+-- Conditional column addition (SQLite)
+-- Note: SQLite doesn't support IF NOT EXISTS for ALTER TABLE ADD COLUMN
+-- Must check programmatically first:
+
+-- TypeScript/JavaScript check:
+const tableInfo = await db.getAllAsync('PRAGMA table_info(backup_history)');
+const columnNames = tableInfo.map(col => col.name);
+if (!columnNames.includes('encryption_type')) {
+  await db.execAsync('ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT "encrypted"');
+}
+```
+
+### Performance Optimization Commands
+
+```powershell
+# Monitor memory usage during backup
+# iOS: Xcode Instruments → Allocations
+# Android: adb shell dumpsys meminfo com.docsshelf.app
+
+# Profile base64 encoding performance
+# Use console.time() and console.timeEnd() in code:
+console.time('base64-encoding');
+const base64 = btoa(binaryString);
+console.timeEnd('base64-encoding');
+
+# Check chunk processing performance
+# 8KB chunks should process without stack overflow
+```
+
+### Security Audit Commands
+
+```powershell
+# Review audit logs for unencrypted backups
+# Query database: SELECT * FROM audit_log WHERE action LIKE 'BACKUP_UNENCRYPTED%'
+
+# Verify user consent recorded
+# Query: SELECT * FROM backup_history WHERE encryption_type = 'unencrypted' AND user_consent = 1
+
+# Check document IDs logged
+# Query: SELECT document_ids FROM backup_history WHERE encryption_type = 'unencrypted'
+```
+
+---
+
+**Last Updated:** November 26, 2025  
+**Next Update:** Additional features for v1.0 release or production deployment steps
 

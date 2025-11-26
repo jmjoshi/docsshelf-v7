@@ -1,10 +1,10 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** November 16, 2025  
+**Last Updated:** November 26, 2025  
 **Project Status:** Phase 2 - Core Document Management (100% Complete) | Phase 3 - Backup & Export (100% Complete)  
-**Current Sprint:** FR-MAIN-013 (USB/External Storage Backup - ALL PHASES COMPLETE ✅ - PRODUCTION READY)  
-**Recent Major Achievement:** Refactored backup system with jszip for Expo Go compatibility and production readiness!  
-**Note:** FR-LOGIN-001 to FR-LOGIN-010 - All Complete | FR-MAIN-001 to FR-MAIN-003 - All Complete | FR-MAIN-013 - All Complete & Production Ready
+**Current Sprint:** FR-MAIN-013A (Unencrypted USB Backup - COMPLETE ✅)  
+**Recent Major Achievement:** FR-MAIN-013A unencrypted backup complete with binary file support and database migration fixes!  
+**Note:** FR-LOGIN-001 to FR-LOGIN-010 - All Complete | FR-MAIN-001 to FR-MAIN-003 - All Complete | FR-MAIN-013 & FR-MAIN-013A - All Complete & Production Ready
 
 ---
 
@@ -2232,6 +2232,303 @@ git push origin master --tags --force
 - **Play Store Submission:** Pending ⏳
 
 **Tags:** #session-nov22 #first-android-build #local-build #physical-device #samsung-m05 #adb #gradle #milestone #production-ready
+
+---
+
+### November 23-26, 2025 - FR-MAIN-013A Unencrypted Backup Implementation & Critical Bug Fixes
+
+**Session Focus:** Complete implementation of plain file backup for USB/external storage with binary file support and database migration fixes
+
+#### FR-MAIN-013A: Unencrypted Backup Feature
+
+**Overview:**
+- Feature: Create plain file backups WITHOUT encryption for USB/external storage
+- Use Case: Users need to transfer documents to external drives without app-specific formats
+- Security: Multi-layer consent flow with explicit warnings
+
+**Components Created:**
+
+1. **SecurityWarningModal.tsx** (360+ lines)
+   - Comprehensive warning modal before unencrypted backup
+   - Lists security risks (no encryption, no HMAC, physical access vulnerability)
+   - Lists recommendations (secure storage, encryption at rest, secure deletion)
+   - Checkbox consent required before proceeding
+   - Accept/Cancel buttons with clear visual hierarchy
+
+2. **UnencryptedBackupScreen.tsx** (555+ lines)
+   - Document selection UI with search and category filtering
+   - Select all/deselect all functionality
+   - Real-time file count and size calculation
+   - Progress tracking with percentage and ETA
+   - Share integration with expo-sharing
+   - Success/failure alerts with detailed information
+
+3. **unencryptedBackupService.ts** (446+ lines)
+   - `createUnencryptedBackup()` - Main export function
+   - `shareUnencryptedBackup()` - Native share sheet integration
+   - `getUnencryptedBackupStats()` - Statistics for UI
+   - Decrypts encrypted documents to plain files
+   - Creates manifest.json with metadata
+   - Optional categories.json export
+   - Audit logging for security tracking
+
+4. **app/settings/unencrypted-backup.tsx**
+   - Route integration with expo-router
+   - Connects to UnencryptedBackupScreen component
+
+**Type Definitions (backup.ts):**
+- `UnencryptedBackupOptions` - Input options with user consent
+- `UnencryptedBackupResult` - Success/failure result
+- `UnencryptedBackupProgress` - Real-time progress tracking
+- `UnencryptedBackupManifest` - JSON metadata structure
+- `UnencryptedDocumentMetadata` - Per-document metadata
+- `UnencryptedCategoryMetadata` - Category structure
+
+**Database Schema Updates (v4→v5):**
+- Added `encryption_type` column ('encrypted' | 'unencrypted')
+- Added `user_consent` column (boolean for security acknowledgment)
+- Added `document_ids` column (JSON array of selected documents)
+- Migration includes column existence checks to prevent duplicate errors
+
+#### Critical Bug Fixes
+
+**Bug 1: iOS Database Migration Duplicate Column Error**
+- **Issue:** "duplicate column name: encryption_type" on iOS physical device
+- **Root Cause:** ALTER TABLE ADD COLUMN without checking if column exists
+- **Solution:** Added PRAGMA table_info checks before each ALTER TABLE statement
+- **Impact:** Migration now safely handles partial failures and re-runs
+
+**Bug 2: Unencrypted Backup Binary File Read Error**
+- **Issue:** "File is not readable" when backing up JPG/PNG images
+- **Root Cause:** `readAsStringAsync()` without encoding can't read binary files
+- **Solution:** Changed to `readAsStringAsync(path, { encoding: 'base64' })`
+- **Impact:** All file types (text, images, PDFs) now backup successfully
+
+**Bug 3: Maximum Call Stack Size Exceeded**
+- **Issue:** Large images (500KB-700KB) causing stack overflow during base64 encoding
+- **Root Cause:** `String.fromCharCode(...Array.from(decryptedBytes))` spreads entire array
+- **Solution:** Process in 8KB chunks, convert to binary string first, then single btoa() call
+- **Impact:** Files of any size can now be backed up without errors
+
+**Bug 4: Vertical Stripes in Exported Images**
+- **Issue:** Backed up images displayed with vertical striping artifacts
+- **Root Cause:** Converting each chunk to base64 separately corrupts the encoding
+- **Solution:** Convert all chunks to binary string first, then encode entire string to base64 once
+- **Impact:** Images now export perfectly without visual artifacts
+
+**Bug 5: DocumentUploadScreen Dynamic Import Error**
+- **Issue:** Metro bundler "LoadBundleFromServerRequestError" when uploading scanned documents
+- **Root Cause:** `await import('expo-file-system/legacy')` dynamic import not supported
+- **Solution:** Changed to static import at top of file
+- **Impact:** Scanned document upload flow now works seamlessly
+
+**Bug 6: BackupScreen Statistics Display Issues**
+- **Issue:** "NaN undefined Never" instead of "0 0 Never" for empty statistics
+- **Root Cause:** `stats.totalBackups` and `stats.totalBackupSize` could be null/undefined
+- **Solution:** Added `|| 0` default values, reduced fontSize 24→18, added textAlign: 'center'
+- **Impact:** Statistics display correctly even when no backups exist
+
+**Bug 7: Missing Bottom Tabs Navigation**
+- **Issue:** Bottom tab bar not visible on BackupScreen
+- **Root Cause:** SafeAreaView edges={['top', 'left', 'right']} blocked bottom area
+- **Solution:** Changed to edges={['top']} only
+- **Impact:** Bottom navigation tabs now visible on backup screen
+
+#### BackupScreen Enhancements
+
+**UI Improvements:**
+- Added "Plain File Backup" button with warning styling (red border, warning badge)
+- Updated "Export Backup" button text to "Create encrypted backup of all documents"
+- Fixed statistics alignment and null handling
+- Fixed SafeAreaView edges for bottom tab visibility
+- Warning badge icon (exclamationmark.triangle.fill) on unencrypted button
+
+**Security Features:**
+- Visual distinction between encrypted and unencrypted backup options
+- Warning color scheme (#FF6B6B red) for unencrypted option
+- Security badge position absolute for visibility
+- Clear text warning about lack of encryption
+
+#### Database Schema Enhancements
+
+**verifySchemaIntegrity() Improvements:**
+- Checks for missing backup_history table and creates if needed
+- Checks for missing columns (encryption_type, user_consent, document_ids)
+- Adds missing columns safely without duplicate errors
+- Logs all schema fixes for debugging
+
+**Migration v4→v5 Improvements:**
+- PRAGMA table_info query before each ALTER TABLE
+- Conditional column addition based on existence check
+- Detailed logging for each added column
+- Prevents "duplicate column name" errors on re-runs
+
+#### Files Modified (Commit: 1138738)
+
+**Modified:**
+- `src/screens/Documents/DocumentUploadScreen.tsx` - Static import fix
+- `src/screens/Settings/BackupScreen.tsx` - UI enhancements, statistics fixes
+- `src/services/database/dbInit.ts` - v4→v5 migration with column checks
+- `src/types/backup.ts` - Added unencrypted backup type definitions
+- `src/services/backup/unencryptedBackupService.ts` - Binary file fixes
+
+**Changes:** 5 files changed, 242 insertions(+), 11 deletions(-)
+
+#### Technical Implementation Details
+
+**Binary File Handling:**
+```typescript
+// Read encrypted file as base64 (works for both text and binary)
+const encryptedDataBase64 = await FileSystem.readAsStringAsync(encryptedFilePath, {
+  encoding: 'base64' as any
+});
+
+// Convert base64 to Uint8Array for decryption
+const encryptedBytes = new Uint8Array(
+  atob(encryptedDataBase64).split('').map(c => c.charCodeAt(0))
+);
+
+// Decrypt using AES-256-CTR + HMAC-SHA256
+const decryptedBytes = await decryptDocument(decryptionInput);
+
+// Convert to base64 in chunks (prevents stack overflow)
+const chunkSize = 8192;
+let binaryString = '';
+for (let i = 0; i < decryptedBytes.length; i += chunkSize) {
+  const chunk = decryptedBytes.slice(i, i + chunkSize);
+  binaryString += String.fromCharCode(...Array.from(chunk));
+}
+const base64Content = btoa(binaryString);
+
+// Write to file system
+await FileSystem.writeAsStringAsync(plainFilePath, base64Content, {
+  encoding: 'base64' as any
+});
+```
+
+**Database Migration Safety:**
+```typescript
+// Check if columns exist before adding
+const backupTableInfo = await db.getAllAsync<{ name: string }>(
+  'PRAGMA table_info(backup_history)'
+);
+const backupColumns = backupTableInfo.map(col => col.name);
+
+if (!backupColumns.includes('encryption_type')) {
+  await db.execAsync(`
+    ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT 'encrypted';
+  `);
+}
+```
+
+**Backup Folder Structure:**
+```
+DocsShelf_Backup_2025-11-23T23-17-35/
+├── manifest.json          # Backup metadata and warnings
+├── categories.json        # Optional category structure
+└── documents/
+    ├── Invoice_2024.pdf   # Plain file (no .encrypted extension)
+    ├── Receipt_001.jpg    # Plain file (no .encrypted extension)
+    └── ...
+```
+
+#### Security Considerations
+
+**User Consent Flow:**
+1. User clicks "Plain File Backup" button
+2. SecurityWarningModal displays with:
+   - Security risks list (5+ detailed points)
+   - Best practice recommendations
+   - Required checkbox consent
+3. User must check "I understand and accept the risks"
+4. User clicks "Accept and Continue"
+5. UnencryptedBackupScreen shows with document selection
+6. User selects documents and creates backup
+7. Audit log records: BACKUP_UNENCRYPTED_EXPORT event
+
+**Audit Logging:**
+- All unencrypted backup operations logged
+- User consent recorded in database
+- Document IDs stored for traceability
+- Failed attempts logged with error details
+
+#### Testing Results
+
+**Tested on iOS Physical Device:**
+- ✅ Security warning modal displays correctly
+- ✅ Document selection UI works with search/filter
+- ✅ Binary file (JPG) backup successful without errors
+- ✅ Exported images display correctly (no artifacts)
+- ✅ Files app integration works via share sheet
+- ✅ Manifest.json created with proper metadata
+- ✅ Database migration v4→v5 successful
+
+**Tested Scenarios:**
+- ✅ Empty database → v0→v5 migration
+- ✅ Existing v4 database → v5 migration
+- ✅ Failed migration retry (column already exists)
+- ✅ Large image files (500KB+) backup
+- ✅ Small text files backup
+- ✅ Multiple document selection
+- ✅ Share to Files app → USB export
+
+#### Integration Points
+
+**expo-file-system/legacy:**
+- Required for iOS compatibility with expo-file-system v19
+- Static imports at top of file (no dynamic imports)
+- Base64 encoding for all file operations
+
+**expo-sharing:**
+- Native share sheet integration
+- Supports Files app, USB drives, iCloud, etc.
+- UTI: 'public.folder' for folder sharing on iOS
+
+**SQLite Database:**
+- Version tracking with PRAGMA user_version
+- Migration system with conditional column addition
+- Schema integrity verification on every launch
+
+#### Status
+
+- **FR-MAIN-013A:** Complete ✅
+- **Database Migration v4→v5:** Complete ✅
+- **Binary File Support:** Complete ✅
+- **iOS Physical Device Testing:** Complete ✅
+- **All Bug Fixes:** Complete ✅
+- **Documentation:** Updated ✅
+
+**Commit Summary:**
+```bash
+git add .
+git commit -m "feat: Implement FR-MAIN-013A unencrypted USB backup with fixes
+
+## FR-MAIN-013A: Plain File Backup (Unencrypted)
+
+### Added Components
+- SecurityWarningModal.tsx - 360+ line warning modal
+- UnencryptedBackupScreen.tsx - 555+ line document selection UI
+- unencryptedBackupService.ts - 446+ line service
+- app/settings/unencrypted-backup.tsx - Route integration
+
+### Database Updates (v4→v5)
+- Added encryption_type, user_consent, document_ids columns
+- Fixed duplicate column errors with existence checks
+
+### Bug Fixes
+- Fixed binary file reading with base64 encoding
+- Fixed stack overflow with chunked processing
+- Fixed image artifacts with proper base64 conversion
+- Fixed DocumentUploadScreen dynamic import
+- Fixed BackupScreen statistics display
+- Fixed SafeAreaView for bottom tab visibility
+
+#FR-MAIN-013A #backup #unencrypted #usb-export #bug-fix"
+
+git push origin master  # Commit: 1138738
+```
+
+**Tags:** #session-nov23-26 #fr-main-013a #unencrypted-backup #binary-files #database-migration-v5 #bug-fixes #ios-testing #production-ready
 
 ---
 
