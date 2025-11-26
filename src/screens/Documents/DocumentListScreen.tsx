@@ -6,7 +6,6 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     RefreshControl,
@@ -17,7 +16,9 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useToast } from 'react-native-toast-notifications';
 import FilterModal, { DocumentFilters } from '../../components/documents/FilterModal';
+import { DocumentListSkeleton } from '../../components/common/LoadingSkeleton';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -44,6 +45,7 @@ type SortMode = 'name' | 'date' | 'size' | 'type';
 export default function DocumentListScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const toast = useToast();
   const allDocuments = useAppSelector(selectAllDocuments);
   const favoriteDocuments = useAppSelector(selectFavoriteDocuments);
   const recentDocuments = useAppSelector((state) => selectRecentDocuments(state, 20));
@@ -96,12 +98,22 @@ export default function DocumentListScreen() {
     }
   };
 
-  const handleToggleFavorite = async (documentId: number) => {
+  const handleToggleFavorite = async (documentId: number, isFavorite: boolean) => {
     try {
       await dispatch(toggleFavorite(documentId)).unwrap();
+      toast.show(
+        isFavorite ? 'Removed from favorites' : 'Added to favorites',
+        {
+          type: 'success',
+          duration: 1500,
+        }
+      );
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
-      Alert.alert('Error', 'Failed to update favorite status');
+      toast.show('Failed to update favorite status', {
+        type: 'danger',
+        duration: 2000,
+      });
     }
   };
 
@@ -120,10 +132,16 @@ export default function DocumentListScreen() {
           onPress: async () => {
             try {
               await dispatch(removeDocument(document.id)).unwrap();
-              Alert.alert('Success', 'Document deleted successfully');
+              toast.show('Document deleted successfully', {
+                type: 'success',
+                duration: 2000,
+              });
             } catch (err) {
               console.error('Failed to delete document:', err);
-              Alert.alert('Error', 'Failed to delete document');
+              toast.show('Failed to delete document', {
+                type: 'danger',
+                duration: 3000,
+              });
             }
           },
         },
@@ -314,7 +332,7 @@ export default function DocumentListScreen() {
             {item.filename}
           </Text>
           <TouchableOpacity
-            onPress={() => handleToggleFavorite(item.id)}
+            onPress={() => handleToggleFavorite(item.id, item.is_favorite)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.favoriteIcon}>{item.is_favorite ? '★' : '☆'}</Text>
@@ -479,10 +497,7 @@ export default function DocumentListScreen() {
 
       {/* Document List */}
       {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
-          <Text style={styles.loadingText}>Loading documents...</Text>
-        </View>
+        <DocumentListSkeleton count={8} />
       ) : (
         <FlatList
           data={displayDocuments}

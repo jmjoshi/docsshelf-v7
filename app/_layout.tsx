@@ -14,6 +14,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
+import { Toast } from '../src/components/common/Toast';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { initializeDatabase } from '../src/services/database/dbInit';
 import { store } from '../src/store';
@@ -103,9 +104,11 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <ReduxProvider store={store}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
+        <Toast>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </Toast>
       </ReduxProvider>
     </ErrorBoundary>
   );

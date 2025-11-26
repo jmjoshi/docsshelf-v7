@@ -18,6 +18,8 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useToast } from 'react-native-toast-notifications';
+import { hapticFeedback } from '../../utils/feedbackUtils';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -36,6 +38,7 @@ export default function DocumentUploadScreen() {
   
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const toast = useToast();
   const params = useLocalSearchParams<{ scannedImageUri?: string; scannedFormat?: string }>();
   
   console.log('[DocumentUploadScreen] Params received:', params);
@@ -165,33 +168,25 @@ export default function DocumentUploadScreen() {
         })
       ).unwrap();
 
-      // Success - reset form and navigate back
-      Alert.alert('Success', 'Document uploaded successfully', [
-        {
-          text: 'View Document',
-          onPress: () => {
-            router.push(`/document/${result.id}`);
-          },
-        },
-        {
-          text: 'Upload Another',
-          onPress: () => {
-            setSelectedFile(null);
-            setSelectedCategoryId(null);
-            setSelectedCategoryName('Uncategorized');
-          },
-        },
-        {
-          text: 'Done',
-          onPress: () => {
-            router.push('/(tabs)/documents');
-          },
-          style: 'default',
-        },
-      ]);
+      // Success - show toast and navigate
+      await hapticFeedback.success();
+      toast.show('Document uploaded successfully', {
+        type: 'success',
+        duration: 2000,
+      });
+      
+      // Navigate to document view
+      router.push(`/document/${result.id}`);
     } catch (err) {
       console.error('Upload failed:', err);
-      Alert.alert('Upload Failed', err instanceof Error ? err.message : 'Failed to upload document');
+      await hapticFeedback.error();
+      toast.show(
+        err instanceof Error ? err.message : 'Failed to upload document',
+        {
+          type: 'danger',
+          duration: 3000,
+        }
+      );
     }
   };
 
