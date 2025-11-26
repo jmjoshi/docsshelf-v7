@@ -4,7 +4,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -17,6 +17,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FilterModal, { DocumentFilters } from '../../components/documents/FilterModal';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -38,7 +39,7 @@ import {
 import type { Document } from '../../types/document';
 
 type ViewMode = 'all' | 'favorites' | 'recent';
-type SortMode = 'name' | 'date' | 'size';
+type SortMode = 'name' | 'date' | 'size' | 'type';
 
 export default function DocumentListScreen() {
   const dispatch = useAppDispatch();
@@ -56,12 +57,16 @@ export default function DocumentListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filters, setFilters] = useState<DocumentFilters>({
+    categoryIds: [],
+    fileTypes: [],
+    dateRange: { start: null, end: null },
+    sizeRange: { min: null, max: null },
+    favoritesOnly: false,
+  });
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       const id = await getCurrentUserId();
       if (id) {
@@ -73,7 +78,11 @@ export default function DocumentListScreen() {
       console.error('Failed to load user:', err);
       Alert.alert('Error', 'Failed to load user data');
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -122,6 +131,32 @@ export default function DocumentListScreen() {
     );
   };
 
+  const getActiveFilterCount = (): number => {
+    let count = 0;
+    if (filters.categoryIds.length > 0) count++;
+    if (filters.fileTypes.length > 0) count++;
+    if (filters.dateRange.start || filters.dateRange.end) count++;
+    if (filters.sizeRange.min !== null || filters.sizeRange.max !== null) count++;
+    if (filters.favoritesOnly) count++;
+    return count;
+  };
+
+  const handleApplyFilters = (newFilters: DocumentFilters) => {
+    setFilters(newFilters);
+    setFilterModalVisible(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      categoryIds: [],
+      fileTypes: [],
+      dateRange: { start: null, end: null },
+      sizeRange: { min: null, max: null },
+      favoritesOnly: false,
+    });
+    setFilterModalVisible(false);
+  };
+
   const getDisplayDocuments = (): Document[] => {
     let documents: Document[] = [];
     
@@ -139,9 +174,69 @@ export default function DocumentListScreen() {
         break;
     }
 
-    // Filter by category
+    // Filter by category (legacy support)
     if (selectedCategoryId !== null) {
       documents = documents.filter((doc) => doc.category_id === selectedCategoryId);
+    }
+
+    // Apply advanced filters
+    // Filter by category IDs
+    if (filters.categoryIds.length > 0) {
+      documents = documents.filter((doc) => 
+        doc.category_id !== null && filters.categoryIds.includes(doc.category_id)
+      );
+    }
+
+    // Filter by file types
+    if (filters.fileTypes.length > 0) {
+      documents = documents.filter((doc) => {
+        // Extract file extension from filename
+        const ext = doc.filename.split('.').pop()?.toLowerCase() || '';
+        return filters.fileTypes.some((type) => {
+          switch (type) {
+            case 'PDF':
+              return ext === 'pdf' || doc.mime_type === 'application/pdf';
+            case 'Images':
+              return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic'].includes(ext) ||
+                     doc.mime_type.startsWith('image/');
+            case 'Text':
+              return ['txt', 'doc', 'docx', 'rtf', 'md'].includes(ext) ||
+                     doc.mime_type.startsWith('text/') ||
+                     doc.mime_type === 'application/msword' ||
+                     doc.mime_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            default:
+              return false;
+          }
+        });
+      });
+    }
+
+    // Filter by date range
+    if (filters.dateRange.start || filters.dateRange.end) {
+      documents = documents.filter((doc) => {
+        const docDate = new Date(doc.created_at);
+        if (filters.dateRange.start && docDate < filters.dateRange.start) return false;
+        if (filters.dateRange.end) {
+          const endOfDay = new Date(filters.dateRange.end);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (docDate > endOfDay) return false;
+        }
+        return true;
+      });
+    }
+
+    // Filter by size range
+    if (filters.sizeRange.min !== null || filters.sizeRange.max !== null) {
+      documents = documents.filter((doc) => {
+        if (filters.sizeRange.min !== null && doc.file_size < filters.sizeRange.min) return false;
+        if (filters.sizeRange.max !== null && doc.file_size > filters.sizeRange.max) return false;
+        return true;
+      });
+    }
+
+    // Filter by favorites only
+    if (filters.favoritesOnly) {
+      documents = documents.filter((doc) => doc.is_favorite);
     }
 
     // Filter by search query
@@ -162,6 +257,13 @@ export default function DocumentListScreen() {
         break;
       case 'size':
         sorted.sort((a, b) => b.file_size - a.file_size);
+        break;
+      case 'type':
+        sorted.sort((a, b) => {
+          const extA = a.filename.split('.').pop()?.toLowerCase() || '';
+          const extB = b.filename.split('.').pop()?.toLowerCase() || '';
+          return extA.localeCompare(extB);
+        });
         break;
       case 'date':
       default:
@@ -286,7 +388,7 @@ export default function DocumentListScreen() {
         </View>
       )}
 
-      {/* Search Bar */}
+      {/* Search Bar and Filter Button */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -295,6 +397,17 @@ export default function DocumentListScreen() {
           placeholder="Search documents..."
           placeholderTextColor="#999"
         />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Text style={styles.filterButtonText}>🔍 Filters</Text>
+          {getActiveFilterCount() > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* View Mode Toggle */}
@@ -354,6 +467,14 @@ export default function DocumentListScreen() {
             Size
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sortButton, sortMode === 'type' && styles.sortButtonActive]}
+          onPress={() => setSortMode('type')}
+        >
+          <Text style={[styles.sortButtonText, sortMode === 'type' && styles.sortButtonTextActive]}>
+            Type
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Document List */}
@@ -397,6 +518,16 @@ export default function DocumentListScreen() {
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={filterModalVisible}
+        filters={filters}
+        categories={categories}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+        onClose={() => setFilterModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -428,17 +559,51 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   searchContainer: {
+    flexDirection: 'row',
     backgroundColor: '#fff',
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    gap: 10,
   },
   searchInput: {
+    flex: 1,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
     color: '#333',
+  },
+  filterButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   toggleContainer: {
     flexDirection: 'row',
