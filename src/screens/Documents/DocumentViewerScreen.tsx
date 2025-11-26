@@ -18,6 +18,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PdfViewer from '../../components/documents/PdfViewer';
 import { readDocument } from '../../services/database/documentService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -55,12 +56,12 @@ export default function DocumentViewerScreen() {
       // Read document directly from service (don't store in Redux to avoid serialization issues)
       const content = await readDocument(documentId);
       
-      // Convert Uint8Array to string for text files, or base64 for images
+      // Convert Uint8Array to string for text files, or base64 for images/PDFs
       if (document.mime_type.startsWith('text/')) {
         const decoder = new TextDecoder();
         setDecryptedContent(decoder.decode(content));
-      } else if (document.mime_type.startsWith('image/')) {
-        // Convert Uint8Array to base64 data URI for images
+      } else if (document.mime_type.startsWith('image/') || document.mime_type === 'application/pdf') {
+        // Convert Uint8Array to base64 data URI for images and PDFs
         const base64 = arrayBufferToBase64(content);
         const dataUri = `data:${document.mime_type};base64,${base64}`;
         setDecryptedContent(dataUri);
@@ -204,6 +205,20 @@ export default function DocumentViewerScreen() {
             resizeMode="contain"
           />
         </ScrollView>
+      );
+    }
+
+    if (document?.mime_type === 'application/pdf' && typeof decryptedContent === 'string') {
+      // For PDFs, use the PdfViewer component
+      return (
+        <PdfViewer
+          source={{ uri: decryptedContent }}
+          filename={document.filename}
+          onError={(error) => {
+            console.error('PDF viewer error:', error);
+            Alert.alert('PDF Error', 'Failed to load PDF document');
+          }}
+        />
       );
     }
 
