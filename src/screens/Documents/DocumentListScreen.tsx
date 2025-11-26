@@ -4,7 +4,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     FlatList,
@@ -98,7 +98,7 @@ export default function DocumentListScreen() {
     }
   };
 
-  const handleToggleFavorite = async (documentId: number, isFavorite: boolean) => {
+  const handleToggleFavorite = useCallback(async (documentId: number, isFavorite: boolean) => {
     try {
       await dispatch(toggleFavorite(documentId)).unwrap();
       toast.show(
@@ -115,9 +115,9 @@ export default function DocumentListScreen() {
         duration: 2000,
       });
     }
-  };
+  }, [dispatch, toast]);
 
-  const handleDeleteDocument = (document: Document) => {
+  const handleDeleteDocument = useCallback((document: Document) => {
     Alert.alert(
       'Delete Document',
       `Are you sure you want to delete "${document.filename}"? This action cannot be undone.`,
@@ -147,7 +147,7 @@ export default function DocumentListScreen() {
         },
       ]
     );
-  };
+  }, [dispatch, toast]);
 
   const getActiveFilterCount = (): number => {
     let count = 0;
@@ -175,7 +175,7 @@ export default function DocumentListScreen() {
     setFilterModalVisible(false);
   };
 
-  const getDisplayDocuments = (): Document[] => {
+  const getDisplayDocuments = useMemo((): Document[] => {
     let documents: Document[] = [];
     
     // Select base documents based on view mode
@@ -292,15 +292,15 @@ export default function DocumentListScreen() {
     }
 
     return sorted;
-  };
+  }, [viewMode, allDocuments, favoriteDocuments, recentDocuments, selectedCategoryId, filters, searchQuery, sortMode]);
 
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = useCallback((bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  }, []);
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = useCallback((dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -311,15 +311,15 @@ export default function DocumentListScreen() {
     if (diffDays < 7) return `${diffDays} days ago`;
     
     return date.toLocaleDateString();
-  };
+  }, []);
 
-  const getCategoryName = (categoryId: number | null): string => {
+  const getCategoryName = useCallback((categoryId: number | null): string => {
     if (!categoryId) return 'Uncategorized';
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.name || 'Unknown';
-  };
+  }, [categories]);
 
-  const renderDocumentItem = ({ item }: { item: Document }) => (
+  const renderDocumentItem = useCallback(({ item }: { item: Document }) => (
     <TouchableOpacity
       style={styles.documentItem}
       onPress={() => {
@@ -370,9 +370,9 @@ export default function DocumentListScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  );
+  ), [router, handleToggleFavorite, handleDeleteDocument, getCategoryName, formatFileSize, formatDate]);
 
-  const renderEmptyState = () => (
+  const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📄</Text>
       <Text style={styles.emptyTitle}>No Documents Found</Text>
@@ -382,9 +382,9 @@ export default function DocumentListScreen() {
           : 'Upload your first document to get started'}
       </Text>
     </View>
-  );
+  ), [searchQuery]);
 
-  const displayDocuments = getDisplayDocuments();
+  const displayDocuments = getDisplayDocuments;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
