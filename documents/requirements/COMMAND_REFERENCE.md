@@ -692,9 +692,215 @@ npx tsc --noEmit > errors.txt
 
 ---
 
+## 🧪 Testing Commands (Added: Nov 27, 2025)
+
+### Running Tests
+
+```powershell
+# Run all tests (watch mode disabled)
+npm test -- --watchAll=false
+
+# Run specific test file
+npm test -- --watchAll=false --testPathPattern="encryption"
+
+# Run multiple specific test files
+npm test -- --watchAll=false --testPathPattern="(env|hooks)\.test"
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run tests with coverage for specific file
+npm test -- --coverage --testPathPattern="passwordRecoveryService"
+
+# Get test summary (count only)
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Tests:"
+
+# Get detailed test results
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Test Suites:|Tests:" | Select-Object -Last 2
+```
+
+### Test File Creation Pattern
+
+```typescript
+// Standard test file structure
+import { /* functions to test */ } from '../../src/path/to/module';
+
+describe('Module Name', () => {
+  describe('functionName', () => {
+    it('should do expected behavior', () => {
+      // Arrange
+      const input = 'test input';
+      
+      // Act
+      const result = functionName(input);
+      
+      // Assert
+      expect(result).toBe('expected output');
+    });
+  });
+});
+```
+
+### Mock Setup Commands
+
+```typescript
+// Add new mock to jest.setup.js
+jest.mock('module-name', () => ({
+  functionName: jest.fn(() => 'mocked result'),
+}));
+
+// Mock with Map-based storage (for SecureStore, AsyncStorage)
+jest.mock('expo-secure-store', () => {
+  const mockStore = new Map();
+  return {
+    getItemAsync: jest.fn(async (key) => mockStore.get(key) || null),
+    setItemAsync: jest.fn(async (key, value) => { mockStore.set(key, value); }),
+    deleteItemAsync: jest.fn(async (key) => { mockStore.delete(key); }),
+  };
+});
+```
+
+### Testing Session Workflow (Nov 27, 2025)
+
+```powershell
+# Session: Build comprehensive test coverage toward 80% goal
+
+# 1. Create test file
+New-Item -Path "__tests__/utils/encryption.test.ts" -ItemType File
+
+# 2. Write tests (39 tests covering encryption.ts)
+
+# 3. Run tests
+npm test -- --watchAll=false --testPathPattern="encryption"
+# Result: 35/39 passing (4 failures)
+
+# 4. Analyze failures (mock limitations)
+# Fix: Adjust tests to work with mock behavior
+
+# 5. Re-run tests
+npm test -- --watchAll=false --testPathPattern="encryption"
+# Result: 39/39 passing ✅
+
+# 6. Create more test files (appConfig, formatConstants, env, hooks)
+
+# 7. Run all tests
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Tests:"
+# Result: 404 passing tests
+
+# 8. Create passwordRecoveryService tests
+# Issue: Missing SecureStore mock
+
+# 9. Add SecureStore mock to jest.setup.js
+# Initial attempt: External variable (failed - out-of-scope)
+# Fixed: Create Map inside factory function
+
+# 10. Run passwordRecovery tests
+npm test -- --watchAll=false --testPathPattern="passwordRecoveryService"
+# Result: 34/36 passing (2 failures: URL encoding, sanitization)
+
+# 11. Fix failing tests
+# - Email URL encoding: expect encodeURIComponent(email)
+# - Sanitization: @ → _at_ (not __at_)
+
+# 12. Re-run tests
+npm test -- --watchAll=false --testPathPattern="passwordRecoveryService"
+# Result: 36/36 passing ✅
+
+# 13. Fix RegisterScreen tests
+# Issue: Can't find button by role
+# Fix: Use screen.UNSAFE_getAllByType('Button')[0]
+
+# 14. Run RegisterScreen tests
+npm test -- --watchAll=false --testPathPattern="RegisterScreen"
+# Result: 2/2 passing ✅
+
+# 15. Final test count
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Test Suites:|Tests:" | Select-Object -Last 2
+# Result: Test Suites: 19 passed, 19 total
+#         Tests: 442 passed, 442 total
+# ✅ 100% pass rate!
+```
+
+### Test File Locations (442 Tests Total)
+
+```
+__tests__/
+├── utils/
+│   ├── encryption.test.ts (39 tests) ✅
+│   ├── validators/
+│   │   ├── passwordValidator.test.ts
+│   │   └── ... (other validators)
+│   └── crypto/
+│       └── ... (crypto tests)
+├── config/
+│   ├── appConfig.test.ts (21 tests) ✅
+│   ├── env.test.ts (36 tests) ✅
+│   └── ...
+├── services/
+│   ├── passwordRecoveryService.test.ts (36 tests) ✅
+│   ├── scan/
+│   │   └── formatConstants.test.ts (42 tests) ✅
+│   └── ... (other services)
+├── store/
+│   └── hooks.test.ts (8 tests) ✅
+└── RegisterScreen.test.tsx (2 tests) ✅
+```
+
+### Common Test Issues & Solutions
+
+```powershell
+# Issue: Mock function not called
+# Solution: Check if module is imported before mock is set up
+# Mock must be at top of jest.setup.js
+
+# Issue: "out-of-scope variable" in jest.mock
+# Solution: Create variables inside factory function
+jest.mock('module', () => {
+  const localVar = 'value';  # ✅ Inside factory
+  return { ... };
+});
+
+# Issue: Can't find React Native component by role
+# Solution: Use UNSAFE_getAllByType for mocked components
+const buttons = screen.UNSAFE_getAllByType('Button');
+const registerButton = buttons[0];
+
+# Issue: Tests fail with "Module not found"
+# Solution: Check import paths, ensure file exists, check jest.config.json
+
+# Issue: Mock not working in test
+# Solution: Clear mocks between tests
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+```
+
+### Test Coverage Goals
+
+```powershell
+# Current: 442 tests (~40-45% coverage)
+# Goal: 80% coverage (~800 tests)
+# Remaining: ~400 tests
+
+# Priority areas:
+# 1. More utility tests (+50 tests)
+# 2. Non-database services (+100 tests)
+# 3. Redux slices (+50 tests)
+# 4. Database services (+150 tests) - after solving db mocking
+# 5. Component tests (+100 tests)
+
+# Run coverage report
+npm test -- --coverage --watchAll=false
+
+# View coverage summary
+# Open: coverage/lcov-report/index.html in browser
+```
+
+---
+
 **Note:** This document is maintained and updated with each development session. Always refer to the latest version in the repository.
 
-**Last Command Reference Update:** November 15, 2025
+**Last Command Reference Update:** November 27, 2025
 
 ---
 
@@ -3123,6 +3329,347 @@ npx expo run:ios --device --configuration Release
 # Update each toggle to call preferenceService.setPreference()
 # Add cache size calculation and clear functions to documentService
 ```
+
+---
+
+## 🧪 Test Coverage Expansion (Nov 27, 2025)
+
+### Session Overview: Document Scanning Service Tests
+
+**Goal:** Continue building toward 80% test coverage (~800 tests)
+
+**Tests Created:**
+- cameraService.test.ts: 26 tests (permissions, hardware, flash modes)
+- imageConverter.test.ts: 36 tests (JPEG, GIF, PDF conversion, utilities)
+
+**Results:**
+- Test count: 442 → 504 passing (+62 tests, +14% increase)
+- Pass rate: 100% (0 failures)
+- Coverage: ~45-50% (estimated)
+
+### Commands Used
+
+**1. Read Source Files for Test Planning:**
+```powershell
+# Read camera service to understand API structure
+cat src/services/scan/cameraService.ts
+
+# Read image converter to understand conversion logic
+cat src/services/scan/imageConverter.ts
+
+# List existing test files
+ls __tests__/
+ls __tests__/services/
+```
+
+**2. Create Test Files:**
+```powershell
+# Created cameraService.test.ts (26 tests)
+# Created imageConverter.test.ts (36 tests)
+# Both files include comprehensive unit tests and integration scenarios
+```
+
+**3. Run Tests and Fix Issues:**
+```powershell
+# Run all camera service tests
+npm test -- --watchAll=false --testPathPattern="cameraService\.test"
+# Result: ✅ 26/26 passing (passed on first run)
+
+# Run all image converter tests (first attempt - module error)
+npm test -- --watchAll=false --testPathPattern="imageConverter\.test"
+# Result: ❌ Module parse error - expo-image-manipulator not mocked
+
+# Fixed expo-image-manipulator mock (added SaveFormat enum)
+# Result: ❌ Cannot use import statement - expo-print not mocked
+
+# Fixed expo-print mock (added printToFileAsync)
+# Result: ❌ TypeScript error - pageSize: 'Letter' → 'LETTER'
+
+# Fixed TypeScript enum value
+# Result: 34/36 passing, 2 failures
+
+# Fixed GIF error message expectation
+# Fixed PDF FileSystem mock calls (added third mockResolvedValueOnce)
+# Result: ✅ 36/36 passing
+```
+
+**4. Verify Total Test Count:**
+```powershell
+# Get total test count across all suites
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Test Suites:|Tests:" | Select-Object -Last 2
+
+# Result:
+Test Suites: 21 passed, 21 total
+Tests:       504 passed, 504 total
+```
+
+**5. Commit Changes:**
+```powershell
+# Force add test files (bypassing .gitignore)
+git add -f __tests__/services/scan/cameraService.test.ts __tests__/services/scan/imageConverter.test.ts
+
+# Verify staging
+git status --short
+
+# Commit with detailed message
+git commit -m "Add comprehensive test coverage for document scanning services (FR-MAIN-003)
+
+- Created cameraService.test.ts (26 tests) covering:
+  - Permission flows (granted, denied, can ask again, permanently denied)
+  - Platform-specific settings navigation (iOS/Android)
+  - Camera availability checks
+  - Flash mode support and conversion
+  - Error handling (showCameraError, showCameraUnavailable)
+  - Integration scenarios
+
+- Created imageConverter.test.ts (36 tests) covering:
+  - JPEG conversion (default options, custom quality, resizing)
+  - GIF conversion (JPEG compression alternative)
+  - PDF conversion (default/custom options, HTML template, base64 embedding)
+  - Format routing (convert function)
+  - Utilities (getFileExtension, getMimeType, getFormatName)
+  - File size estimation (30% JPEG, 40% GIF, 50% PDF compression)
+  - Error handling for all conversion types
+
+Test count increased: 442 → 504 passing tests (+62 tests, +14% increase)
+Coverage estimate: ~45-50% (target: 80%)"
+
+# Result: Commit 039e8ab created successfully
+```
+
+### Mock Configurations Added
+
+**expo-image-manipulator:**
+```typescript
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn(),
+  SaveFormat: {
+    JPEG: 'jpeg',
+    PNG: 'png',
+  },
+}));
+```
+
+**expo-print:**
+```typescript
+jest.mock('expo-print', () => ({
+  printToFileAsync: jest.fn(),
+}));
+```
+
+### Issues Resolved
+
+1. **expo-image-manipulator module parse error:**
+   - Added proper mock with SaveFormat enum export
+   
+2. **expo-print import error:**
+   - Added mock with printToFileAsync function
+   
+3. **TypeScript pageSize type error:**
+   - Changed 'Letter' to 'LETTER' to match enum type
+   
+4. **GIF conversion error test:**
+   - Fixed error message expectation to match actual FileSystem error
+   
+5. **PDF conversion test failure:**
+   - Added third FileSystem.getInfoAsync mock for final PDF file check
+   
+6. **.gitignore blocking commits:**
+   - Used `git add -f` to force add test files
+
+### Next Testing Priorities
+
+**High Priority (~300 tests remaining for 80%):**
+1. Database service tests (150 tests) - Need to solve db export mocking
+2. Redux slice tests (50 tests) - documentSlice, categorySlice
+3. Utility tests (50 tests) - File system, date formatters
+4. Backup service tests (50 tests) - Non-database logic
+
+**Medium Priority:**
+5. Component tests (100 tests) - Settings screens
+
+---
+
+## 🧪 Phase 1: Redux Slice Tests (Nov 27, 2025)
+
+### Session Overview: Redux State Management Tests
+
+**Goal:** Test Redux slices without database mocking complexity
+
+**Tests Created:**
+- documentSlice.test.ts: 40 tests (async thunks, selectors, edge cases)
+- categorySlice.test.ts: 34 tests (async thunks, selectors, edge cases)
+
+**Results:**
+- Test count: 504 → 578 passing (+74 tests, +15% increase)
+- Pass rate: 100% (0 failures)
+- Coverage: ~50-55% (estimated)
+
+### Commands Used
+
+**1. Explore Redux Store Structure:**
+```powershell
+# Check what slices exist
+ls src/store/slices/
+# Result: documentSlice.ts, categorySlice.ts
+
+# Read slice implementations to understand structure
+cat src/store/slices/documentSlice.ts
+cat src/store/slices/categorySlice.ts
+```
+
+**2. Create Test Files:**
+```powershell
+# Created documentSlice.test.ts (40 tests)
+# - Initial state validation
+# - Sync actions (4 tests)
+# - Async thunks (7 thunks, 2-4 tests each = 18 tests)
+# - Selectors (11 tests)
+# - Edge cases (4 tests)
+
+# Created categorySlice.test.ts (34 tests)
+# - Initial state validation
+# - Sync actions (3 tests)
+# - Async thunks (5 thunks, 2-3 tests each = 15 tests)
+# - Selectors (11 tests)
+# - Edge cases (4 tests)
+```
+
+**3. Run Tests and Fix Issues:**
+```powershell
+# Run documentSlice tests (first attempt)
+npm test -- --watchAll=false --testPathPattern="documentSlice\.test"
+# Result: 38/40 passing, 2 failures
+# - readDocumentContent error handling (doesn't set error in state)
+# - Filter preservation (filter is merged, not replaced)
+
+# Fixed both issues:
+# - Changed readDocumentContent error test to check thunk result
+# - Changed filter test to check merged filter with defaults
+
+# Run documentSlice tests (final)
+npm test -- --watchAll=false --testPathPattern="documentSlice\.test"
+# Result: ✅ 40/40 passing
+
+# Run categorySlice tests (first attempt)
+npm test -- --watchAll=false --testPathPattern="categorySlice\.test"
+# Result: ✅ 34/34 passing (passed on first run!)
+```
+
+**4. Verify Total Test Count:**
+```powershell
+# Get total test count across all suites
+npm test -- --watchAll=false 2>&1 | Select-String -Pattern "Test Suites:|Tests:" | Select-Object -Last 2
+
+# Result:
+Test Suites: 23 passed, 23 total
+Tests:       578 passed, 578 total
+```
+
+**5. Commit Changes:**
+```powershell
+# Force add test files (bypassing .gitignore)
+git add -f __tests__/store/slices/documentSlice.test.ts __tests__/store/slices/categorySlice.test.ts
+
+# Verify staging
+git status --short
+
+# Commit with detailed message
+git commit -m "Add comprehensive Redux slice tests (Phase 1 complete)
+
+- Created documentSlice.test.ts (40 tests) covering:
+  - Initial state validation
+  - Sync actions (setSelectedDocument, setFilter, clearError, clearUploadProgress)
+  - All 7 async thunks (loadDocuments, loadDocumentStats, uploadDocumentWithProgress, 
+    readDocumentContent, updateDocumentMetadata, removeDocument, toggleFavorite)
+  - All 11 selectors (basic and memoized)
+  - Edge cases (multiple uploads, empty lists, filter preservation)
+
+- Created categorySlice.test.ts (34 tests) covering:
+  - Initial state validation
+  - Sync actions (setSelectedCategory, clearError, clearCategories)
+  - All 5 async thunks (loadCategories, createCategory, updateCategory, 
+    deleteCategory, moveCategory)
+  - All 8 selectors (flat list, tree, selected, by parent)
+  - Edge cases (simultaneous creates, selection preservation, minimal data)
+
+Test count increased: 504 → 578 passing tests (+74 tests, +15% increase)
+Coverage estimate: ~50-55% (target: 80%)
+Phase 1 (Redux Slices) complete!"
+
+# Result: Commit a4e8292 created successfully
+```
+
+### Testing Pattern: Redux Slices
+
+**Mock Setup:**
+```typescript
+// Mock the service module
+jest.mock('../../../src/services/database/documentService');
+const mockService = documentService as jest.Mocked<typeof documentService>;
+
+// Configure mock responses
+mockService.getDocuments.mockResolvedValue([mockDocument]);
+mockService.uploadDocument.mockResolvedValue(mockDocument);
+```
+
+**Store Setup:**
+```typescript
+import { configureStore } from '@reduxjs/toolkit';
+import reducer from '../../../src/store/slices/documentSlice';
+
+let store: ReturnType<typeof configureStore>;
+
+beforeEach(() => {
+  store = configureStore({
+    reducer: { documents: reducer },
+  });
+  jest.clearAllMocks();
+});
+```
+
+**Testing Async Thunks:**
+```typescript
+it('should load documents successfully', async () => {
+  mockService.getDocuments.mockResolvedValue([mockDocument]);
+  
+  await store.dispatch(loadDocuments(undefined));
+  const state = store.getState().documents;
+  
+  expect(state.documents).toEqual([mockDocument]);
+  expect(state.loading).toBe(false);
+  expect(state.error).toBeNull();
+});
+```
+
+**Testing Selectors:**
+```typescript
+it('should select documents by category', () => {
+  const state = store.getState();
+  const docs = selectDocumentsByCategory(state, 10);
+  
+  expect(docs.every(d => d.category_id === 10)).toBe(true);
+});
+```
+
+### Lessons Learned
+
+1. **readDocumentContent thunk**: Returns only documentId, not content (to avoid Redux serialization issues). Tests should check service calls, not state changes.
+
+2. **setFilter action**: Merges partial updates with existing filter instead of replacing. Tests must account for default values.
+
+3. **Memoized selectors**: Use createSelector from @reduxjs/toolkit to prevent unnecessary re-renders. Test with various input scenarios.
+
+4. **Edge cases matter**: Test simultaneous operations, empty states, and error recovery to ensure robust state management.
+
+### Next Phase: Backup Services
+
+**Remaining for 80% coverage (~220 tests):**
+1. Backup services (40 tests)
+2. Database services (150 tests - deferred until db mocking solved)
+3. Components (15 tests - low priority)
+
+---
 
 ### Phase 3: Document Management (PENDING)
 
