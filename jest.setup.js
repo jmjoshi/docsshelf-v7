@@ -13,17 +13,30 @@ jest.mock('expo-sqlite', () => ({
 
 // Mock expo-crypto
 jest.mock('expo-crypto', () => ({
-  getRandomBytes: jest.fn((length) => {
+  getRandomBytesAsync: jest.fn(async (length) => {
     const bytes = new Uint8Array(length);
     for (let i = 0; i < length; i++) {
       bytes[i] = Math.floor(Math.random() * 256);
     }
     return bytes;
   }),
-  digestStringAsync: jest.fn((algorithm, data) => {
-    // Mock SHA-512 hash
-    return Promise.resolve('a'.repeat(128)); // 128 hex chars for SHA-512
+  digestStringAsync: jest.fn(async (algorithm, data, options) => {
+    // Mock SHA-512 hash - deterministic for testing
+    const hash = Array.from({ length: 128 }, (_, i) => 
+      ((i + data.charCodeAt(i % data.length)) % 16).toString(16)
+    ).join('');
+    return hash;
   }),
+  CryptoDigestAlgorithm: {
+    SHA512: 'SHA-512',
+    SHA256: 'SHA-256',
+    SHA1: 'SHA-1',
+    MD5: 'MD5',
+  },
+  CryptoEncoding: {
+    HEX: 'hex',
+    BASE64: 'base64',
+  },
 }));
 
 // Mock expo-router
