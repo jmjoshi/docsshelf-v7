@@ -36,6 +36,14 @@ export default function SettingsScreen() {
       onPress: () => router.push('/settings/preferences' as any),
     },
     {
+      id: 'document-management',
+      title: 'Document Management',
+      subtitle: 'Storage, cleanup, and bulk operations',
+      icon: 'folder.badge.gearshape' as any,
+      color: '#AF52DE',
+      onPress: () => router.push('/settings/document-management' as any),
+    },
+    {
       id: 'backup',
       title: 'Backup & Restore',
       subtitle: 'Export and import your data',
