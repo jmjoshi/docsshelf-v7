@@ -2542,6 +2542,387 @@ npx tsc --noEmit
 
 ---
 
-**Last Updated:** November 26, 2025  
-**Next Update:** Continue with remaining v1.0 features (Error handling, Performance optimization)
+## 📦 Production Build Commands (FR-MAIN-019)
+**Session:** November 27, 2025  
+**Purpose:** Generate production APK for physical device testing
+
+### Android Production Build
+
+#### Generate Release Keystore (First Time Only)
+```powershell
+# Navigate to android/app directory
+cd C:\projects\docsshelf-v7\android\app
+
+# Generate RSA 2048-bit keystore (PKCS12 format, 10000 days validity)
+keytool -genkeypair -v -storetype PKCS12 `
+  -keystore release.keystore `
+  -alias docsshelf-release `
+  -keyalg RSA `
+  -keysize 2048 `
+  -validity 10000 `
+  -dname "CN=DocsShelf, OU=Development, O=DocsShelf, L=City, ST=State, C=US"
+
+# Verify keystore created
+Test-Path release.keystore
+# Expected: True
+
+# List keystore contents
+keytool -list -v -keystore release.keystore
+# Enter password when prompted (docsshelf2025 for test keystore)
+```
+
+**Keystore Details:**
+- **Type**: PKCS12 (modern format, recommended)
+- **Algorithm**: RSA 2048-bit
+- **Validity**: 10,000 days (~27 years)
+- **Alias**: docsshelf-release
+- **Password**: docsshelf2025 (TEST ONLY - use secure password for production)
+- **Location**: android/app/release.keystore
+
+**Security Warning:**
+- ⚠️ Test keystore only - suitable for development/testing
+- 🔒 Production keystore must use strong, unique passwords
+- 🚫 Never commit production keystore to version control
+- 💾 Backup keystore securely offline
+
+#### Configure Build Signing
+Edit `android/app/build.gradle`:
+
+```gradle
+android {
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storePassword 'docsshelf2025'
+            keyAlias 'docsshelf-release'
+            keyPassword 'docsshelf2025'
+        }
+    }
+    
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled enableMinifyInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+}
+```
+
+**For Production (Using Environment Variables):**
+```gradle
+signingConfigs {
+    release {
+        storeFile file(System.getenv("KEYSTORE_FILE") ?: "release.keystore")
+        storePassword System.getenv("KEYSTORE_PASSWORD")
+        keyAlias System.getenv("KEY_ALIAS")
+        keyPassword System.getenv("KEY_PASSWORD")
+    }
+}
+```
+
+#### Build Production APK
+```powershell
+# Navigate to android directory
+cd C:\projects\docsshelf-v7\android
+
+# Clean previous builds (optional, may fail with CMake errors - safe to skip)
+.\gradlew clean
+
+# Build release APK
+.\gradlew assembleRelease
+
+# Build with forced dependency refresh (if network/cache issues)
+.\gradlew assembleRelease --refresh-dependencies
+
+# Build with more verbose output
+.\gradlew assembleRelease --info
+
+# Build with debugging output
+.\gradlew assembleRelease --debug
+```
+
+**Expected Output:**
+```
+BUILD SUCCESSFUL in 10m 23s
+147 actionable tasks: 147 executed
+```
+
+**APK Location:**
+```powershell
+# Verify APK created
+Test-Path "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk"
+# Expected: True
+
+# Get APK file size
+(Get-Item "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk").Length / 1MB
+# Expected: ~40-60 MB
+```
+
+#### Build Troubleshooting
+
+**Issue 1: Network Connectivity Errors**
+```powershell
+# Error: "No such host is known (repo.maven.apache.org)"
+# Error: "No such host is known (www.jitpack.io)"
+
+# Diagnose network connectivity
+Test-NetConnection repo.maven.apache.org -Port 443
+Test-NetConnection www.jitpack.io -Port 443
+
+# Solutions:
+# 1. Check internet connection
+# 2. Disable VPN if using corporate network
+# 3. Try different network (mobile hotspot)
+# 4. Check firewall settings
+# 5. Retry build: .\gradlew assembleRelease --refresh-dependencies
+```
+
+**Issue 2: CMake Errors During Clean**
+```powershell
+# Error: "add_subdirectory given source ... which is not an existing directory"
+# Affects: react-native-gesture-handler, react-native-reanimated
+
+# Solution: Skip clean step
+# Clean is optional - assembleRelease works without it
+.\gradlew assembleRelease  # Skip clean, go straight to build
+```
+
+**Issue 3: Gradle Daemon Issues**
+```powershell
+# Error: "Gradle daemon disappeared unexpectedly"
+
+# Kill all Gradle daemons
+.\gradlew --stop
+
+# Clear Gradle cache
+Remove-Item -Recurse -Force $env:USERPROFILE\.gradle\caches
+
+# Retry build
+.\gradlew assembleRelease
+```
+
+**Issue 4: Out of Memory**
+```powershell
+# Error: "OutOfMemoryError: Java heap space"
+
+# Edit gradle.properties, increase memory:
+# org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m
+
+# Or set environment variable temporarily:
+$env:GRADLE_OPTS="-Xmx4096m"
+.\gradlew assembleRelease
+```
+
+#### Install APK on Physical Device
+
+**Method 1: ADB Command-Line**
+```powershell
+# Enable USB debugging on Android device:
+# Settings → About Phone → Tap "Build Number" 7 times → Developer Options → USB Debugging
+
+# Connect device via USB cable
+
+# Verify device connected
+adb devices
+# Expected: List of devices attached
+#           <device_id>    device
+
+# Install APK
+adb install "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk"
+
+# If app already installed, force reinstall
+adb install -r "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk"
+
+# Uninstall app (if needed)
+adb uninstall com.docsshelf  # Use your app's package name
+```
+
+**Method 2: Direct APK Transfer**
+```powershell
+# 1. Copy APK to device storage (Downloads folder)
+#    - Use USB cable file transfer
+#    - Or email APK to yourself
+#    - Or use cloud storage (Google Drive, Dropbox)
+
+# 2. On device:
+#    - Open Files app → Downloads
+#    - Tap app-release.apk
+#    - Allow installation from unknown sources if prompted
+#    - Tap "Install"
+```
+
+**Method 3: Wireless ADB (Android 11+)**
+```powershell
+# On device: Settings → Developer Options → Wireless Debugging → Pair Device
+
+# Get pairing code and IP:port from device screen
+
+# Pair device (one-time)
+adb pair <ip>:<port>
+# Enter pairing code when prompted
+
+# Connect to device
+adb connect <ip>:<port>
+
+# Verify connection
+adb devices
+
+# Install APK
+adb install "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk"
+```
+
+#### Generate AAB for Play Store
+```powershell
+# Android App Bundle (AAB) - required for Play Store submission
+cd C:\projects\docsshelf-v7\android
+
+# Build release AAB
+.\gradlew bundleRelease
+
+# AAB location
+Test-Path "app\build\outputs\bundle\release\app-release.aab"
+# Expected: True
+
+# Note: AAB must be signed before upload to Play Store
+```
+
+### iOS Production Build
+
+#### Build for Physical Device
+```powershell
+# Connect iPhone/iPad via USB cable
+
+# Build and install on device
+npx expo run:ios --device --configuration Release
+
+# Or specify device by name
+npx expo run:ios --device "My iPhone" --configuration Release
+```
+
+#### Build with Xcode
+```powershell
+# Open workspace in Xcode
+open ios/docsshelf.xcworkspace
+
+# In Xcode:
+# 1. Select your device from device dropdown (not simulator)
+# 2. Product → Scheme → Edit Scheme
+# 3. Set Build Configuration to "Release"
+# 4. Product → Build (Cmd+B)
+# 5. Product → Run (Cmd+R) to install on device
+```
+
+#### Create iOS Archive for TestFlight/App Store
+```powershell
+# In Xcode:
+# 1. Select "Any iOS Device (arm64)" from device dropdown
+# 2. Product → Archive
+# 3. Wait for archive to complete
+# 4. Organizer opens automatically
+# 5. Select archive → Distribute App → App Store Connect
+# 6. Follow upload wizard
+```
+
+### Build Verification
+
+#### APK Testing Checklist
+```powershell
+# After installing APK on device:
+
+✅ App launches without crashes
+✅ Splash screen displays correctly
+✅ Registration flow works
+✅ Login flow works
+✅ MFA setup and verification (if enabled)
+✅ Document upload works
+✅ Document viewer displays content
+✅ PDF viewer opens PDFs correctly
+✅ Camera scan feature works
+✅ Search and filters functional
+✅ Categories can be created/edited
+✅ Backup export works
+✅ Backup restore works
+✅ Settings screens accessible
+✅ Performance smooth (no lag)
+✅ No console errors in logs
+```
+
+#### Check Build Info
+```powershell
+# Check APK details with aapt (Android Asset Packaging Tool)
+$buildTools = "C:\Users\<username>\AppData\Local\Android\Sdk\build-tools\36.0.0"
+& "$buildTools\aapt" dump badging "C:\projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk"
+
+# Extract key information:
+# - package name
+# - versionCode
+# - versionName
+# - targetSdkVersion
+# - minSdkVersion
+```
+
+### Build Performance Metrics
+
+**Typical Build Times:**
+- **First build**: 10-15 minutes (downloads dependencies)
+- **Clean build**: 8-12 minutes
+- **Incremental build**: 3-5 minutes
+- **Build with cache**: 2-3 minutes
+
+**Build Output Sizes:**
+- **APK (ARM64)**: 40-60 MB
+- **APK (Universal)**: 80-120 MB
+- **AAB**: 30-50 MB (smaller than APK)
+
+### Production Release Checklist
+
+**Before Submitting to App Stores:**
+- [ ] Generate production keystore with secure passwords
+- [ ] Store keystore backup securely offline
+- [ ] Update version number in app.json
+- [ ] Test on multiple physical devices
+- [ ] Complete all app store screenshots
+- [ ] Write app description and release notes
+- [ ] Prepare privacy policy URL
+- [ ] Configure in-app content rating
+- [ ] Test backup and restore on clean install
+- [ ] Verify all features work in release build
+- [ ] Check for any console warnings/errors
+- [ ] Remove any test/debug code
+- [ ] Update changelog and documentation
+- [ ] Create git tag for release version
+- [ ] Build and test iOS version
+- [ ] Generate signed AAB for Play Store
+- [ ] Create iOS archive for App Store
+
+### Build Documentation
+
+**Comprehensive Guide:**
+- Location: `documents/LOCAL_PRODUCTION_BUILD_GUIDE.md`
+- Contents:
+  * Detailed prerequisites
+  * Step-by-step instructions
+  * Troubleshooting (8 common issues)
+  * Installation methods
+  * Testing procedures
+  * Production best practices
+
+**Quick Reference:**
+```powershell
+# Complete build workflow (Android)
+cd C:\projects\docsshelf-v7\android
+.\gradlew assembleRelease
+adb install app\build\outputs\apk\release\app-release.apk
+
+# Complete build workflow (iOS)
+cd C:\projects\docsshelf-v7
+npx expo run:ios --device --configuration Release
+```
+
+---
+
+**Last Updated:** November 27, 2025  
+**Session:** FR-MAIN-019 (Production Build Setup)  
+**Next Update:** Document management and security functions in settings
 
