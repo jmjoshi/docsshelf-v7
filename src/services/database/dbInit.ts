@@ -8,7 +8,7 @@ import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
 // Database version - increment when schema changes
-const DATABASE_VERSION = 5;
+const DATABASE_VERSION = 6;
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -559,6 +559,47 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
       }
       
       console.log('Migration to version 5 completed');
+    }
+    
+    // Migration v5 → v6: Add biometric authentication and app preferences
+    if (fromVersion < 6) {
+      console.log('Migrating database from version 5 to 6...');
+      
+      // Add biometric_enabled column to users table
+      const userColumns = await db.getAllAsync<{ name: string }>(
+        `PRAGMA table_info(users)`
+      );
+      const userColumnNames = userColumns.map((col) => col.name);
+      
+      if (!userColumnNames.includes('biometric_enabled')) {
+        await db.execAsync(`
+          ALTER TABLE users ADD COLUMN biometric_enabled INTEGER DEFAULT 0;
+        `);
+        console.log('Added biometric_enabled column to users table');
+      }
+      
+      // Create app_preferences table for persistent user preferences
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS app_preferences (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          preference_key TEXT NOT NULL,
+          preference_value TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(user_id, preference_key)
+        );
+      `);
+      
+      // Create index for faster preference lookups
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_preferences_user 
+        ON app_preferences(user_id);
+      `);
+      
+      console.log('Created app_preferences table');
+      console.log('Migration to version 6 completed');
     }
     
     await setDatabaseVersion(db, DATABASE_VERSION);
