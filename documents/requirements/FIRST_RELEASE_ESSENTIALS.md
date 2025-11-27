@@ -593,11 +593,218 @@ src/screens/Documents/DocumentListScreen.tsx
 
 ---
 
-### 6. Document Tags UI (MEDIUM) ⏳
+### 6. Settings Enhancement (HIGH) 🚧
+
+**Priority:** 🟡 **HIGH** - Critical for v1.0 production  
+**Effort:** 3-4 days  
+**Status:** 🚧 **IN PROGRESS** (Started Nov 27, 2025 - Session FR-MAIN-020)
+
+#### Current State Analysis:
+
+**✅ Complete Settings (3/7):**
+1. Profile - Edit user information ✅
+2. Backup & Restore - Full backup/restore functionality ✅
+3. About - App version, privacy, terms ✅
+
+**🚧 Incomplete Settings (2/7 - 70-80%):**
+4. Security - UI only, not wired up (70%)
+5. Preferences - State not persisted (80%)
+
+**❌ Missing Settings (2/7):**
+6. Document Management - Not implemented (0%)
+7. Help & Support - Not implemented (0%)
+
+#### Critical Gaps Identified:
+
+**Security Settings Issues:**
+- ❌ MFA toggle shows "Coming Soon" alert (placeholder)
+- ❌ Biometric toggle not functional (placeholder)
+- ❌ Change Password shows "Coming Soon" alert (placeholder)
+- ❌ Security Log shows "Coming Soon" alert (placeholder)
+- ⚠️ All toggles are UI-only, not connected to database
+- ⚠️ No actual security operations performed
+
+**Preferences Issues:**
+- ❌ Clear Cache shows TODO placeholder comment
+- ⚠️ All preferences lost on app restart (not persisted to database)
+- ⚠️ Toggles don't affect actual app behavior
+- ⚠️ No storage usage information displayed
+
+**Missing Document Management:**
+- ❌ No dedicated document management settings screen
+- ❌ No storage usage breakdown by category
+- ❌ No bulk document operations (delete all, by category, by date)
+- ❌ No duplicate detection tools
+- ❌ No database optimization tools (VACUUM, rebuild index)
+- ❌ No document cleanup utilities
+
+#### Implementation Plan (FR-MAIN-020):
+
+**Phase 1: Security Settings Enhancement** (8-10 hours) 🔴 HIGH
+1. **MFA Toggle Integration**
+   - Wire up to existing mfaService
+   - Navigate to MFA setup screen
+   - Enable/disable MFA from settings
+   - Update database user.mfa_enabled field
+
+2. **Biometric Authentication**
+   - Implement with expo-local-authentication
+   - Check device support (hasHardwareAsync)
+   - Verify enrollment (isEnrolledAsync)
+   - Test authentication prompt
+   - Add biometric_enabled column to users table
+   - Persist setting to database
+
+3. **Change Password Screen**
+   - Create new ChangePasswordScreen.tsx
+   - Validate current password
+   - Password strength validation
+   - Update password hash in database
+   - Force logout after change
+   - Route: app/settings/change-password.tsx
+
+4. **Security Log Viewer**
+   - Create new SecurityLogScreen.tsx
+   - Display audit_log entries
+   - Filter: All, Login, Security actions
+   - Show timestamp, action, details, IP
+   - Export logs option
+   - Route: app/settings/security-log.tsx
+
+**Phase 2: Preferences Enhancement** (4-6 hours) 🟡 MEDIUM
+1. **Preferences Persistence**
+   - Create app_preferences table (v6 migration)
+   - Build preferenceService.ts
+   - Save preferences: darkMode, compactView, showThumbnails, notifications, autoBackup
+   - Load preferences on app start
+   - Update PreferencesScreen to persist all toggles
+
+2. **Clear Cache Implementation**
+   - Calculate cache size (thumbnails + temp files)
+   - Delete thumbnail files
+   - Clear Expo cache directory
+   - Show freed storage amount
+   - Toast notification with size freed
+
+3. **Storage Usage Display**
+   - Show total cache size
+   - Show total documents size
+   - Available device storage
+
+**Phase 3: Document Management Settings** (6-8 hours) 🟡 HIGH
+1. **Create Document Management Screen**
+   - NEW screen: DocumentManagementScreen.tsx
+   - Route: app/settings/document-management.tsx
+   - Add menu item to explore.tsx
+
+2. **Storage Usage Section**
+   - Total documents count
+   - Total storage used
+   - Average document size
+   - Largest documents list
+   - Breakdown by category (size + count)
+   - Visual progress bars
+
+3. **Bulk Operations Section**
+   - Delete all documents (with double confirmation)
+   - Delete documents by category
+   - Delete documents older than X days
+   - Delete documents by size (> X MB)
+   - Export all documents
+   - Confirmation dialogs for all destructive actions
+
+4. **Cleanup Tools Section**
+   - Find and remove duplicates
+   - Remove orphaned files (DB records without files)
+   - Remove orphaned files (files without DB records)
+   - Optimize database (VACUUM)
+   - Rebuild search index
+   - Show progress for long operations
+
+5. **New Service Functions**
+   ```typescript
+   // documentService.ts additions
+   - deleteAllDocuments(userId): Promise<number>
+   - findDuplicateDocuments(userId): Promise<DuplicateGroup[]>
+   - getStorageByCategory(userId): Promise<CategoryStorage[]>
+   - optimizeDatabase(): Promise<void>
+   - rebuildSearchIndex(): Promise<void>
+   ```
+
+#### Implementation Details:
+
+**Files to Create (10 new):**
+1. `development-plans/fr-main-020-settings-enhancement-plan.md` ✅
+2. `src/screens/Settings/ChangePasswordScreen.tsx`
+3. `src/screens/Settings/SecurityLogScreen.tsx`
+4. `src/screens/Settings/DocumentManagementScreen.tsx`
+5. `src/screens/Settings/DuplicatesScreen.tsx`
+6. `src/services/database/preferenceService.ts`
+7. `app/settings/change-password.tsx`
+8. `app/settings/security-log.tsx`
+9. `app/settings/document-management.tsx`
+10. `app/settings/duplicates.tsx`
+
+**Files to Modify (5 existing):**
+1. `src/screens/Settings/SecuritySettingsScreen.tsx` - Wire up functionality
+2. `src/screens/Settings/PreferencesScreen.tsx` - Add persistence
+3. `src/services/database/dbInit.ts` - Add v6 migration (app_preferences table)
+4. `src/services/database/documentService.ts` - Add bulk operations
+5. `app/(tabs)/explore.tsx` - Add document management menu item
+
+**Database Changes (Schema v6):**
+```sql
+-- New table for persistent preferences
+CREATE TABLE IF NOT EXISTS app_preferences (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  preference_key TEXT NOT NULL,
+  preference_value TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(user_id, preference_key)
+);
+
+-- Add biometric column if not exists
+ALTER TABLE users ADD COLUMN biometric_enabled INTEGER DEFAULT 0;
+```
+
+**Testing Plan:**
+- [ ] MFA toggle enables/disables correctly
+- [ ] Biometric prompt appears and authenticates
+- [ ] Change password validates and updates
+- [ ] Security log displays recent activity
+- [ ] Preferences persist after app restart
+- [ ] Clear cache removes files and shows correct size
+- [ ] Storage stats show accurate numbers
+- [ ] Find duplicates identifies matches correctly
+- [ ] Delete all documents requires confirmation
+- [ ] Optimize database completes successfully
+
+**Completion Criteria:**
+- [ ] All placeholder alerts replaced with functionality
+- [ ] All toggles connected to database
+- [ ] All new screens implemented and tested
+- [ ] Database migrations tested (v5 → v6)
+- [ ] Unit tests written for new services
+- [ ] Integration tests for settings screens
+- [ ] Manual testing checklist completed
+- [ ] Documentation updated
+- [ ] Code committed with proper tags
+- [ ] FIRST_RELEASE_ESSENTIALS updated
+
+**Estimated Time:** 21-29 hours (~3-4 days)  
+**Target Completion:** November 30, 2025  
+**Status:** Ready to start Phase 1 - Security Settings
+
+---
+
+### 7. Document Tags UI (MEDIUM) ⏳
 
 **Priority:** 🟢 **MEDIUM** - Nice to have, not critical  
 **Effort:** 2-3 days  
-**Status:** 🚧 **Database ready, UI not implemented**
+**Status:** 🚧 **Database ready, UI not implemented** (Deferred to v1.1)
 
 #### What's Needed:
 - **Tag Management**
@@ -641,7 +848,7 @@ src/services/database/tagService.ts
 
 ---
 
-### 7. Error Handling & User Feedback (HIGH) ✅
+### 8. Error Handling & User Feedback (HIGH) ✅
 
 **Priority:** 🟡 **HIGH** - Critical for UX  
 **Effort:** 2 days  
@@ -924,7 +1131,7 @@ src/constants/helpContent.ts
 
 ## 📊 PROGRESS TRACKING
 
-### Overall Completion: 95% ✅
+### Overall Completion: 92% (was 100%, adjusted after settings review)
 
 #### Completed Categories:
 - ✅ Authentication & Security: 100%
@@ -932,20 +1139,24 @@ src/constants/helpContent.ts
 - ✅ Backup & Export: 100%
 - ✅ Backup & Restore: 100%
 - ✅ Legal Documents & Consent: 100%
-- ✅ PDF Viewer: 100% 🎉 **NEW!**
-- ✅ Settings & Profile: 100%
+- ✅ PDF Viewer: 100%
+- 🚧 Settings & Preferences: 75% (Security 70%, Preferences 80%, Doc Mgmt 0%)
 - ✅ Dashboard & Navigation: 100%
 - ✅ Database & Data Layer: 100%
 - ✅ Security Infrastructure: 100%
 
-#### All HIGH Priority Features Complete! 🎉
-- ✅ Search & Filters: 100% (HIGH) ✅
-- ⏳ Document Tags: 0% (MEDIUM) - Can defer to v1.1
-- ✅ Error Handling: 100% (HIGH) ✅
-- ⏳ Help & Docs: 0% (MEDIUM) - Can defer to v1.1
-- ✅ Performance: 100% (HIGH) ✅ **NEW!**
+#### HIGH Priority Features Status:
+- ✅ Search & Filters: 100% ✅
+- 🚧 Settings Enhancement: 40% (HIGH) **IN PROGRESS** 🔴
+  - Security Settings: 70% (UI only, needs wiring)
+  - Preferences: 80% (needs persistence)
+  - Document Management: 0% (needs implementation)
+- ⏳ Document Tags: 0% (MEDIUM) - Deferred to v1.1
+- ✅ Error Handling: 100% ✅
+- ⏳ Help & Docs: 0% (MEDIUM) - Deferred to v1.1
+- ✅ Performance: 100% ✅
 
-**All essential v1.0 features are now 100% complete!** 🚀
+**Status:** Settings enhancement (FR-MAIN-020) is critical blocker for v1.0 release. Security and document management features are incomplete.
 
 ---
 
