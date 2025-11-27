@@ -3,12 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 import RegisterScreen from '../src/screens/Auth/RegisterScreen';
 
-// Remove problematic mock from test file. Use manual mock instead.
-
-jest.mock('react-native-argon2', () => jest.fn().mockResolvedValue({ encodedHash: 'mockedHash' }));
-jest.mock('expo-secure-store', () => ({
-  setItemAsync: jest.fn().mockResolvedValue(undefined),
-}));
+// Mocks are now in jest.setup.js
 
 describe('RegisterScreen', () => {
   it('shows error for invalid password', async () => {
