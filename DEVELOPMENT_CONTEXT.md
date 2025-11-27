@@ -1,10 +1,10 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** November 26, 2025  
+**Last Updated:** November 27, 2025  
 **Project Status:** Phase 2 - Core Document Management (100% Complete) | Phase 3 - Backup & Export (100% Complete)  
-**Current Sprint:** FR-MAIN-013A (Unencrypted USB Backup - COMPLETE ✅)  
-**Recent Major Achievement:** FR-MAIN-013A unencrypted backup complete with binary file support and database migration fixes!  
-**Note:** FR-LOGIN-001 to FR-LOGIN-010 - All Complete | FR-MAIN-001 to FR-MAIN-003 - All Complete | FR-MAIN-013 & FR-MAIN-013A - All Complete & Production Ready
+**Current Sprint:** FR-MAIN-020 (Settings Enhancement - Phase 1 COMPLETE ✅)  
+**Recent Major Achievement:** FR-MAIN-020 Phase 1 complete - Security Settings wired up with MFA, biometric auth, password change, and security log!  
+**Note:** FR-LOGIN-001 to FR-LOGIN-010 - All Complete | FR-MAIN-001 to FR-MAIN-003 - All Complete | FR-MAIN-013 & FR-MAIN-013A - All Complete | FR-MAIN-019 - Production Build Ready
 
 ---
 
@@ -3930,6 +3930,210 @@ git push origin master
 ```
 
 **Tags:** #session-nov27-morning #production-build #android #apk #keystore #gradle #release-config #network-troubleshooting #build-documentation #fr-main-019 #build-complete #v1.0-production-ready
+
+---
+
+## 📱 SESSION FR-MAIN-020: SETTINGS ENHANCEMENT (November 27, 2025)
+
+### Overview
+Comprehensive review and enhancement of all settings screens. Initial assessment showed 100% complete, but detailed review revealed critical gaps: Security Settings (70% - UI only), Preferences (80% - no persistence), Document Management (0% - not implemented). Created 3-phase implementation plan to complete all missing functionality.
+
+### Phase 1: Security Settings Enhancement ✅ COMPLETE
+
+#### Problem Identified
+- SecuritySettingsScreen.tsx had placeholder alerts instead of real functionality
+- MFA toggle showed "Coming Soon" alert
+- Biometric toggle showed "Coming Soon" alert
+- Change password and security log were non-functional
+
+#### Solution Implemented
+
+**Database Schema v6 Migration:**
+```typescript
+// Added to dbInit.ts (DATABASE_VERSION: 5 → 6)
+- Added biometric_enabled column to users table (INTEGER DEFAULT 0)
+- Created app_preferences table (id, user_id, preference_key, preference_value, timestamps)
+- Created index idx_preferences_user for performance
+```
+
+**Preference Service Created (158 lines):**
+```typescript
+// src/services/database/preferenceService.ts
+interface AppPreference {
+  darkMode: boolean;
+  compactView: boolean;
+  showThumbnails: boolean;
+  notifications: boolean;
+  autoBackup: boolean;
+  autoBackupFrequency: 'daily' | 'weekly' | 'monthly';
+  defaultSortMode: 'date' | 'name' | 'size' | 'type';
+  defaultViewMode: 'all' | 'favorites' | 'recent';
+}
+
+Functions:
+- getPreferences(userId?): Promise<AppPreference> - Returns defaults merged with saved
+- setPreference(key, value, userId?): Promise<void> - Update single preference
+- setPreferences(preferences, userId?): Promise<void> - Batch update with transaction
+- resetPreferences(userId?): Promise<void> - Delete all, restore defaults
+- getPreference(key, userId?): Promise<value> - Get single preference
+```
+
+**SecuritySettingsScreen.tsx Enhanced:**
+- Added loading state with database fetch on mount
+- Wired up MFA toggle:
+  * Disable: Updates users.mfa_enabled = 0, clears mfa_type
+  * Enable: Navigates to /(auth)/mfa-setup (reuses existing screen)
+- Wired up Biometric toggle:
+  * Checks device support: hasHardwareAsync()
+  * Checks enrollment: isEnrolledAsync()
+  * Prompts authentication: authenticateAsync()
+  * Updates users.biometric_enabled in database
+  * Shows toast notifications for all states
+- Updated Change Password: Navigates to /settings/change-password
+- Updated Security Log: Navigates to /settings/security-log
+
+**ChangePasswordScreen Created (380 lines):**
+- Three password fields: current, new, confirm
+- Real-time password strength indicator (Weak/Fair/Good/Strong)
+- Password validation:
+  * Current password verified against database with salt
+  * New password validated (12+ chars, uppercase, lowercase, numbers, symbols)
+  * Confirm password must match
+  * New password must differ from current
+- Visual feedback:
+  * Strength bar with color coding (red/orange/green/teal)
+  * Error messages for each field
+  * Eye icons to toggle password visibility
+  * Disabled button when invalid
+- Updates password_hash with existing salt
+- Logs PASSWORD_CHANGE action to audit_log
+- Route: app/settings/change-password.tsx
+
+**SecurityLogScreen Created (460 lines):**
+- Displays audit_log entries with filtering
+- Filter tabs: All / Login / Security
+  * Login: LOGIN, LOGOUT, FAILED_LOGIN, REGISTER
+  * Security: PASSWORD_CHANGE, MFA_ENABLED, MFA_DISABLED, BIOMETRIC_ENABLED, BIOMETRIC_DISABLED
+- Features:
+  * Color-coded icons per action type
+  * Formatted timestamps (Nov 27, 2025, 2:30 PM)
+  * IP address display (when not 'local')
+  * Pull-to-refresh
+  * Export to CSV via Share API
+  * Badge counts per filter
+  * Limit to 100 most recent entries
+- Empty state with instructions
+- Route: app/settings/security-log.tsx
+
+#### Files Created (5 new files)
+1. `src/services/database/preferenceService.ts` (158 lines)
+2. `src/screens/Settings/ChangePasswordScreen.tsx` (380 lines)
+3. `src/screens/Settings/SecurityLogScreen.tsx` (460 lines)
+4. `app/settings/change-password.tsx` (route)
+5. `app/settings/security-log.tsx` (route)
+
+#### Files Modified (2 files)
+1. `src/services/database/dbInit.ts` - DATABASE_VERSION 5→6, v6 migration
+2. `src/screens/Settings/SecuritySettingsScreen.tsx` - Wired up all functionality
+
+#### TypeScript Issues Resolved
+1. **useToast import error**: Changed from custom Toast component to react-native-toast-notifications
+2. **Preference assignment type error**: Added explicit type cast `(result as any)[key] = value`
+3. **currentVersion scope error**: Changed to `fromVersion` parameter in migration
+4. **passwordHash API**: Fixed to include salt parameter (hashPassword(password, salt))
+5. **passwordValidator API**: Fixed to use {valid, message} not {isValid, errors}
+6. **React Hook dependencies**: Wrapped loadLogs in useCallback with proper deps
+
+#### Testing Checklist (Pending Manual Testing)
+- [ ] MFA toggle enables and navigates to setup screen
+- [ ] MFA toggle disables and updates database
+- [ ] Biometric prompt appears on enable
+- [ ] Biometric authentication works
+- [ ] Biometric setting persists after app restart
+- [ ] Change password screen validates all fields
+- [ ] Password strength indicator updates in real-time
+- [ ] New password saves correctly
+- [ ] Security log displays all activity
+- [ ] Security log filters work (All/Login/Security)
+- [ ] Security log export generates CSV
+- [ ] All toast notifications appear
+
+#### Dependencies Used
+- expo-local-authentication (existing) - Biometric authentication
+- react-native-toast-notifications (existing) - Toast notifications
+- jsotp (existing) - MFA/TOTP functionality
+- expo-sqlite v2 (existing) - Database persistence
+
+#### Git Operations
+```powershell
+git add -A
+git commit -m "feat(FR-MAIN-020): Complete Phase 1 - Security Settings enhancement"
+git push origin master
+# Commit: d601a5c
+```
+
+### Phase 2: Preferences Enhancement 🔄 IN PROGRESS
+
+#### Scope
+- Wire up PreferencesScreen with preferenceService
+- Implement clear cache functionality
+- Add storage usage display
+- Show freed storage in toast after cache clear
+- Persist all preference toggles to database
+- Estimated Time: 4-6 hours
+
+#### Files to Modify
+1. `src/screens/Settings/PreferencesScreen.tsx` - Wire up all toggles to preferenceService
+2. `src/services/database/documentService.ts` - Add getCacheSize() and clearCache() functions
+
+### Phase 3: Document Management Screen ⏳ PENDING
+
+#### Scope
+- Create new Document Management settings screen
+- Storage usage section (total, by category, charts)
+- Bulk operations (delete all, by category, by date, by size)
+- Cleanup tools (find duplicates, optimize DB, rebuild index)
+- Document retention policies
+- Estimated Time: 6-8 hours
+
+#### Files to Create
+1. `src/screens/Settings/DocumentManagementScreen.tsx` (400+ lines)
+2. `app/settings/document-management.tsx` (route)
+3. `src/screens/Settings/DuplicatesScreen.tsx` (for duplicate results)
+4. `app/settings/duplicates.tsx` (route)
+
+#### Files to Modify
+1. `app/(tabs)/explore.tsx` - Add Document Management menu item
+2. `src/services/database/documentService.ts` - Add new functions:
+   - deleteAllDocuments(userId): Promise<number>
+   - findDuplicateDocuments(userId): Promise<DuplicateGroup[]>
+   - getStorageByCategory(userId): Promise<CategoryStorage[]>
+   - optimizeDatabase(): Promise<void> (VACUUM)
+   - rebuildSearchIndex(): Promise<void>
+
+### Progress Summary
+
+**Phase 1: Security Settings** ✅ 100% Complete
+- Database v6 migration
+- preferenceService created
+- SecuritySettingsScreen wired up
+- ChangePasswordScreen created
+- SecurityLogScreen created
+- All TypeScript errors resolved
+
+**Phase 2: Preferences** 🔄 0% (Starting Now)
+- PreferencesScreen enhancement
+- Cache clearing functionality
+
+**Phase 3: Document Management** ⏳ 0% (Pending)
+- New Document Management screen
+- Storage analytics
+- Bulk operations
+- Cleanup tools
+
+**Overall Progress:** 33% Complete (1 of 3 phases done)
+
+**Tags:** #session-nov27-afternoon #settings-enhancement #security-settings #mfa #biometric #password-change #security-log #preferences #database-migration #fr-main-020 #phase-1-complete
 
 ---
 

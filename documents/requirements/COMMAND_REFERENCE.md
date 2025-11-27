@@ -2922,7 +2922,250 @@ npx expo run:ios --device --configuration Release
 
 ---
 
+## 🔐 FR-MAIN-020: Settings Enhancement (November 27, 2025)
+
+### Session Overview
+Comprehensive settings enhancement across 3 phases: Security Settings (Phase 1 ✅), Preferences (Phase 2), Document Management (Phase 3).
+
+### Phase 1: Security Settings - Commands Used
+
+#### Database Migration
+```powershell
+# Check current database version
+# Added to src/services/database/dbInit.ts:
+# - DATABASE_VERSION changed from 5 to 6
+# - Added v5→v6 migration block for biometric + preferences
+
+# Migration creates:
+# - biometric_enabled column in users table
+# - app_preferences table with user_id, preference_key, preference_value
+# - Index idx_preferences_user for performance
+```
+
+#### TypeScript Compilation
+```powershell
+# Check for TypeScript errors
+npx tsc --noEmit
+
+# Common errors fixed:
+# 1. Import path corrections (passwordValidator, passwordHash in subdirectories)
+# 2. Function signature mismatches (hashPassword requires salt parameter)
+# 3. API interface changes (validatePassword returns {valid, message} not {isValid, errors})
+# 4. React Hook dependencies (useCallback, useEffect)
+# 5. Variable scope issues (fromVersion vs currentVersion)
+```
+
+#### Git Operations - Phase 1 Commit
+```powershell
+# Stage all changes
+git add -A
+
+# Commit with comprehensive message
+git commit -m "feat(FR-MAIN-020): Complete Phase 1 - Security Settings enhancement
+
+- Wired up MFA toggle to database and setup navigation
+- Implemented biometric authentication with device checks  
+- Created ChangePasswordScreen with validation
+- Created SecurityLogScreen with filtering
+- Added database v6 migration (biometric + preferences)
+- Created preferenceService for persistent settings
+
+Files Created:
+- src/services/database/preferenceService.ts (158 lines)
+- src/screens/Settings/ChangePasswordScreen.tsx (380 lines)
+- src/screens/Settings/SecurityLogScreen.tsx (460 lines)
+- app/settings/change-password.tsx
+- app/settings/security-log.tsx
+
+Files Modified:
+- src/services/database/dbInit.ts (v6 migration)
+- src/screens/Settings/SecuritySettingsScreen.tsx (wired up)
+
+TAGS: #fr-main-020 #phase-1 #security-settings #mfa #biometric #preferences"
+
+# Push to GitHub
+git push origin master
+# Commit hash: d601a5c
+```
+
+### Files Created in Phase 1
+
+**1. preferenceService.ts (158 lines)**
+```typescript
+// src/services/database/preferenceService.ts
+// Service layer for persistent user preferences
+// Functions: getPreferences, setPreference, setPreferences, resetPreferences, getPreference
+// Database: app_preferences table with upsert pattern
+```
+
+**2. ChangePasswordScreen.tsx (380 lines)**
+```typescript
+// src/screens/Settings/ChangePasswordScreen.tsx
+// Features:
+// - Current password validation (verifies against DB with salt)
+// - New password strength indicator (real-time)
+// - Password requirements validation (12+ chars, complexity)
+// - Confirm password matching
+// - Updates password_hash with existing salt
+// - Logs PASSWORD_CHANGE to audit_log
+// - Toast notifications
+// - Eye icons for show/hide password
+```
+
+**3. SecurityLogScreen.tsx (460 lines)**
+```typescript
+// src/screens/Settings/SecurityLogScreen.tsx
+// Features:
+// - Displays audit_log entries with color-coded icons
+// - Filter tabs: All / Login / Security
+// - Badge counts per filter
+// - Pull-to-refresh
+// - Export to CSV via Share API
+// - Formatted timestamps
+// - IP address display
+// - Limit to 100 most recent entries
+// - Empty state with instructions
+```
+
+**4. Route Files**
+```typescript
+// app/settings/change-password.tsx - Route for ChangePasswordScreen
+// app/settings/security-log.tsx - Route for SecurityLogScreen
+```
+
+### Files Modified in Phase 1
+
+**1. dbInit.ts - Database Migration v5→v6**
+```typescript
+// DATABASE_VERSION: 5 → 6
+// Added biometric_enabled column to users table (ALTER TABLE)
+// Created app_preferences table (id, user_id, preference_key, preference_value, timestamps)
+// Created index idx_preferences_user
+```
+
+**2. SecuritySettingsScreen.tsx - Wired Up All Features**
+```typescript
+// Before: Placeholder alerts for all actions
+// After: 
+// - MFA toggle: Database updates + navigation to MFA setup
+// - Biometric toggle: Device checks + authentication + DB persistence
+// - Change password: Navigate to /settings/change-password
+// - Security log: Navigate to /settings/security-log
+// - Loading state with database fetch on mount
+// - Toast notifications for all actions
+```
+
+### TypeScript Error Resolution Commands
+
+**Common Pattern for Fixing Import Errors:**
+```powershell
+# Find correct file locations
+Get-ChildItem -Recurse -Filter "*.ts" | Where-Object { $_.Name -like "*password*" }
+
+# Result shows actual paths:
+# src/utils/validators/passwordValidator.ts
+# src/utils/crypto/passwordHash.ts
+
+# Update imports accordingly
+# FROM: import { validatePassword } from '@/src/utils/passwordValidator';
+# TO:   import { validatePassword } from '@/src/utils/validators/passwordValidator';
+```
+
+**Checking Function Signatures:**
+```powershell
+# Read file to check API
+# Example: hashPassword requires (password, salt) not just (password)
+# Example: validatePassword returns {valid, message} not {isValid, errors}
+```
+
+### Dependencies Used (No New Installs Required)
+
+All dependencies already installed:
+- `expo-local-authentication` - Biometric authentication
+- `react-native-toast-notifications` - Toast notifications
+- `expo-sqlite v2` - Database operations
+- `jsotp` - MFA/TOTP functionality
+
+### Testing Commands (Pending Manual Testing)
+
+```powershell
+# Start development server
+npx expo start --clear
+
+# Install on physical device for testing
+# Android:
+adb install android/app/build/outputs/apk/release/app-release.apk
+
+# iOS:
+npx expo run:ios --device --configuration Release
+
+# Manual testing checklist:
+# - MFA toggle enables and disables correctly
+# - Biometric authentication prompts appear
+# - Password change validates and saves
+# - Security log displays all activity
+# - All settings persist after app restart
+# - Toast notifications appear for all actions
+```
+
+### Phase 2: Preferences (IN PROGRESS)
+
+**Scope:**
+- Wire up PreferencesScreen with preferenceService
+- Implement clear cache functionality
+- Add storage usage display
+- Persist all preference toggles
+
+**Commands to Use:**
+```powershell
+# Read existing PreferencesScreen to understand current state
+# Modify to use preferenceService.getPreferences() on mount
+# Update each toggle to call preferenceService.setPreference()
+# Add cache size calculation and clear functions to documentService
+```
+
+### Phase 3: Document Management (PENDING)
+
+**Scope:**
+- Create new Document Management settings screen
+- Add storage analytics
+- Implement bulk operations
+- Add cleanup tools
+
+**Commands to Use:**
+```powershell
+# Create new screen and route files
+# Add menu item to app/(tabs)/explore.tsx
+# Extend documentService with new functions:
+# - deleteAllDocuments
+# - findDuplicateDocuments
+# - getStorageByCategory
+# - optimizeDatabase (VACUUM)
+# - rebuildSearchIndex
+```
+
+### Session Summary
+
+**Phase 1 Complete:** ✅
+- 5 new files created (998 total lines)
+- 2 files modified
+- 6 TypeScript errors resolved
+- Database migrated to v6
+- All security settings wired up
+- Commit: d601a5c
+
+**Phase 2 In Progress:** 🔄
+- PreferencesScreen enhancement
+- Cache clearing functionality
+
+**Phase 3 Pending:** ⏳
+- Document Management screen
+- Storage analytics
+- Bulk operations
+
+---
+
 **Last Updated:** November 27, 2025  
-**Session:** FR-MAIN-019 (Production Build Setup)  
-**Next Update:** Document management and security functions in settings
+**Session:** FR-MAIN-020 Phase 1 (Security Settings - COMPLETE ✅)  
+**Next Update:** Phase 2 - Preferences enhancement
 
