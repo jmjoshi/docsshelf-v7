@@ -64,6 +64,53 @@ jest.mock('expo-file-system', () => ({
   makeDirectoryAsync: jest.fn(),
 }));
 
+// Mock expo-file-system/legacy
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///mock/documents/',
+  cacheDirectory: 'file:///mock/cache/',
+  getInfoAsync: jest.fn(),
+  readAsStringAsync: jest.fn(),
+  writeAsStringAsync: jest.fn(),
+  deleteAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(),
+  readDirectoryAsync: jest.fn(),
+  copyAsync: jest.fn(),
+  moveAsync: jest.fn(),
+}));
+
+// Mock expo-sharing
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+  shareAsync: jest.fn(() => Promise.resolve()),
+}));
+
+// Mock jszip
+jest.mock('jszip', () => {
+  return jest.fn().mockImplementation(() => ({
+    file: jest.fn().mockReturnThis(),
+    folder: jest.fn().mockReturnThis(),
+    generateAsync: jest.fn(() => Promise.resolve('mockzipbase64')),
+    loadAsync: jest.fn(() => Promise.resolve({
+      file: jest.fn(),
+      folder: jest.fn(),
+      files: {},
+    })),
+  }));
+});
+
+// Mock expo-document-picker
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(() => Promise.resolve({
+    canceled: false,
+    assets: [{
+      uri: 'file:///mock/document.pdf',
+      name: 'document.pdf',
+      size: 1024,
+      mimeType: 'application/pdf',
+    }],
+  })),
+}));
+
 // Mock react-native-toast-notifications
 jest.mock('react-native-toast-notifications', () => ({
   ToastProvider: 'ToastProvider',
@@ -103,3 +150,17 @@ jest.mock('expo-haptics', () => ({
     Heavy: 'heavy',
   },
 }));
+
+// Mock expo-secure-store
+jest.mock('expo-secure-store', () => {
+  const mockStore = new Map();
+  return {
+    getItemAsync: jest.fn(async (key) => mockStore.get(key) || null),
+    setItemAsync: jest.fn(async (key, value) => {
+      mockStore.set(key, value);
+    }),
+    deleteItemAsync: jest.fn(async (key) => {
+      mockStore.delete(key);
+    }),
+  };
+});
