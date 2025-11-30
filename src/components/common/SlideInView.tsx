@@ -57,6 +57,7 @@ export const SlideInView: React.FC<SlideInViewProps> = ({
     }, delay);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

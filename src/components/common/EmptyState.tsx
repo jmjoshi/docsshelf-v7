@@ -123,7 +123,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             • Remove filters to see all results
           </Text>
           <Text style={[styles.tipText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
-            • Search by file type (e.g., "PDF")
+            • Search by file type (e.g., &quot;PDF&quot;)
           </Text>
         </View>
       )}
