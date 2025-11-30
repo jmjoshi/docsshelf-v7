@@ -47,8 +47,8 @@ export const Button: React.FC<ButtonProps> = ({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const getButtonStyle = () => {
-    const baseStyle = [styles.button, styles[`button_${size}`]];
+  const getButtonStyle = (): ViewStyle[] => {
+    const baseStyle: ViewStyle[] = [styles.button, styles[`button_${size}`]];
 
     if (fullWidth) {
       baseStyle.push(styles.fullWidth);
@@ -58,34 +58,34 @@ export const Button: React.FC<ButtonProps> = ({
       case 'primary':
         baseStyle.push({
           backgroundColor: Colors.primary,
-        });
+        } as ViewStyle);
         break;
       case 'secondary':
         baseStyle.push({
           backgroundColor: isDark ? '#2c2c2e' : '#f0f0f0',
-        });
+        } as ViewStyle);
         break;
       case 'destructive':
         baseStyle.push({
           backgroundColor: '#ef4444',
-        });
+        } as ViewStyle);
         break;
       case 'ghost':
         baseStyle.push({
           backgroundColor: 'transparent',
-        });
+        } as ViewStyle);
         break;
       case 'outline':
         baseStyle.push({
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: Colors.primary,
-        });
+        } as ViewStyle);
         break;
     }
 
     if (disabled || loading) {
-      baseStyle.push({ opacity: 0.5 });
+      baseStyle.push({ opacity: 0.5 } as ViewStyle);
     }
 
     return baseStyle;

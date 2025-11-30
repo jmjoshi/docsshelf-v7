@@ -76,7 +76,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   actionLabel,
 }) => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const config = emptyStateConfig[type];
 
   const displayMessage = type === 'no-search-results' && searchQuery

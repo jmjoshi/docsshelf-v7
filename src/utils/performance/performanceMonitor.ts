@@ -358,5 +358,4 @@ export const performanceHelpers = {
   },
 };
 
-// Export types
-export type { PerformanceMetric, PerformanceReport };
+// Types exported at top of file

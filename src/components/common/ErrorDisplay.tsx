@@ -46,7 +46,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
         router.back();
         break;
       case 'help':
-        router.push('/settings/help');
+        router.push('/(tabs)/explore');
         break;
       case 'compress':
         Alert.alert(

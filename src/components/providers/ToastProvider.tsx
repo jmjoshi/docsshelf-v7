@@ -12,9 +12,16 @@ interface ToastProviderProps {
 }
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
+  const handleRef = (ref: any) => {
+    if (ref) {
+      setToastInstance(ref);
+    }
+  };
+
   return (
     <RNToastProvider
-      ref={(ref) => setToastInstance(ref)}
+      // @ts-ignore - ref type mismatch in library
+      ref={handleRef}
       placement="top"
       duration={3000}
       animationType="slide-in"

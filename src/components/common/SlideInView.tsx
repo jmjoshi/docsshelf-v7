@@ -11,7 +11,6 @@ type Direction = 'left' | 'right' | 'top' | 'bottom';
 interface SlideInViewProps {
   children: React.ReactNode;
   direction?: Direction;
-  duration?: number;
   delay?: number;
   distance?: number;
   style?: ViewStyle;
@@ -20,7 +19,6 @@ interface SlideInViewProps {
 export const SlideInView: React.FC<SlideInViewProps> = ({
   children,
   direction = 'bottom',
-  duration = 300,
   delay = 0,
   distance = 50,
   style,

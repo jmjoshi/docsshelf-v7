@@ -16,6 +16,8 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import TagList from '../../components/documents/TagList';
+import TagPicker from '../../components/documents/TagPicker';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -32,8 +34,6 @@ import {
     selectDocumentTags,
     setTagsForDocument,
 } from '../../store/slices/tagSlice';
-import TagList from '../../components/documents/TagList';
-import TagPicker from '../../components/documents/TagPicker';
 
 export default function DocumentEditScreen() {
   const router = useRouter();
