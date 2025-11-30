@@ -1,4 +1,4 @@
-import { Colors, Shadows, BorderRadius, Spacing, Typography, Duration } from '../../constants/colors';
+import { BorderRadius, Colors, Duration, Shadows, Spacing, Typography } from '../../constants/colors';
 
 describe('Colors', () => {
   describe('Primary Colors', () => {

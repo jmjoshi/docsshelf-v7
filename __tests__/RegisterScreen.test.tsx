@@ -1,5 +1,5 @@
 
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 import RegisterScreen from '../src/screens/Auth/RegisterScreen';
 
@@ -7,22 +7,38 @@ import RegisterScreen from '../src/screens/Auth/RegisterScreen';
 
 describe('RegisterScreen', () => {
   it('shows error for invalid password', async () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
-    fireEvent.changeText(getByPlaceholderText('Email'), 'user@example.com');
-    fireEvent.changeText(getByPlaceholderText('Password'), 'short');
-    fireEvent.press(getByText('Register'));
+    render(<RegisterScreen />);
+    
+    const emailInput = screen.getByPlaceholderText('Email');
+    const passwordInput = screen.getByPlaceholderText('Password');
+    
+    fireEvent.changeText(emailInput, 'user@example.com');
+    fireEvent.changeText(passwordInput, 'short');
+    
+    // Find button by its text within the component tree
+    const buttons = screen.UNSAFE_getAllByType('Button');
+    fireEvent.press(buttons[0]);
+    
     await waitFor(() => {
-      expect(getByText('Password must be at least 12 characters.')).toBeTruthy();
+      expect(screen.getByText('Password must be at least 12 characters.')).toBeTruthy();
     });
   });
 
   it('registers with valid input and stores credentials', async () => {
-    const { getByPlaceholderText, getByText, queryByText } = render(<RegisterScreen />);
-    fireEvent.changeText(getByPlaceholderText('Email'), 'user@example.com');
-    fireEvent.changeText(getByPlaceholderText('Password'), 'StrongPass123!');
-    fireEvent.press(getByText('Register'));
+    render(<RegisterScreen />);
+    
+    const emailInput = screen.getByPlaceholderText('Email');
+    const passwordInput = screen.getByPlaceholderText('Password');
+    
+    fireEvent.changeText(emailInput, 'user@example.com');
+    fireEvent.changeText(passwordInput, 'StrongPass123!');
+    
+    // Find button by its text within the component tree
+    const buttons = screen.UNSAFE_getAllByType('Button');
+    fireEvent.press(buttons[0]);
+    
     await waitFor(() => {
-      expect(queryByText('Password must be at least 12 characters.')).toBeNull();
+      expect(screen.queryByText('Password must be at least 12 characters.')).toBeNull();
     });
   });
 });

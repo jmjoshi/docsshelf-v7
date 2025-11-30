@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -26,6 +27,13 @@ import {
     selectDocumentError,
     updateDocumentMetadata,
 } from '../../store/slices/documentSlice';
+import {
+    loadDocumentTags,
+    selectDocumentTags,
+    setTagsForDocument,
+} from '../../store/slices/tagSlice';
+import TagList from '../../components/documents/TagList';
+import TagPicker from '../../components/documents/TagPicker';
 
 export default function DocumentEditScreen() {
   const router = useRouter();
@@ -42,11 +50,18 @@ export default function DocumentEditScreen() {
   const [selectedCategoryName, setSelectedCategoryName] = useState('Uncategorized');
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showTagPicker, setShowTagPicker] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const documentTags = useAppSelector(selectDocumentTags(documentId));
 
   useEffect(() => {
     loadUserData();
-  }, []);
+    if (documentId) {
+      dispatch(loadDocumentTags(documentId));
+    }
+  }, [documentId]);
 
   useEffect(() => {
     if (document) {
@@ -58,6 +73,10 @@ export default function DocumentEditScreen() {
       setSelectedCategoryName(category?.name || 'Uncategorized');
     }
   }, [document, categories]);
+
+  useEffect(() => {
+    setSelectedTagIds(documentTags.map((tag) => tag.id));
+  }, [documentTags]);
 
   const loadUserData = async () => {
     try {
@@ -85,6 +104,11 @@ export default function DocumentEditScreen() {
 
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
+    setHasChanges(true);
+  };
+
+  const handleSaveTags = async (tagIds: number[]) => {
+    setSelectedTagIds(tagIds);
     setHasChanges(true);
   };
 
@@ -124,6 +148,14 @@ export default function DocumentEditScreen() {
         })
       ).unwrap();
 
+      // Update tags
+      await dispatch(
+        setTagsForDocument({
+          documentId: document.id,
+          tagIds: selectedTagIds,
+        })
+      ).unwrap();
+
       Alert.alert('Success', 'Document updated successfully', [
         {
           text: 'OK',
@@ -160,19 +192,19 @@ export default function DocumentEditScreen() {
 
   if (!document) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Document not found</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
@@ -255,6 +287,25 @@ export default function DocumentEditScreen() {
             </View>
             <Text style={styles.favoriteLabel}>Mark as Favorite</Text>
           </TouchableOpacity>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Tags</Text>
+            <TouchableOpacity
+              style={styles.tagSelector}
+              onPress={() => setShowTagPicker(true)}
+            >
+              {documentTags.length > 0 ? (
+                <TagList
+                  tags={documentTags}
+                  size="small"
+                  horizontal={false}
+                  maxTags={5}
+                />
+              ) : (
+                <Text style={styles.tagSelectorPlaceholder}>Add tags...</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Metadata Section */}
@@ -319,7 +370,16 @@ export default function DocumentEditScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+
+      {/* Tag Picker Modal */}
+      <TagPicker
+        visible={showTagPicker}
+        selectedTagIds={selectedTagIds}
+        onClose={() => setShowTagPicker(false)}
+        onSave={handleSaveTags}
+        title="Select Tags"
+      />
+    </SafeAreaView>
   );
 }
 
@@ -471,6 +531,18 @@ const styles = StyleSheet.create({
   favoriteLabel: {
     fontSize: 16,
     color: '#333',
+  },
+  tagSelector: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    minHeight: 50,
+  },
+  tagSelectorPlaceholder: {
+    fontSize: 16,
+    color: '#999',
   },
   ocrContainer: {
     maxHeight: 200,

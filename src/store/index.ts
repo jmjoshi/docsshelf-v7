@@ -7,11 +7,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import categoryReducer from './slices/categorySlice';
 
 import documentReducer from './slices/documentSlice';
+import tagReducer from './slices/tagSlice';
 
 export const store = configureStore({
   reducer: {
     category: categoryReducer,
     documents: documentReducer,
+    tags: tagReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -8,12 +8,12 @@ import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from 'react-native';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost' | 'outline';

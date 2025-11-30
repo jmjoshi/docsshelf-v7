@@ -1,8 +1,8 @@
 import {
-  SUPPORTED_MIME_TYPES,
-  DocumentType,
-  DOCUMENT_VALIDATION,
-  OCR_THRESHOLDS,
+    DOCUMENT_VALIDATION,
+    DocumentType,
+    OCR_THRESHOLDS,
+    SUPPORTED_MIME_TYPES,
 } from '../../src/types/document';
 
 describe('Document Type Constants', () => {

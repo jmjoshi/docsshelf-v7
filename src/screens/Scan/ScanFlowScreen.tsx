@@ -8,6 +8,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import FormatSelectionModal from '../../components/scan/FormatSelectionModal';
 import { getRecommendedFormat } from '../../services/scan/formatConstants';
 import type { ScanFormat } from '../../types/scan.types';
@@ -94,7 +95,7 @@ export default function ScanFlowScreen() {
   console.log('[ScanFlowScreen] Rendering with step:', currentStep);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Format Selection Modal */}
       {currentStep === 'format-selection' && (
         <FormatSelectionModal
@@ -124,7 +125,7 @@ export default function ScanFlowScreen() {
           onCancel={handleCancelPreview}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

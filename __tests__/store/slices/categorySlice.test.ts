@@ -5,26 +5,26 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit';
-import categoryReducer, {
-  loadCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  moveCategory,
-  setSelectedCategory,
-  clearError,
-  clearCategories,
-  selectAllCategories,
-  selectCategoryTree,
-  selectSelectedCategoryId,
-  selectSelectedCategory,
-  selectCategoryById,
-  selectCategoriesByParent,
-  selectCategoryLoading,
-  selectCategoryError,
-  selectLastSync,
-} from '../../../src/store/slices/categorySlice';
 import * as categoryService from '../../../src/services/database/categoryService';
+import categoryReducer, {
+    clearCategories,
+    clearError,
+    createCategory,
+    deleteCategory,
+    loadCategories,
+    moveCategory,
+    selectAllCategories,
+    selectCategoriesByParent,
+    selectCategoryById,
+    selectCategoryError,
+    selectCategoryLoading,
+    selectCategoryTree,
+    selectLastSync,
+    selectSelectedCategory,
+    selectSelectedCategoryId,
+    setSelectedCategory,
+    updateCategory,
+} from '../../../src/store/slices/categorySlice';
 import type { Category, CategoryTreeNode } from '../../../src/types/category';
 
 // Mock the category service

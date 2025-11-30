@@ -63,6 +63,10 @@ export interface Tag {
   created_at: string;
 }
 
+export interface TagWithCount extends Tag {
+  document_count: number;
+}
+
 export interface TagCreateInput {
   name: string;
   color?: string;

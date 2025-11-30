@@ -4,17 +4,17 @@
  */
 
 import type {
-  ScanFormat,
-  FormatOption,
-  CameraPermissionStatus,
-  FlashMode,
-  CameraState,
-  CapturedImage,
-  PreviewState,
-  PDFOptions,
-  ImageCompressionOptions,
-  ConversionResult,
-  ScanSession,
+    CameraPermissionStatus,
+    CameraState,
+    CapturedImage,
+    ConversionResult,
+    FlashMode,
+    FormatOption,
+    ImageCompressionOptions,
+    PDFOptions,
+    PreviewState,
+    ScanFormat,
+    ScanSession,
 } from '../../src/types/scan.types';
 
 describe('Scan Types', () => {

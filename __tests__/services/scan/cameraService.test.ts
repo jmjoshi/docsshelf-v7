@@ -4,9 +4,9 @@
  * Covers camera permissions, hardware detection, and error handling
  */
 
-import { cameraService } from '../../../src/services/scan/cameraService';
 import { Camera } from 'expo-camera';
 import { Alert, Linking, Platform } from 'react-native';
+import { cameraService } from '../../../src/services/scan/cameraService';
 
 // Mock expo-camera
 jest.mock('expo-camera', () => ({

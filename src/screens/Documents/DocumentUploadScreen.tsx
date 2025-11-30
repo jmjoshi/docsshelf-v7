@@ -19,7 +19,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
-import { hapticFeedback } from '../../utils/feedbackUtils';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -32,6 +31,7 @@ import {
     selectDocumentError,
     uploadDocumentWithProgress,
 } from '../../store/slices/documentSlice';
+import { hapticFeedback } from '../../utils/feedbackUtils';
 
 export default function DocumentUploadScreen() {
   console.log('[DocumentUploadScreen] Component mounting/rendering');
@@ -67,7 +67,8 @@ export default function DocumentUploadScreen() {
       processedUriRef.current = params.scannedImageUri;
       handleScannedDocument(params.scannedImageUri, params.scannedFormat);
     }
-  }, [params.scannedImageUri, params.scannedFormat]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadUserData = async () => {
     try {

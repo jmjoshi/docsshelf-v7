@@ -6,13 +6,13 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import React, { useRef } from 'react';
 import {
-  Animated,
-  PanResponder,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    Animated,
+    PanResponder,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from 'react-native';
 
 interface SwipeAction {

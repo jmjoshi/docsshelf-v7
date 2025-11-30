@@ -17,8 +17,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
-import FilterModal, { DocumentFilters } from '../../components/documents/FilterModal';
 import { DocumentListSkeleton } from '../../components/common/LoadingSkeleton';
+import FilterModal, { DocumentFilters } from '../../components/documents/FilterModal';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {

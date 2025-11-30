@@ -5,33 +5,32 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit';
-import documentReducer, {
-  loadDocuments,
-  loadDocumentStats,
-  uploadDocumentWithProgress,
-  readDocumentContent,
-  updateDocumentMetadata,
-  removeDocument,
-  toggleFavorite,
-  setSelectedDocument,
-  clearError,
-  setFilter,
-  clearUploadProgress,
-  selectAllDocuments,
-  selectSelectedDocument,
-  selectDocumentStats,
-  selectUploadProgress,
-  selectDocumentLoading,
-  selectDocumentError,
-  selectDocumentFilter,
-  selectDocumentById,
-  selectDocumentsByCategory,
-  selectFavoriteDocuments,
-  selectRecentDocuments,
-  selectActiveUploads,
-} from '../../../src/store/slices/documentSlice';
 import * as documentService from '../../../src/services/database/documentService';
-import type { Document, DocumentStats, DocumentFilter } from '../../../src/types/document';
+import documentReducer, {
+    clearError,
+    clearUploadProgress,
+    loadDocuments,
+    loadDocumentStats,
+    readDocumentContent,
+    removeDocument,
+    selectActiveUploads,
+    selectAllDocuments,
+    selectDocumentById,
+    selectDocumentError,
+    selectDocumentFilter,
+    selectDocumentLoading,
+    selectDocumentsByCategory,
+    selectDocumentStats,
+    selectFavoriteDocuments,
+    selectRecentDocuments,
+    selectSelectedDocument,
+    setFilter,
+    setSelectedDocument,
+    toggleFavorite,
+    updateDocumentMetadata,
+    uploadDocumentWithProgress
+} from '../../../src/store/slices/documentSlice';
+import type { Document, DocumentFilter, DocumentStats } from '../../../src/types/document';
 
 // Mock the document service
 jest.mock('../../../src/services/database/documentService');

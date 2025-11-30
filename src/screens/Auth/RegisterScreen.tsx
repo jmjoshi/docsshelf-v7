@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../utils/auth/secureStoreKeys';
 import { generateSalt, hashPassword } from '../../utils/crypto/passwordHash';
 import { logger } from '../../utils/helpers/logger';
@@ -54,7 +55,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Create Account</Text>
       <TextInput
         style={styles.input}

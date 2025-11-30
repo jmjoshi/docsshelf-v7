@@ -8,13 +8,13 @@ import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useEffect, useRef } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface FeatureHighlightProps {

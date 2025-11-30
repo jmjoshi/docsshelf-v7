@@ -3,7 +3,6 @@
  * Centralized toast notification system for user feedback
  */
 
-import { ToastType as RNToastType } from 'react-native-toast-notifications';
 
 // Type guard to ensure we only use valid toast types
 export type ToastType = 'success' | 'warning' | 'danger' | 'info';

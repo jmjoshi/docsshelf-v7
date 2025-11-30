@@ -3,8 +3,8 @@
  * Performance enhancements for SQLite database
  */
 
-import { db } from './dbInit';
 import { logger } from '../../utils/helpers/logger';
+import { db } from './dbInit';
 
 /**
  * Optimize database performance with recommended PRAGMA settings

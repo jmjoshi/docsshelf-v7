@@ -1,7 +1,7 @@
 import {
-  CATEGORY_ICONS,
-  CATEGORY_COLORS,
-  CATEGORY_VALIDATION,
+    CATEGORY_COLORS,
+    CATEGORY_ICONS,
+    CATEGORY_VALIDATION,
 } from '../../src/types/category';
 
 describe('Category Type Constants', () => {

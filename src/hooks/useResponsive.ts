@@ -5,14 +5,14 @@
 
 import { useEffect, useState } from 'react';
 import {
-  DeviceType,
-  getDeviceType,
-  getOrientation,
-  getScreenDimensions,
-  isTablet,
-  Orientation,
-  ScreenDimensions,
-  subscribeToScreenChanges,
+    DeviceType,
+    getDeviceType,
+    getOrientation,
+    getScreenDimensions,
+    isTablet,
+    Orientation,
+    ScreenDimensions,
+    subscribeToScreenChanges,
 } from '../utils/responsive/responsive';
 
 interface ResponsiveState {

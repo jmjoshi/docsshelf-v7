@@ -4,10 +4,10 @@
  * Covers image format conversion (JPEG, GIF, PDF)
  */
 
-import { imageConverter } from '../../../src/services/scan/imageConverter';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
+import { imageConverter } from '../../../src/services/scan/imageConverter';
 
 // Mock expo modules
 jest.mock('expo-file-system');

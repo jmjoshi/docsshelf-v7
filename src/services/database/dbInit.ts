@@ -483,14 +483,27 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
     if (fromVersion < 3) {
       console.log('Migrating to version 3: Adding HMAC fields for authenticated encryption');
       
-      // Add HMAC columns to documents table
-      await db.execAsync(`
-        ALTER TABLE documents ADD COLUMN encryption_hmac TEXT;
-      `);
-      
-      await db.execAsync(`
-        ALTER TABLE documents ADD COLUMN encryption_hmac_key TEXT;
-      `);
+      // Wrap migration in transaction for atomicity
+      await db.withTransactionAsync(async () => {
+        // Check if columns already exist to avoid duplicate column errors
+        const docColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(documents)');
+        const docColumnNames = docColumns.map(col => col.name);
+        
+        // Add HMAC columns to documents table
+        if (!docColumnNames.includes('encryption_hmac')) {
+          await db.execAsync(`
+            ALTER TABLE documents ADD COLUMN encryption_hmac TEXT;
+          `);
+          console.log('Added encryption_hmac column');
+        }
+        
+        if (!docColumnNames.includes('encryption_hmac_key')) {
+          await db.execAsync(`
+            ALTER TABLE documents ADD COLUMN encryption_hmac_key TEXT;
+          `);
+          console.log('Added encryption_hmac_key column');
+        }
+      });
       
       console.log('Migration to version 3 completed');
     }
@@ -499,29 +512,32 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
     if (fromVersion < 4) {
       console.log('Migrating to version 4: Adding backup_history table');
       
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS backup_history (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          backup_type TEXT NOT NULL,
-          backup_location TEXT,
-          backup_filename TEXT NOT NULL,
-          backup_size INTEGER,
-          document_count INTEGER,
-          category_count INTEGER,
-          backup_hash TEXT,
-          status TEXT DEFAULT 'completed',
-          error_message TEXT,
-          created_at INTEGER DEFAULT (strftime('%s', 'now')),
-          restored_at INTEGER,
-          user_id INTEGER,
-          notes TEXT
-        );
-      `);
-      
-      await db.execAsync(`
-        CREATE INDEX IF NOT EXISTS idx_backup_history_created 
-        ON backup_history(created_at DESC);
-      `);
+      // Wrap migration in transaction for atomicity
+      await db.withTransactionAsync(async () => {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS backup_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            backup_type TEXT NOT NULL,
+            backup_location TEXT,
+            backup_filename TEXT NOT NULL,
+            backup_size INTEGER,
+            document_count INTEGER,
+            category_count INTEGER,
+            backup_hash TEXT,
+            status TEXT DEFAULT 'completed',
+            error_message TEXT,
+            created_at INTEGER DEFAULT (strftime('%s', 'now')),
+            restored_at INTEGER,
+            user_id INTEGER,
+            notes TEXT
+          );
+        `);
+        
+        await db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_backup_history_created 
+          ON backup_history(created_at DESC);
+        `);
+      });
       
       console.log('Migration to version 4 completed');
     }
@@ -530,33 +546,36 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
     if (fromVersion < 5) {
       console.log('Migrating to version 5: Adding unencrypted backup support (FR-MAIN-013A)');
       
-      // Check if columns already exist to avoid duplicate column errors
-      const backupTableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(backup_history)');
-      const backupColumns = backupTableInfo.map(col => col.name);
-      
-      // Add encryption_type column (default 'encrypted' for existing backups)
-      if (!backupColumns.includes('encryption_type')) {
-        await db.execAsync(`
-          ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT 'encrypted';
-        `);
-        console.log('Added encryption_type column');
-      }
-      
-      // Add user_consent column for unencrypted backups
-      if (!backupColumns.includes('user_consent')) {
-        await db.execAsync(`
-          ALTER TABLE backup_history ADD COLUMN user_consent INTEGER DEFAULT 0;
-        `);
-        console.log('Added user_consent column');
-      }
-      
-      // Add document_ids column for selective backups (JSON array of document IDs)
-      if (!backupColumns.includes('document_ids')) {
-        await db.execAsync(`
-          ALTER TABLE backup_history ADD COLUMN document_ids TEXT;
-        `);
-        console.log('Added document_ids column');
-      }
+      // Wrap migration in transaction for atomicity
+      await db.withTransactionAsync(async () => {
+        // Check if columns already exist to avoid duplicate column errors
+        const backupTableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(backup_history)');
+        const backupColumns = backupTableInfo.map(col => col.name);
+        
+        // Add encryption_type column (default 'encrypted' for existing backups)
+        if (!backupColumns.includes('encryption_type')) {
+          await db.execAsync(`
+            ALTER TABLE backup_history ADD COLUMN encryption_type TEXT DEFAULT 'encrypted';
+          `);
+          console.log('Added encryption_type column');
+        }
+        
+        // Add user_consent column for unencrypted backups
+        if (!backupColumns.includes('user_consent')) {
+          await db.execAsync(`
+            ALTER TABLE backup_history ADD COLUMN user_consent INTEGER DEFAULT 0;
+          `);
+          console.log('Added user_consent column');
+        }
+        
+        // Add document_ids column for selective backups (JSON array of document IDs)
+        if (!backupColumns.includes('document_ids')) {
+          await db.execAsync(`
+            ALTER TABLE backup_history ADD COLUMN document_ids TEXT;
+          `);
+          console.log('Added document_ids column');
+        }
+      });
       
       console.log('Migration to version 5 completed');
     }
@@ -565,40 +584,44 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
     if (fromVersion < 6) {
       console.log('Migrating database from version 5 to 6...');
       
-      // Add biometric_enabled column to users table
-      const userColumns = await db.getAllAsync<{ name: string }>(
-        `PRAGMA table_info(users)`
-      );
-      const userColumnNames = userColumns.map((col) => col.name);
-      
-      if (!userColumnNames.includes('biometric_enabled')) {
-        await db.execAsync(`
-          ALTER TABLE users ADD COLUMN biometric_enabled INTEGER DEFAULT 0;
-        `);
-        console.log('Added biometric_enabled column to users table');
-      }
-      
-      // Create app_preferences table for persistent user preferences
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS app_preferences (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          preference_key TEXT NOT NULL,
-          preference_value TEXT NOT NULL,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          UNIQUE(user_id, preference_key)
+      // Wrap migration in transaction for atomicity
+      await db.withTransactionAsync(async () => {
+        // Add biometric_enabled column to users table
+        const userColumns = await db.getAllAsync<{ name: string }>(
+          `PRAGMA table_info(users)`
         );
-      `);
+        const userColumnNames = userColumns.map((col) => col.name);
+        
+        if (!userColumnNames.includes('biometric_enabled')) {
+          await db.execAsync(`
+            ALTER TABLE users ADD COLUMN biometric_enabled INTEGER DEFAULT 0;
+          `);
+          console.log('Added biometric_enabled column to users table');
+        }
+        
+        // Create app_preferences table for persistent user preferences
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS app_preferences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            preference_key TEXT NOT NULL,
+            preference_value TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, preference_key)
+          );
+        `);
+        
+        // Create index for faster preference lookups
+        await db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_preferences_user 
+          ON app_preferences(user_id);
+        `);
+        
+        console.log('Created app_preferences table');
+      });
       
-      // Create index for faster preference lookups
-      await db.execAsync(`
-        CREATE INDEX IF NOT EXISTS idx_preferences_user 
-        ON app_preferences(user_id);
-      `);
-      
-      console.log('Created app_preferences table');
       console.log('Migration to version 6 completed');
     }
     

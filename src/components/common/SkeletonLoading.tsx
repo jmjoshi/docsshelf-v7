@@ -3,7 +3,6 @@
  * Beautiful skeleton screens with shimmer animation
  */
 
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';

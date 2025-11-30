@@ -60,8 +60,7 @@ export async function authenticateWithBiometrics(): Promise<boolean> {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Authenticate to continue',
       cancelLabel: 'Cancel',
-      disableDeviceFallback: true, // Do NOT allow device passcode fallback
-      fallbackLabel: '', // Remove fallback option
+      disableDeviceFallback: false, // Allow device passcode fallback for better UX
     });
     
     return result.success;
@@ -237,7 +236,27 @@ export async function enableBiometric(email: string): Promise<boolean> {
   const authenticated = await authenticateWithBiometrics();
   
   if (authenticated) {
+    // Store in SecureStore
     await SecureStore.setItemAsync(`biometric_enabled_${sanitizedEmail}`, 'true');
+    
+    // Update database
+    try {
+      const { getDatabase } = await import('../database/dbInit');
+      const { getCurrentUserId } = await import('../database/userService');
+      const db = await getDatabase();
+      const userId = await getCurrentUserId();
+      
+      if (userId) {
+        await db.runAsync(
+          'UPDATE users SET biometric_enabled = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [userId]
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update database for biometric:', error);
+      // Don't fail if database update fails, SecureStore is the source of truth for login
+    }
+    
     return true;
   }
   

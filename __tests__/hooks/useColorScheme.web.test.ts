@@ -4,6 +4,8 @@
 
 import { renderHook, waitFor } from '@testing-library/react-native';
 
+import { useColorScheme } from '../../hooks/use-color-scheme.web';
+
 // Mock react-native's useColorScheme at module level
 let mockRNColorSchemeValue: 'light' | 'dark' | null | undefined = 'light';
 
@@ -12,8 +14,6 @@ jest.mock('react-native', () => ({
   useEffect: require('react').useEffect,
   useState: require('react').useState,
 }));
-
-import { useColorScheme } from '../../hooks/use-color-scheme.web';
 
 describe('useColorScheme.web', () => {
   beforeEach(() => {

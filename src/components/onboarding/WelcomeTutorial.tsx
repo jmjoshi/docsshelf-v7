@@ -6,16 +6,15 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewToken,
+    Dimensions,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewToken,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

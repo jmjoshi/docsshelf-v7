@@ -4,7 +4,7 @@
  */
 
 import React, { useRef } from 'react';
-import { Animated, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { Animated, Pressable, ViewStyle } from 'react-native';
 
 interface AnimatedCardProps {
   children: React.ReactNode;
