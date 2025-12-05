@@ -4370,7 +4370,133 @@ if (!agreedToTerms) {
 
 ---
 
-**Last Updated:** November 27, 2025  
-**Session:** Test Coverage Milestone - 80% ACHIEVED! 🎉  
-**Next:** Device testing & production preparation
+## 🧹 Code Quality Commands (Added November 30, 2025)
+
+### TypeScript Error Checking
+```powershell
+# Check all TypeScript errors
+npx tsc --noEmit
+
+# Check source code errors only (filter out node_modules)
+npx tsc --noEmit 2>&1 | Select-String -Pattern "^src/"
+
+# Count errors by type
+$output = npx tsc --noEmit 2>&1 | Out-String
+$srcErrors = ($output | Select-String -Pattern "^src/" -AllMatches).Matches.Count
+$testErrors = ($output | Select-String -Pattern "^__tests__/" -AllMatches).Matches.Count
+Write-Host "Source code errors: $srcErrors"
+Write-Host "Test file errors: $testErrors"
+
+# Check with skipLibCheck (ignore node_modules)
+npx tsc --noEmit --skipLibCheck
+```
+
+### ESLint Commands
+```powershell
+# Check ESLint errors
+npm run lint
+
+# Fix auto-fixable issues
+npx eslint --fix src/
+
+# Check specific file
+npx eslint src/components/common/Button.tsx
+
+# Fix specific file
+npx eslint --fix src/components/common/Button.tsx
+```
+
+### VS Code Error Checking
+```powershell
+# Get all errors from VS Code programmatically
+# (Use VS Code's Problems panel or the get_errors tool in development)
+
+# Common fixes:
+# 1. TypeScript errors: Add proper types, fix JSX tags
+# 2. ESLint warnings: Add // eslint-disable-next-line comments
+# 3. Import errors: Fix import paths, add missing imports
+# 4. Unused variables: Remove or prefix with underscore _variable
+```
+
+### Code Quality Verification Workflow
+```powershell
+# Step 1: Check TypeScript errors
+npx tsc --noEmit
+
+# Step 2: Fix TypeScript errors
+# - Add missing types
+# - Fix JSX tag mismatches
+# - Add proper imports
+# - Cast types where needed
+
+# Step 3: Verify fix
+npx tsc --noEmit 2>&1 | Select-String -Pattern "^src/"
+
+# Step 4: Check ESLint
+npm run lint
+
+# Step 5: Fix ESLint issues
+# - Escape quotes in JSX
+# - Add eslint-disable comments
+# - Remove unused variables
+
+# Step 6: Final verification
+npx tsc --noEmit
+npm run lint
+
+# Step 7: Commit
+git add -A
+git commit -m "fix: Code quality improvements"
+git push origin master
+```
+
+### Common TypeScript Fixes
+```typescript
+// Fix 1: Style typing in components
+const getButtonStyle = (): ViewStyle[] => {
+  const baseStyle: ViewStyle[] = [styles.button];
+  baseStyle.push({ backgroundColor: 'blue' } as ViewStyle);
+  return baseStyle;
+};
+
+// Fix 2: Fix JSX closing tags
+<SafeAreaView>
+  <View>...</View>
+</SafeAreaView>  // Must match opening tag
+
+// Fix 3: Add missing imports
+import { Alert } from 'react-native';
+
+// Fix 4: Remove unused variables
+// Before: const isDark = useColorScheme() === 'dark';
+// After: Remove if not used
+
+// Fix 5: Fix route paths
+router.push('/(tabs)/explore');  // Use valid route path
+```
+
+### Common ESLint Fixes
+```typescript
+// Fix 1: Escape quotes in JSX
+<Text>Search by file type (e.g., &quot;PDF&quot;)</Text>
+
+// Fix 2: Disable exhaustive-deps when intentional
+useEffect(() => {
+  // Run once on mount only
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// Fix 3: Fix ref typing
+ref={(ref: any) => handleRef(ref)}  // Add type annotation
+
+// Fix 4: Add @ts-ignore for library issues
+// @ts-ignore - Library type mismatch
+<Component ref={handleRef} />
+```
+
+---
+
+**Last Updated:** November 30, 2025  
+**Session:** Code Quality Cleanup - Zero Errors Achieved! 🎉  
+**Next:** Final device testing & production release preparation
 
