@@ -1,7 +1,8 @@
 # DocsShelf Development Command Reference
 **Project:** DocsShelf v7 - Secure Document Management App  
-**Framework:** React Native + Expo (SDK 54)  
-**Last Updated:** November 17, 2025
+**Framework:** React Native + Expo (SDK 54) - **Native Android Builds Only**  
+**Last Updated:** December 6, 2025  
+**Build Method:** Direct native Android builds (expo-dev-client removed)
 
 This document captures all essential commands used during the development of DocsShelf v7, organized by category for future reference.
 
@@ -52,6 +53,114 @@ npm install expo-secure-store
 
 # Biometric authentication
 npm install expo-local-authentication
+```
+
+---
+
+## 🔥 NATIVE ANDROID BUILD WORKFLOW (Current Method)
+
+### React Version Management (CRITICAL)
+```powershell
+# Fix React version mismatch (if occurs)
+# Symptom: "Incompatible React versions" error
+
+# 1. Update package.json to pin exact versions (remove ^)
+# "react": "19.1.0",
+# "react-dom": "19.1.0",
+# "react-test-renderer": "19.1.0"
+
+# 2. Kill all Node/Gradle processes
+Stop-Process -Name "node" -Force
+Stop-Process -Name "java" -Force -ErrorAction SilentlyContinue
+
+# 3. Clean install
+Remove-Item -Recurse -Force node_modules
+npm install
+
+# 4. Verify versions
+npm list react react-dom react-test-renderer | Select-String -Pattern "react"
+```
+
+### Build Android APK (Debug)
+```powershell
+# Navigate to android folder and build
+cd android
+.\gradlew clean           # Clean previous builds
+.\gradlew assembleDebug   # Build debug APK
+cd ..
+
+# Or combine in one line
+cd android; .\gradlew clean; .\gradlew assembleDebug; cd ..
+
+# APK location:
+# android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+### Install on Physical Android Device
+```powershell
+# Prerequisites:
+# 1. Enable USB Debugging on device (Settings → About → Tap Build Number 7x → Developer Options → USB Debugging)
+# 2. Connect device via USB
+# 3. Accept USB debugging prompt on device
+
+# Check connected devices
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices
+
+# Install APK on connected device
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# -r flag: Replace existing app (keeps data)
+```
+
+### Start Metro Bundler (Separately)
+```powershell
+# Option 1: React Native CLI (Recommended for native builds)
+npx react-native start
+
+# Option 2: Expo CLI (if needed)
+npx expo start
+
+# Clear Metro cache if needed
+npx react-native start --reset-cache
+```
+
+### Complete Build & Deploy Workflow
+```powershell
+# Full workflow from build to device
+cd C:\Projects\docsshelf-v7
+
+# 1. Build APK
+cd android; .\gradlew assembleDebug; cd ..
+
+# 2. Install on device
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# 3. Open app on device manually or via ADB
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell am start -n com.docsshelf.app/.MainActivity
+```
+
+### Troubleshooting Native Builds
+```powershell
+# Kill locked Gradle daemon
+cd android
+.\gradlew --stop
+cd ..
+
+# Clean Metro bundler cache
+Remove-Item -Recurse -Force $env:TEMP\metro-* -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force $env:TEMP\haste-map-* -ErrorAction SilentlyContinue
+
+# Clean Android build (aggressive)
+cd android
+Remove-Item -Recurse -Force app\build, .gradle
+.\gradlew clean
+cd ..
+
+# Full nuclear clean (when all else fails)
+Stop-Process -Name "node","java" -Force -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force node_modules, android\app\build, android\.gradle
+npm install
+cd android; .\gradlew clean; .\gradlew assembleDebug; cd ..
 ```
 
 ---

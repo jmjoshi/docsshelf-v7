@@ -1,0 +1,54 @@
+<div class="app app--split">
+  <header class="app-header">
+    <button class="icon-button" aria-label="Back"></button>
+    <h1 class="app-header__title">Tasks</h1>
+    <button class="icon-button" aria-label="Profile"></button>
+  </header>
+
+  <main class="app-main app-main--split">
+    <section class="app-search">
+      <div class="search-field">
+        <span class="search-field__icon"></span>
+        <input type="search" placeholder="Search tasks" />
+      </div>
+    </section>
+
+    <section class="task-list task-list--dense">
+      <button class="task-row task-row--selected">
+        <div class="task-row__main">
+          <div class="task-row__title">
+            <span class="status-dot status-dot--success"></span>
+            Design landing page
+          </div>
+          <div class="task-row__meta">
+            <span>Due today</span>
+            <span class="task-row__meta-dot">•</span>
+            <span>Marketing</span>
+          </div>
+        </div>
+        <span class="task-row__time">14:30</span>
+      </button>
+
+      <!-- more task-row items -->
+    </section>
+  </main>
+
+  <section class="task-detail-sheet">
+    <div class="task-detail-sheet__handle"></div>
+    <header class="task-detail-sheet__header">
+      <h2 class="task-detail-sheet__title">Design landing page</h2>
+      <span class="status-pill status-pill--in-progress">In progress</span>
+    </header>
+    <p class="task-detail-sheet__description">
+      Collaborate with marketing to finalize hero copy and illustrations. Prepare responsive layouts for mobile and desktop.
+    </p>
+    <div class="task-detail-sheet__meta">
+      <span>Due today, 17:00</span>
+      <span>Owner: Alex</span>
+    </div>
+    <footer class="task-detail-sheet__actions">
+      <button class="btn btn--outline">Edit</button>
+      <button class="btn btn--primary">Mark complete</button>
+    </footer>
+  </section>
+</div>

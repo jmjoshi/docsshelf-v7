@@ -9,13 +9,40 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import 'react-native-reanimated';
 import { Provider as ReduxProvider } from 'react-redux';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+// Disable LogBox completely in production
+if (!__DEV__) {
+  LogBox.ignoreAllLogs();
+} else {
+  // Only ignore specific non-critical warnings in development
+  LogBox.ignoreLogs([
+    'Unable to activate keep awake', // Non-critical: screen dimming is fine during development
+  ]);
+}
+
+// Suppress non-critical unhandled promise rejections
+const isNonCriticalError = (error: any) => {
+  const message = error?.message || String(error);
+  return message.includes('Unable to activate keep awake');
+};
+
+// Handle unhandled promise rejections globally
+if (typeof global.addEventListener === 'function') {
+  global.addEventListener('unhandledrejection', (event: any) => {
+    if (isNonCriticalError(event.reason)) {
+      event.preventDefault();
+      return;
+    }
+  });
+}
+
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { Toast } from '../src/components/common/Toast';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
+import { ThemeProvider as CustomThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { initializeDatabase } from '../src/services/database/dbInit';
 import { store } from '../src/store';
 
@@ -24,21 +51,32 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   // Suppress splash screen initialization errors
 });
 
-// Suppress splash screen error messages in console (common on iOS with modals)
-const originalError = console.error;
-console.error = (...args: any[]) => {
-  if (
-    typeof args[0] === 'string' &&
-    args[0].includes('No native splash screen registered')
-  ) {
-    // Suppress this specific error
-    return;
-  }
-  originalError(...args);
-};
+// Suppress non-critical error messages in console (development only)
+if (__DEV__) {
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    if (typeof args[0] === 'string') {
+      // Suppress splash screen errors (common on iOS with modals)
+      if (args[0].includes('No native splash screen registered')) {
+        return;
+      }
+      // Suppress keep-awake errors (non-critical development warning)
+      if (args[0].includes('Unable to activate keep awake')) {
+        return;
+      }
+    }
+    
+    // Check for Error objects with keep-awake message
+    if (args[0] instanceof Error && args[0].message?.includes('Unable to activate keep awake')) {
+      return;
+    }
+    
+    originalError(...args);
+  };
+}
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -106,7 +144,9 @@ export default function RootLayout() {
       <ReduxProvider store={store}>
         <Toast>
           <AuthProvider>
-            <RootLayoutNav />
+            <CustomThemeProvider>
+              <RootLayoutNav />
+            </CustomThemeProvider>
           </AuthProvider>
         </Toast>
       </ReduxProvider>

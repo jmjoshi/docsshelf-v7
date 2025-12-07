@@ -3,6 +3,8 @@
  * Displays all documents with search, filter, and sorting capabilities
  */
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -46,6 +48,7 @@ export default function DocumentListScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const toast = useToast();
+  const colorScheme = useColorScheme();
   const allDocuments = useAppSelector(selectAllDocuments);
   const favoriteDocuments = useAppSelector(selectFavoriteDocuments);
   const recentDocuments = useAppSelector((state) => selectRecentDocuments(state, 20));
@@ -101,19 +104,23 @@ export default function DocumentListScreen() {
   const handleToggleFavorite = useCallback(async (documentId: number, isFavorite: boolean) => {
     try {
       await dispatch(toggleFavorite(documentId)).unwrap();
-      toast.show(
-        isFavorite ? 'Removed from favorites' : 'Added to favorites',
-        {
-          type: 'success',
-          duration: 1500,
-        }
-      );
+      if (toast) {
+        toast.show(
+          isFavorite ? 'Removed from favorites' : 'Added to favorites',
+          {
+            type: 'success',
+            duration: 1500,
+          }
+        );
+      }
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
-      toast.show('Failed to update favorite status', {
-        type: 'danger',
-        duration: 2000,
-      });
+      if (toast) {
+        toast.show('Failed to update favorite status', {
+          type: 'danger',
+          duration: 2000,
+        });
+      }
     }
   }, [dispatch, toast]);
 
@@ -132,16 +139,20 @@ export default function DocumentListScreen() {
           onPress: async () => {
             try {
               await dispatch(removeDocument(document.id)).unwrap();
-              toast.show('Document deleted successfully', {
-                type: 'success',
-                duration: 2000,
-              });
+              if (toast) {
+                toast.show('Document deleted successfully', {
+                  type: 'success',
+                  duration: 2000,
+                });
+              }
             } catch (err) {
               console.error('Failed to delete document:', err);
-              toast.show('Failed to delete document', {
-                type: 'danger',
-                duration: 3000,
-              });
+              if (toast) {
+                toast.show('Failed to delete document', {
+                  type: 'danger',
+                  duration: 3000,
+                });
+              }
             }
           },
         },
@@ -321,14 +332,14 @@ export default function DocumentListScreen() {
 
   const renderDocumentItem = useCallback(({ item }: { item: Document }) => (
     <TouchableOpacity
-      style={styles.documentItem}
+      style={[styles.documentItem, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}
       onPress={() => {
         router.push(`/document/${item.id}`);
       }}
     >
       <View style={styles.documentContent}>
         <View style={styles.documentHeader}>
-          <Text style={styles.documentName} numberOfLines={1}>
+          <Text style={[styles.documentName, { color: Colors[colorScheme ?? 'light'].text }]} numberOfLines={1}>
             {item.filename}
           </Text>
           <TouchableOpacity
@@ -340,20 +351,20 @@ export default function DocumentListScreen() {
         </View>
 
         <View style={styles.documentMeta}>
-          <Text style={styles.documentMetaText}>
+          <Text style={[styles.documentMetaText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
             {getCategoryName(item.category_id)} • {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
           </Text>
         </View>
 
         {item.ocr_text && (
-          <Text style={styles.documentDescription} numberOfLines={2}>
+          <Text style={[styles.documentDescription, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]} numberOfLines={2}>
             {item.ocr_text}
           </Text>
         )}
 
         <View style={styles.documentActions}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
             onPress={() => {
               router.push(`/document/${item.id}`);
             }}
@@ -370,56 +381,56 @@ export default function DocumentListScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  ), [router, handleToggleFavorite, handleDeleteDocument, getCategoryName, formatFileSize, formatDate]);
+  ), [router, handleToggleFavorite, handleDeleteDocument, getCategoryName, formatFileSize, formatDate, colorScheme]);
 
   const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📄</Text>
-      <Text style={styles.emptyTitle}>No Documents Found</Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyTitle, { color: Colors[colorScheme ?? 'light'].text }]}>No Documents Found</Text>
+      <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
         {searchQuery
           ? 'Try adjusting your search or filters'
           : 'Upload your first document to get started'}
       </Text>
     </View>
-  ), [searchQuery]);
+  ), [searchQuery, colorScheme]);
 
   const displayDocuments = getDisplayDocuments;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} edges={['top']}>
       {/* Header with Stats */}
       {stats && (
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.totalDocuments}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={[styles.statValue, { color: Colors[colorScheme ?? 'light'].tint }]}>{stats.totalDocuments}</Text>
+            <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Total</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{favoriteDocuments.length}</Text>
-            <Text style={styles.statLabel}>Favorites</Text>
+            <Text style={[styles.statValue, { color: Colors[colorScheme ?? 'light'].tint }]}>{favoriteDocuments.length}</Text>
+            <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Favorites</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatFileSize(stats.totalSize)}</Text>
-            <Text style={styles.statLabel}>Storage</Text>
+            <Text style={[styles.statValue, { color: Colors[colorScheme ?? 'light'].tint }]}>{formatFileSize(stats.totalSize)}</Text>
+            <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Storage</Text>
           </View>
         </View>
       )}
 
       {/* Search Bar and Filter Button */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground, color: Colors[colorScheme ?? 'light'].text }]}
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Search documents..."
-          placeholderTextColor="#999"
+          placeholderTextColor={Colors[colorScheme ?? 'light'].tabIconDefault}
         />
         <TouchableOpacity
-          style={styles.filterButton}
+          style={[styles.filterButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Text style={styles.filterButtonText}>🔍 Filters</Text>
+          <Text style={[styles.filterButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>🔍 Filters</Text>
           {getActiveFilterCount() > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
@@ -429,67 +440,67 @@ export default function DocumentListScreen() {
       </View>
 
       {/* View Mode Toggle */}
-      <View style={styles.toggleContainer}>
+      <View style={[styles.toggleContainer, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
         <TouchableOpacity
-          style={[styles.toggleButton, viewMode === 'all' && styles.toggleButtonActive]}
+          style={[styles.toggleButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, viewMode === 'all' && { backgroundColor: Colors.primary }]}
           onPress={() => setViewMode('all')}
         >
-          <Text style={[styles.toggleButtonText, viewMode === 'all' && styles.toggleButtonTextActive]}>
+          <Text style={[styles.toggleButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, viewMode === 'all' && { color: '#fff', fontWeight: '600' }]}>
             All
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toggleButton, viewMode === 'favorites' && styles.toggleButtonActive]}
+          style={[styles.toggleButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, viewMode === 'favorites' && { backgroundColor: Colors.primary }]}
           onPress={() => setViewMode('favorites')}
         >
-          <Text style={[styles.toggleButtonText, viewMode === 'favorites' && styles.toggleButtonTextActive]}>
+          <Text style={[styles.toggleButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, viewMode === 'favorites' && { color: '#fff', fontWeight: '600' }]}>
             Favorites
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toggleButton, viewMode === 'recent' && styles.toggleButtonActive]}
+          style={[styles.toggleButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, viewMode === 'recent' && { backgroundColor: Colors.primary }]}
           onPress={() => setViewMode('recent')}
         >
-          <Text style={[styles.toggleButtonText, viewMode === 'recent' && styles.toggleButtonTextActive]}>
+          <Text style={[styles.toggleButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, viewMode === 'recent' && { color: '#fff', fontWeight: '600' }]}>
             Recent
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Sort Options */}
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortLabel}>Sort by:</Text>
+      <View style={[styles.sortContainer, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
+        <Text style={[styles.sortLabel, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Sort by:</Text>
         <TouchableOpacity
-          style={[styles.sortButton, sortMode === 'date' && styles.sortButtonActive]}
+          style={[styles.sortButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, sortMode === 'date' && styles.sortButtonActive]}
           onPress={() => setSortMode('date')}
         >
-          <Text style={[styles.sortButtonText, sortMode === 'date' && styles.sortButtonTextActive]}>
+          <Text style={[styles.sortButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, sortMode === 'date' && { color: Colors[colorScheme ?? 'light'].tint, fontWeight: '500' }]}>
             Date
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.sortButton, sortMode === 'name' && styles.sortButtonActive]}
+          style={[styles.sortButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, sortMode === 'name' && styles.sortButtonActive]}
           onPress={() => setSortMode('name')}
         >
-          <Text style={[styles.sortButtonText, sortMode === 'name' && styles.sortButtonTextActive]}>
+          <Text style={[styles.sortButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, sortMode === 'name' && { color: Colors[colorScheme ?? 'light'].tint, fontWeight: '500' }]}>
             Name
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.sortButton, sortMode === 'size' && styles.sortButtonActive]}
+          style={[styles.sortButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, sortMode === 'size' && styles.sortButtonActive]}
           onPress={() => setSortMode('size')}
         >
-          <Text style={[styles.sortButtonText, sortMode === 'size' && styles.sortButtonTextActive]}>
+          <Text style={[styles.sortButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, sortMode === 'size' && { color: Colors[colorScheme ?? 'light'].tint, fontWeight: '500' }]}>
             Size
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.sortButton, sortMode === 'type' && styles.sortButtonActive]}
+          style={[styles.sortButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }, sortMode === 'type' && styles.sortButtonActive]}
           onPress={() => setSortMode('type')}
         >
-          <Text style={[styles.sortButtonText, sortMode === 'type' && styles.sortButtonTextActive]}>
+          <Text style={[styles.sortButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }, sortMode === 'type' && { color: Colors[colorScheme ?? 'light'].tint, fontWeight: '500' }]}>
             Type
           </Text>
         </TouchableOpacity>
@@ -520,7 +531,7 @@ export default function DocumentListScreen() {
 
       {/* Scan FAB (top button) */}
       <TouchableOpacity
-        style={styles.scanFab}
+        style={[styles.scanFab, { backgroundColor: '#4CAF50' }]}
         onPress={() => router.push('/scan' as any)}
       >
         <Text style={styles.fabIcon}>📷</Text>
@@ -528,7 +539,7 @@ export default function DocumentListScreen() {
 
       {/* Upload FAB (bottom button) */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: Colors.primary }]}
         onPress={() => router.push('/document/upload')}
       >
         <Text style={styles.fabIcon}>+</Text>
@@ -550,14 +561,11 @@ export default function DocumentListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   statItem: {
     flex: 1,
@@ -566,31 +574,24 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2196F3',
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
     marginTop: 5,
   },
   searchContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
     gap: 10,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    color: '#333',
   },
   filterButton: {
-    backgroundColor: '#2196F3',
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 10,
@@ -622,10 +623,8 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   toggleButton: {
     flex: 1,
@@ -633,15 +632,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#2196F3',
   },
   toggleButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
   },
   toggleButtonTextActive: {
     color: '#fff',
@@ -649,14 +643,11 @@ const styles = StyleSheet.create({
   sortContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   sortLabel: {
     fontSize: 14,
-    color: '#666',
     marginRight: 10,
   },
   sortButton: {
@@ -664,24 +655,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginHorizontal: 5,
     borderRadius: 15,
-    backgroundColor: '#f0f0f0',
   },
   sortButtonActive: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: 'transparent',
   },
   sortButtonText: {
     fontSize: 13,
-    color: '#666',
-  },
-  sortButtonTextActive: {
-    color: '#2196F3',
-    fontWeight: '500',
   },
   listContent: {
     padding: 10,
   },
   documentItem: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     marginBottom: 10,
     elevation: 2,
@@ -702,7 +686,6 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     flex: 1,
     marginRight: 10,
   },
@@ -715,11 +698,9 @@ const styles = StyleSheet.create({
   },
   documentMetaText: {
     fontSize: 12,
-    color: '#999',
   },
   documentDescription: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 12,
   },
   documentActions: {
@@ -730,7 +711,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 5,
-    backgroundColor: '#2196F3',
     marginLeft: 10,
   },
   actionButtonText: {
@@ -757,12 +737,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 10,
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
     textAlign: 'center',
   },
   loadingContainer: {
@@ -773,7 +751,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
   },
   errorContainer: {
     backgroundColor: '#ffebee',
@@ -790,11 +767,10 @@ const styles = StyleSheet.create({
   scanFab: {
     position: 'absolute',
     right: 20,
-    bottom: 90, // Position above the upload FAB
+    bottom: 90,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4CAF50', // Green for scan
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
@@ -810,7 +786,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2196F3',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,

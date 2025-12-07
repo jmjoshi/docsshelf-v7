@@ -1,0 +1,181 @@
+:root {
+  --color-bg: #F3F4F6;
+  --color-surface: #FFFFFF;
+  --color-primary: #2563EB;
+  --color-primary-soft: #EFF6FF;
+  --color-border-subtle: #E5E7EB;
+  --color-text-main: #111827;
+  --color-text-muted: #6B7280;
+  --color-chip-selected-text: #FFFFFF;
+  --color-danger: #DC2626;
+
+  --font-size-title: 18px;
+  --font-size-task-title: 16px;
+  --font-size-body: 14px;
+  --font-weight-bold: 600;
+  --font-weight-regular: 400;
+
+  --space-page-x: 16px;
+  --space-card-gap: 12px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.app {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-bg);
+  min-height: 100vh;
+  color: var(--color-text-main);
+  position: relative;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 56px;
+  padding: 0 var(--space-page-x);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.app-header__title {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+}
+
+.icon-button {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.app-main {
+  padding: 12px var(--space-page-x) 80px;
+}
+
+.app-search {
+  margin-bottom: 8px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--color-surface);
+  border-radius: 999px;
+  border: 1px solid var(--color-border-subtle);
+  height: 40px;
+}
+
+.search-field input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: var(--font-size-body);
+  background: transparent;
+}
+
+.app-filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+}
+
+.chip {
+  padding: 0 12px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.chip--selected {
+  background: var(--color-primary);
+  color: var(--color-chip-selected-text);
+  border-color: var(--color-primary);
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-card-gap);
+}
+
+.task-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 12px;
+}
+
+.task-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.task-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-card__title {
+  font-size: var(--font-size-task-title);
+  font-weight: var(--font-weight-bold);
+}
+
+.task-card__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-pill {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.status-pill--in-progress {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.status-pill--overdue {
+  background: #FEF2F2;
+  color: var(--color-danger);
+}
+
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px rgba(15, 23, 42, 0.3);
+}

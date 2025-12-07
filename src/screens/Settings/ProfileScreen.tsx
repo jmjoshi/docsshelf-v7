@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { getCurrentUserId, getCurrentUserProfile, updateUser } from '@/src/services/database/userService';
 import { UserProfile } from '@/src/types/user';
 import { router } from 'expo-router';
@@ -183,6 +184,7 @@ export default function ProfileScreen() {
             Loading profile...
           </Text>
         </View>
+        <BottomNavBar />
       </SafeAreaView>
     );
   }
@@ -371,6 +373,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

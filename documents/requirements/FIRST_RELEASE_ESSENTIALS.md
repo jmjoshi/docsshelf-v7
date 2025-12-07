@@ -1,12 +1,14 @@
 # DocsShelf v1.0 - First Release Essentials
 
 **Document Created:** November 26, 2025  
-**Last Updated:** November 30, 2025 - 🎉 Code Quality: Zero TypeScript & ESLint Errors!  
+**Last Updated:** December 6, 2025 - 🎉 Native Build Transition Complete + Dark Mode Polish!  
 **Target Release Date:** Q1 2026  
 **Overall Progress:** 100% Complete 🎉✅  
 **Test Coverage:** 802 passing tests, 0 failures (100% pass rate) - **80%+ coverage ✅ (target: 80% - ACHIEVED!)** 🧪🎉  
-**Latest Build:** v1.0.0-beta.3 (Android & iOS tested, Code Quality: Zero Errors ✅)  
-**Code Quality:** Zero TypeScript errors in source code, Zero ESLint warnings 🎯
+**Latest Build:** v1.0.0-beta.4 (Native Android Build, Physical Device Tested ✅)  
+**Code Quality:** Zero TypeScript errors in source code, Zero ESLint warnings 🎯  
+**Build Method:** Native Android builds only (expo-dev-client removed) ✅  
+**React Version:** 19.1.0 (pinned for compatibility) ✅
 
 ---
 
@@ -26,6 +28,57 @@ DocsShelf v1.0 will be released when:
 - ✅ No critical bugs remain
 - ✅ Testing passes on iOS and Android physical devices
 - ✅ App Store and Play Store assets are ready
+
+---
+
+## 🔥 RECENT UPDATES (December 6, 2025)
+
+### Native Android Build Transition ✅
+**Major Change:** Transitioned from Expo development client to native Android builds
+
+**What Changed:**
+- ❌ Removed `expo-dev-client` dependency (causing native module issues)
+- ✅ Implemented direct native Android build workflow
+- ✅ Created comprehensive build guide: `ANDROID_LOCAL_BUILD_GUIDE.md`
+- ✅ Kept all Expo SDK modules (camera, file-system, sqlite, etc.)
+
+**Benefits:**
+- Full control over native modules
+- Better stability and compatibility
+- Eliminates hybrid approach inconsistencies
+- Production-ready build process
+
+**New Build Commands:**
+```powershell
+cd android; .\gradlew assembleDebug; cd ..
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+### React Version Compatibility Fix ✅
+**Issue:** Incompatible React versions causing app crashes
+- React 19.2.1 installed (via npm caret ^19.1.0)
+- react-native-renderer required exactly 19.1.0
+
+**Solution:** Pinned React to exact version 19.1.0
+```json
+"react": "19.1.0",
+"react-dom": "19.1.0",
+"react-test-renderer": "19.1.0"
+```
+
+**Result:** App now runs without React version mismatch errors ✅
+
+### Dark Mode Polish Complete ✅
+**Fixed Issues:**
+- White text on white backgrounds (now visible)
+- Inconsistent button colors across screens
+- Toggle buttons now use primary color (#007AFF)
+- FAB visibility improved
+- Modal buttons properly themed
+
+**New Theme Colors Added:**
+- `headerBackground`: Dark mode headers
+- `inputBackground`: Dark mode input fields
 
 ---
 
@@ -256,14 +309,34 @@ DocsShelf v1.0 will be released when:
   - App version display (1.0.0)
   - Build number
   - App name and branding
-  - Rate app button (placeholder)
+  - ✅ **Rate This App** (NEW - Dec 6, 2025)
+    - Platform-specific store links (Google Play/App Store)
+    - Deep link to native store app
+    - Fallback to web URL if store app unavailable
+    - Error handling and user feedback
+    - Package ID: com.docsshelf.app
+    - iOS App Store ID: Pending publication
   - ⏳ Privacy Policy viewer (pending)
   - ⏳ Terms of Service viewer (pending)
   - ⏳ Open Source Licenses (pending)
-  - Contact support (email)
+  - Contact support (support@docsshelf.app)
   - Credits and acknowledgments
 
-**Status:** ✅ **100% Complete** - All settings screens implemented and functional
+#### Dark Mode & Theming
+- ✅ **Dark Mode Complete** (Polished - Dec 6, 2025)
+  - System-based dark mode toggle
+  - Consistent color scheme across all screens
+  - Dynamic text colors (black on white, white on dark)
+  - Added theme colors:
+    - `headerBackground`: '#1a1a1a' (dark) / '#007AFF' (light)
+    - `inputBackground`: '#2a2a2a' (dark) / '#f5f5f5' (light)
+  - All buttons use Colors.primary for active state
+  - FAB colors consistent with theme
+  - Modal buttons properly themed
+  - Toggle buttons (All/Favorites/Recent) use primary color
+  - No invisible text issues (all fixed)
+
+**Status:** ✅ **100% Complete** - All settings screens implemented, functional, and polished
 
 ---
 

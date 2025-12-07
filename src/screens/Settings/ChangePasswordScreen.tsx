@@ -1,3 +1,4 @@
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { getDatabase } from '@/src/services/database/dbInit';
 import { getCurrentUserId } from '@/src/services/database/userService';
 import { hashPassword } from '@/src/utils/crypto/passwordHash';
@@ -183,8 +184,8 @@ export default function ChangePasswordScreen() {
 
       // Log the password change in audit log
       await db.runAsync(
-        `INSERT INTO audit_log (user_id, action, details, ip_address) 
-         VALUES (?, 'PASSWORD_CHANGE', 'Password changed successfully', ?)`,
+        `INSERT INTO audit_log (user_id, action, entity_type, details, ip_address) 
+         VALUES (?, 'PASSWORD_CHANGE', 'user', 'Password changed successfully', ?)`,
         [userId, 'local']
       );
 
@@ -360,6 +361,7 @@ export default function ChangePasswordScreen() {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

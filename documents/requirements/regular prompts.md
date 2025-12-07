@@ -54,3 +54,8 @@ Create a document for first release essentials  that includes what is completed 
 update the context of this chat in developer_context.md document and also update document capturing all the commands used in this chat and future chats in developing this application for future reference. Save that document in documents/requirements/COMMAND_REFERENCE.md file. Also update first release essentials doc
 ------------------------
 Check in github repository and add summary and list of added and updated components with relevant tag for identification. After checkin update the context of this chat and the previous two chats in developer_context.md document and also update document capturing all the commands used in this chat and future chats in developing this application for future reference. Save that document in documents/requirements/COMMAND_REFERENCE.md file. Also update first release essentials doc. Ma. Make sure you update first release essentials doc, feature development roadmap doc and other relavant docs
+
+---------------------------------
+All these functionality used to work on different machine, is it we are missing some code due to check in issue from other machine or is it library issues. Can you confirm we have all the required libraries. Also when you say simpler version are we compromising on prod level functionality. Remember the goal always is to develop for industry standard prod level quality.
+------------------------------------
+Before we do that lets work on few navigation and features 1) Add the main feature buttons at the bottom like home screen to all the screens so that user can navigate to any screen. Tart with category, documents and settings screens. 

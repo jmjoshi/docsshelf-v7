@@ -55,6 +55,8 @@ export const Colors = {
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
     card: '#ffffff',
+    headerBackground: '#007AFF',        // Blue header for light mode
+    inputBackground: '#f9fafb',         // Light input background
     shadow: '#000000',
     overlay: 'rgba(0, 0, 0, 0.5)',
     success: '#10b981',
@@ -76,6 +78,8 @@ export const Colors = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
     card: '#1c1c1e',
+    headerBackground: '#1a1a1a',        // Dark header for dark mode
+    inputBackground: '#2c2c2e',         // Dark input background
     shadow: '#000000',
     overlay: 'rgba(0, 0, 0, 0.7)',
     success: '#10b981',

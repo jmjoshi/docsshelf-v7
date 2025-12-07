@@ -171,23 +171,42 @@ export default function DocumentUploadScreen() {
 
       // Success - show toast and navigate
       await hapticFeedback.success();
-      toast.show('Document uploaded successfully', {
-        type: 'success',
-        duration: 2000,
-      });
+      if (toast) {
+        toast.show('Document uploaded successfully', {
+          type: 'success',
+          duration: 2000,
+        });
+      } else {
+        Alert.alert('Success', 'Document uploaded successfully');
+      }
       
       // Navigate to document view
       router.push(`/document/${result.id}`);
     } catch (err) {
       console.error('Upload failed:', err);
       await hapticFeedback.error();
-      toast.show(
-        err instanceof Error ? err.message : 'Failed to upload document',
-        {
+      
+      // Check for duplicate document error
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload document';
+      const isDuplicate = errorMessage.includes('UNIQUE constraint failed') || 
+                         errorMessage.includes('duplicate') ||
+                         errorMessage.includes('checksum');
+      
+      const friendlyMessage = isDuplicate 
+        ? 'This document has already been uploaded. Duplicate documents are not allowed.'
+        : errorMessage;
+      
+      if (toast) {
+        toast.show(friendlyMessage, {
           type: 'danger',
-          duration: 3000,
-        }
-      );
+          duration: 4000,
+        });
+      } else {
+        Alert.alert(
+          isDuplicate ? 'Duplicate Document' : 'Upload Failed',
+          friendlyMessage
+        );
+      }
     }
   };
 

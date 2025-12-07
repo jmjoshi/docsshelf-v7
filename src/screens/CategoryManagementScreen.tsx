@@ -3,30 +3,32 @@
  * Allows users to organize documents into categories and folders
  */
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCurrentUserId } from '../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-  createCategory,
-  deleteCategory,
-  loadCategories,
-  selectCategoryError,
-  selectCategoryLoading,
-  selectCategoryTree,
-  setSelectedCategory,
-  updateCategory,
+    createCategory,
+    deleteCategory,
+    loadCategories,
+    selectCategoryError,
+    selectCategoryLoading,
+    selectCategoryTree,
+    setSelectedCategory,
+    updateCategory,
 } from '../store/slices/categorySlice';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CategoryTreeNode } from '../types/category';
 
@@ -35,6 +37,7 @@ export default function CategoryManagementScreen() {
   const categoryTree = useAppSelector(selectCategoryTree);
   const loading = useAppSelector(selectCategoryLoading);
   const error = useAppSelector(selectCategoryError);
+  const colorScheme = useColorScheme();
 
   const [userId, setUserId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -197,22 +200,22 @@ export default function CategoryManagementScreen() {
 
   const renderCategoryItem = ({ item, depth = 0 }: { item: CategoryTreeNode; depth?: number }) => (
     <View style={styles.categoryItemContainer}>
-      <View style={[styles.categoryItem, { marginLeft: depth * 20 }]}>
+      <View style={[styles.categoryItem, { marginLeft: depth * 20, backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
         <TouchableOpacity
           style={styles.categoryContent}
           onPress={() => dispatch(setSelectedCategory(item.id))}
         >
-          <View style={[styles.iconCircle, { backgroundColor: item.color || '#2196F3' }]}>
+          <View style={[styles.iconCircle, { backgroundColor: item.color || Colors[colorScheme ?? 'light'].tint }]}>
             <Text style={styles.iconText}>{item.icon || '📁'}</Text>
           </View>
           <View style={styles.categoryInfo}>
-            <Text style={styles.categoryName}>{item.name}</Text>
+            <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>{item.name}</Text>
             {item.description && (
-              <Text style={styles.categoryDescription} numberOfLines={1}>
+              <Text style={[styles.categoryDescription, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]} numberOfLines={1}>
                 {item.description}
               </Text>
             )}
-            <Text style={styles.categoryStats}>
+            <Text style={[styles.categoryStats, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
               {item.documentCount} document{item.documentCount !== 1 ? 's' : ''} • Depth: {item.depth}
             </Text>
           </View>
@@ -220,13 +223,13 @@ export default function CategoryManagementScreen() {
 
         <View style={styles.categoryActions}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
             onPress={() => handleAddSubcategory(item.id)}
           >
             <Text style={styles.actionButtonText}>+</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
             onPress={() => handleEditCategory(item)}
           >
             <Text style={styles.actionButtonText}>✏️</Text>
@@ -252,34 +255,37 @@ export default function CategoryManagementScreen() {
 
   const renderCategoryForm = () => (
     <View style={styles.formContainer}>
-      <Text style={styles.formLabel}>Category Name *</Text>
+      <Text style={[styles.formLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Category Name *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground, borderColor: Colors[colorScheme ?? 'light'].border, color: Colors[colorScheme ?? 'light'].text }]}
         value={categoryName}
         onChangeText={setCategoryName}
         placeholder="Enter category name"
+        placeholderTextColor={Colors[colorScheme ?? 'light'].tabIconDefault}
         maxLength={100}
       />
 
-      <Text style={styles.formLabel}>Description</Text>
+      <Text style={[styles.formLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Description</Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[styles.input, styles.textArea, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground, borderColor: Colors[colorScheme ?? 'light'].border, color: Colors[colorScheme ?? 'light'].text }]}
         value={description}
         onChangeText={setDescription}
         placeholder="Optional description"
+        placeholderTextColor={Colors[colorScheme ?? 'light'].tabIconDefault}
         multiline
         numberOfLines={3}
         maxLength={500}
       />
 
-      <Text style={styles.formLabel}>Icon</Text>
+      <Text style={[styles.formLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Icon</Text>
       <View style={styles.iconGrid}>
         {CATEGORY_ICONS.slice(0, 12).map((icon: string) => (
           <TouchableOpacity
             key={icon}
             style={[
               styles.iconOption,
-              selectedIcon === icon && styles.iconOptionSelected,
+              { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground },
+              selectedIcon === icon && { borderColor: Colors[colorScheme ?? 'light'].tint, backgroundColor: Colors[colorScheme ?? 'light'].tint + '20' },
             ]}
             onPress={() => setSelectedIcon(icon)}
           >
@@ -288,7 +294,7 @@ export default function CategoryManagementScreen() {
         ))}
       </View>
 
-      <Text style={styles.formLabel}>Color</Text>
+      <Text style={[styles.formLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Color</Text>
       <View style={styles.colorGrid}>
         {Object.values(CATEGORY_COLORS).slice(0, 12).map((color: string) => (
           <TouchableOpacity
@@ -307,23 +313,23 @@ export default function CategoryManagementScreen() {
 
   if (loading && !categoryTree.length) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Loading categories...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+        <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Loading categories...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Categories</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
+        <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>Categories</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+          <TouchableOpacity style={[styles.refreshButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]} onPress={handleRefresh}>
             <Text style={styles.refreshButtonText}>🔄</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddCategory}>
-            <Text style={styles.addButtonText}>+ New Category</Text>
+          <TouchableOpacity style={[styles.addButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]} onPress={handleAddCategory}>
+            <Text style={[styles.addButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>+ New Category</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -337,8 +343,8 @@ export default function CategoryManagementScreen() {
       {categoryTree.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📁</Text>
-          <Text style={styles.emptyText}>No categories yet</Text>
-          <Text style={styles.emptySubtext}>Create your first category to organize documents</Text>
+          <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>No categories yet</Text>
+          <Text style={[styles.emptySubtext, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Create your first category to organize documents</Text>
         </View>
       ) : (
         <FlatList
@@ -359,20 +365,20 @@ export default function CategoryManagementScreen() {
         onRequestClose={() => setShowAddModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
+            <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
               {selectedParentId ? 'Add Subcategory' : 'Add Category'}
             </Text>
             {renderCategoryForm()}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
                 onPress={() => setShowAddModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+                style={[styles.modalButton, styles.saveButton, { backgroundColor: Colors.primary }]}
                 onPress={handleSaveNewCategory}
               >
                 <Text style={styles.saveButtonText}>Create</Text>
@@ -390,18 +396,18 @@ export default function CategoryManagementScreen() {
         onRequestClose={() => setShowEditModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Category</Text>
+          <View style={[styles.modalContent, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
+            <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Edit Category</Text>
             {renderCategoryForm()}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
                 onPress={() => setShowEditModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+                style={[styles.modalButton, styles.saveButton, { backgroundColor: Colors.primary }]}
                 onPress={handleSaveEditCategory}
               >
                 <Text style={styles.saveButtonText}>Save</Text>
@@ -417,7 +423,6 @@ export default function CategoryManagementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   centerContainer: {
     flex: 1,
@@ -427,21 +432,17 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
   },
   headerButtons: {
     flexDirection: 'row',
@@ -450,7 +451,6 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
   },
   refreshButtonText: {
     fontSize: 20,
@@ -459,7 +459,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#2196F3',
   },
   addButtonText: {
     color: '#fff',
@@ -489,12 +488,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
     textAlign: 'center',
   },
   listContent: {
@@ -506,7 +503,6 @@ const styles = StyleSheet.create({
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 12,
     marginBottom: 4,
@@ -538,17 +534,14 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
     marginBottom: 2,
   },
   categoryDescription: {
     fontSize: 12,
-    color: '#666',
     marginBottom: 2,
   },
   categoryStats: {
     fontSize: 11,
-    color: '#999',
   },
   categoryActions: {
     flexDirection: 'row',
@@ -558,7 +551,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -577,14 +569,12 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '90%',
     maxHeight: '80%',
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
     marginBottom: 20,
   },
   formContainer: {
@@ -593,17 +583,14 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
     marginTop: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fafafa',
   },
   textArea: {
     height: 80,
@@ -618,15 +605,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-  },
-  iconOptionSelected: {
-    borderColor: '#2196F3',
-    backgroundColor: '#e3f2fd',
   },
   iconOptionText: {
     fontSize: 24,
@@ -658,15 +640,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
   },
   cancelButtonText: {
-    color: '#666',
     fontSize: 16,
     fontWeight: '600',
   },
   saveButton: {
-    backgroundColor: '#2196F3',
   },
   saveButtonText: {
     color: '#fff',

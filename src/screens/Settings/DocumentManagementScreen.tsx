@@ -1,3 +1,4 @@
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { getDatabase } from '@/src/services/database/dbInit';
 import { getCurrentUserId } from '@/src/services/database/userService';
 import { formatFileSize } from '@/src/utils/crypto/encryption';
@@ -31,6 +32,15 @@ export default function DocumentManagementScreen() {
   const [stats, setStats] = useState<StorageStats | null>(null);
   const toast = useToast();
 
+  // Helper to show messages with toast or Alert fallback
+  const showMessage = (message: string, type: 'success' | 'danger' = 'danger') => {
+    if (toast) {
+      toast.show(message, { type });
+    } else {
+      Alert.alert(type === 'success' ? 'Success' : 'Error', message);
+    }
+  };
+
   useEffect(() => {
     loadStorageStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,7 +52,7 @@ export default function DocumentManagementScreen() {
       const userId = await getCurrentUserId();
 
       if (!userId) {
-        toast.show('User not found', { type: 'danger' });
+        showMessage('User not found', 'danger');
         return;
       }
 
@@ -84,7 +94,7 @@ export default function DocumentManagementScreen() {
       });
     } catch (error) {
       console.error('Error loading storage stats:', error);
-      toast.show('Failed to load storage statistics', { type: 'danger' });
+      showMessage('Failed to load storage statistics', 'danger');
     } finally {
       setLoading(false);
     }
@@ -105,7 +115,7 @@ export default function DocumentManagementScreen() {
               const userId = await getCurrentUserId();
 
               if (!userId) {
-                toast.show('User not found', { type: 'danger' });
+                showMessage('User not found', 'danger');
                 return;
               }
 
@@ -117,16 +127,16 @@ export default function DocumentManagementScreen() {
 
               // Log the action
               await db.runAsync(
-                `INSERT INTO audit_log (user_id, action, details, ip_address) 
-                 VALUES (?, 'BULK_DELETE', 'Deleted all documents', 'local')`,
+                `INSERT INTO audit_log (user_id, action, entity_type, details, ip_address) 
+                 VALUES (?, 'BULK_DELETE', 'document', 'Deleted all documents', 'local')`,
                 [userId]
               );
 
-              toast.show(`Deleted ${result.changes} documents`, { type: 'success' });
+              showMessage(`Deleted ${result.changes} documents`, 'success');
               await loadStorageStats();
             } catch (error) {
               console.error('Error deleting all documents:', error);
-              toast.show('Failed to delete documents', { type: 'danger' });
+              showMessage('Failed to delete documents', 'danger');
             }
           },
         },
@@ -149,7 +159,7 @@ export default function DocumentManagementScreen() {
               const userId = await getCurrentUserId();
 
               if (!userId) {
-                toast.show('User not found', { type: 'danger' });
+                showMessage('User not found', 'danger');
                 return;
               }
 
@@ -159,16 +169,16 @@ export default function DocumentManagementScreen() {
               );
 
               await db.runAsync(
-                `INSERT INTO audit_log (user_id, action, details, ip_address) 
-                 VALUES (?, 'BULK_DELETE', ?, 'local')`,
+                `INSERT INTO audit_log (user_id, action, entity_type, details, ip_address) 
+                 VALUES (?, 'BULK_DELETE', 'document', ?, 'local')`,
                 [userId, `Deleted ${result.changes} documents from category: ${categoryName}`]
               );
 
-              toast.show(`Deleted ${result.changes} documents`, { type: 'success' });
+              showMessage(`Deleted ${result.changes} documents`, 'success');
               await loadStorageStats();
             } catch (error) {
               console.error('Error deleting category documents:', error);
-              toast.show('Failed to delete documents', { type: 'danger' });
+              showMessage('Failed to delete documents', 'danger');
             }
           },
         },
@@ -194,10 +204,10 @@ export default function DocumentManagementScreen() {
               // Run ANALYZE to update query optimizer statistics
               await db.execAsync('ANALYZE;');
 
-              toast.show('Database optimized successfully', { type: 'success' });
+              showMessage('Database optimized successfully', 'success');
             } catch (error) {
               console.error('Error optimizing database:', error);
-              toast.show('Failed to optimize database', { type: 'danger' });
+              showMessage('Failed to optimize database', 'danger');
             }
           },
         },
@@ -242,7 +252,7 @@ export default function DocumentManagementScreen() {
       const userId = await getCurrentUserId();
 
       if (!userId) {
-        toast.show('User not found', { type: 'danger' });
+        showMessage('User not found', 'danger');
         return;
       }
 
@@ -289,7 +299,7 @@ export default function DocumentManagementScreen() {
         await db.execAsync('VACUUM;');
         await db.execAsync('ANALYZE;');
 
-        toast.show('Database reset complete. All data deleted.', { type: 'success' });
+        showMessage('Database reset complete. All data deleted.', 'success');
         
         // Reload stats to show empty state
         await loadStorageStats();
@@ -307,7 +317,7 @@ export default function DocumentManagementScreen() {
       }
     } catch (error) {
       console.error('Error during nuclear reset:', error);
-      toast.show('Failed to reset database', { type: 'danger' });
+      showMessage('Failed to reset database', 'danger');
       Alert.alert(
         'Reset Failed',
         'An error occurred during the database reset. Some data may remain. Please try again or contact support.'
@@ -323,7 +333,7 @@ export default function DocumentManagementScreen() {
       const userId = await getCurrentUserId();
 
       if (!userId) {
-        toast.show('User not found', { type: 'danger' });
+        showMessage('User not found', 'danger');
         return;
       }
 
@@ -353,7 +363,7 @@ export default function DocumentManagementScreen() {
       }
     } catch (error) {
       console.error('Error finding duplicates:', error);
-      toast.show('Failed to find duplicates', { type: 'danger' });
+      showMessage('Failed to find duplicates', 'danger');
     }
   };
 
@@ -536,6 +546,7 @@ export default function DocumentManagementScreen() {
           </Text>
         </View>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

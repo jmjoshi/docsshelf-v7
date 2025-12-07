@@ -1,0 +1,50 @@
+<div class="app app--light">
+  <header class="app-header">
+    <button class="icon-button" aria-label="Back">
+      <!-- icon -->
+    </button>
+    <h1 class="app-header__title">Tasks</h1>
+    <button class="icon-button" aria-label="Profile">
+      <!-- avatar or icon -->
+    </button>
+  </header>
+
+  <main class="app-main">
+    <section class="app-search">
+      <div class="search-field">
+        <span class="search-field__icon"></span>
+        <input type="search" placeholder="Search tasks" />
+      </div>
+    </section>
+
+    <section class="app-filters">
+      <button class="chip chip--selected">All</button>
+      <button class="chip">Today</button>
+      <button class="chip">Upcoming</button>
+      <button class="chip">Completed</button>
+    </section>
+
+    <section class="task-list">
+      <article class="task-card">
+        <div class="task-card__top">
+          <div class="task-card__title-row">
+            <input type="checkbox" aria-label="Mark complete" />
+            <h2 class="task-card__title">Design landing page</h2>
+          </div>
+          <span class="status-pill status-pill--in-progress">In progress</span>
+        </div>
+        <div class="task-card__meta">
+          <span class="task-card__meta-item">Due today</span>
+          <span class="task-card__meta-dot">•</span>
+          <span class="task-card__meta-item">Marketing</span>
+        </div>
+      </article>
+
+      <!-- more task-card elements -->
+    </section>
+  </main>
+
+  <button class="fab" aria-label="Add task">
+    +
+  </button>
+</div>

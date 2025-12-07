@@ -1,11 +1,130 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** January 2025  
-**Project Status:** Production Readiness - UI/UX & Documentation phases in progress  
-**Current Sprint:** 🚀 Production Readiness (B→C→D→A): Performance ✅ | UI/UX 🚧 | Documentation ✅ | Device Testing ⏳  
-**Recent Major Achievement:** Phase 1 of UI/UX (Toast System) + FAQ Documentation complete!  
+**Last Updated:** December 6, 2025  
+**Project Status:** Native Android Build Transition - React Version & Dark Mode Fixes Complete  
+**Current Sprint:** 🚀 Native Build Migration: Expo Dev Client Removed ✅ | React 19.1.0 Pinned ✅ | Dark Mode Fixed ✅ | Rate App Added ✅  
+**Recent Major Achievement:** Transitioned to native Android builds only, fixed React version mismatch, completed dark mode UI polish  
 **Test Coverage:** 802 tests passing (80%+ coverage ✅, target: 80% - ACHIEVED!)  
-**Note:** Performance utilities created | Toast system integrated | Comprehensive FAQ written | Moving toward v1.0 release
+**Note:** Native builds working | React 19.1.0 compatibility restored | Dark mode complete | Rate This App implemented | Ready for physical device testing
+
+---
+
+## 🔥 LATEST DEVELOPMENT SESSION (December 6, 2025)
+
+### Critical Issues Resolved
+
+#### 1. React Version Mismatch Error (FIXED ✅)
+**Problem:** Incompatible React versions causing app crashes
+- `react: 19.2.1` (installed)
+- `react-native-renderer: 19.1.0` (required)
+- Error: "Incompatible React versions: The 'react' and 'react-native-renderer' packages must have the exact same version"
+
+**Solution:**
+```json
+// package.json - Pinned React versions (removed caret)
+"react": "19.1.0",
+"react-dom": "19.1.0",
+"react-test-renderer": "19.1.0"
+```
+
+**Commands Used:**
+```powershell
+cd C:\Projects\docsshelf-v7
+Stop-Process -Name "node" -Force  # Kill Metro/Gradle processes
+Remove-Item -Recurse -Force node_modules
+npm install
+cd android
+.\gradlew clean
+.\gradlew assembleDebug
+cd ..
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+#### 2. Development Method Change: Native Builds Only (MAJOR SHIFT ✅)
+**Decision:** Transitioned from Expo development client to native Android builds only
+
+**Rationale:**
+- Expo Dev Client causing native module compatibility issues
+- Native builds provide full control and stability
+- Better for custom native modules and production readiness
+- Eliminates hybrid approach inconsistencies
+
+**What Changed:**
+- ❌ Removed: `expo-dev-client` dependency
+- ❌ Removed: Expo Go workflow
+- ✅ Added: Direct native Android build workflow
+- ✅ Kept: Expo SDK modules (camera, file-system, sqlite, etc.)
+- ✅ Created: ANDROID_LOCAL_BUILD_GUIDE.md for team reference
+
+**New Development Workflow:**
+```powershell
+# Build APK
+cd android
+.\gradlew assembleDebug
+cd ..
+
+# Install on device
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# Start Metro (separately)
+npx react-native start
+```
+
+#### 3. Dark Mode UI Polish (COMPLETE ✅)
+**Issues Fixed:**
+- White text on white backgrounds (invisible text)
+- Inconsistent button colors across screens
+- Toggle buttons using wrong color scheme
+- FAB (Floating Action Button) visibility issues
+- Modal button colors not dark-mode compatible
+
+**Changes Made:**
+```typescript
+// Added to constants/theme.ts
+headerBackground: '#1a1a1a',  // Dark mode header
+inputBackground: '#2a2a2a',    // Dark mode inputs
+
+// Fixed button colors throughout app
+// Active state: Colors.primary (#007AFF) instead of tint
+// Text color: Dynamic based on background (black on white, white on dark)
+```
+
+**Files Updated:**
+- `app/(tabs)/index.tsx` - Header and stats card styling
+- `src/screens/Documents/DocumentListScreen.tsx` - Toggle buttons, FAB, filter buttons
+- `src/screens/CategoryManagementScreen.tsx` - Add/save buttons, action buttons
+- `constants/theme.ts` - Added missing color definitions
+
+#### 4. Rate This App Feature (NEW FEATURE ✅)
+**Implementation:** Native app store integration in About screen
+
+**Features:**
+- Platform-specific store links (Google Play for Android, App Store for iOS)
+- Deep link to store app with web fallback
+- Error handling and user feedback
+- Non-intrusive (user-triggered only)
+
+**Code Added:**
+```typescript
+// src/screens/Settings/AboutScreen.tsx
+const handleRateApp = async () => {
+  const packageId = 'com.docsshelf.app';
+  const androidUrl = `market://details?id=${packageId}`;
+  const androidWebUrl = `https://play.google.com/store/apps/details?id=${packageId}`;
+  const iosUrl = `itms-apps://apps.apple.com/app/id${APP_STORE_ID}`;
+  // ... platform detection and opening logic
+};
+```
+
+**Note:** iOS App Store ID placeholder - to be updated upon App Store publication
+
+#### 5. Support Email Discussion (PENDING)
+**Current:** `support@docsshelf.app` configured in app
+**Status:** Email infrastructure needs to be set up
+**Options Discussed:**
+- ImprovMX (free email forwarding)
+- Google Workspace ($6/month)
+- Zoho Mail (free for 1 user)
 
 ---
 

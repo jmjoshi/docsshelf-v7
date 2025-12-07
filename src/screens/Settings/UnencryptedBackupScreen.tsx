@@ -10,6 +10,7 @@
  * - Backup history
  */
 
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -344,6 +345,7 @@ export default function UnencryptedBackupScreen() {
         onCancel={() => setShowWarningModal(false)}
         documentCount={selectedDocIds.size}
       />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

@@ -1,0 +1,53 @@
+.app--dark {
+  --color-bg: #020617;
+  --color-surface: #0F172A;
+  --color-surface-elevated: #111827;
+  --color-primary: #14B8A6;
+  --color-primary-soft: rgba(20, 184, 166, 0.16);
+  --color-border-subtle: #1F2933;
+  --color-text-main: #E5E7EB;
+  --color-text-muted: #9CA3AF;
+  --color-danger: #F97373;
+}
+
+.app--dark .app {
+  background: var(--color-bg);
+}
+
+.app--dark .app-header {
+  background: var(--color-surface-elevated);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.8);
+}
+
+.app--dark .search-field {
+  background: var(--color-surface);
+  border-color: var(--color-border-subtle);
+}
+
+.app--dark .chip {
+  background: transparent;
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-muted);
+}
+
+.app--dark .chip--selected {
+  background: var(--color-primary);
+  color: #020617;
+  border-color: var(--color-primary);
+}
+
+.app--dark .task-card {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: none;
+}
+
+.app--dark .status-pill--in-progress {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.app--dark .fab {
+  background: var(--color-primary);
+  color: #020617;
+}

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/colors';
@@ -359,11 +359,21 @@ function RegisterScreenContent() {
           <Text style={styles.loadingText}>Creating your account...</Text>
         </View>
       ) : (
-        <Button 
-          title="Register" 
+        <TouchableOpacity 
+          style={[
+            styles.registerButton,
+            (agreedToTerms && agreedToPrivacy) && styles.registerButtonEnabled
+          ]}
           onPress={handleRegister}
           disabled={loading || !agreedToTerms || !agreedToPrivacy}
-        />
+        >
+          <Text style={[
+            styles.registerButtonText,
+            (agreedToTerms && agreedToPrivacy) && styles.registerButtonTextEnabled
+          ]}>
+            Register
+          </Text>
+        </TouchableOpacity>
       )}
       <TouchableOpacity 
         style={styles.linkContainer}
@@ -539,5 +549,25 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: Colors.border.main,
+  },
+  registerButton: {
+    backgroundColor: Colors.border.main,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    ...Shadows.sm,
+  },
+  registerButtonEnabled: {
+    backgroundColor: Colors.primary.main,
+    ...Shadows.md,
+  },
+  registerButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.secondary,
+  },
+  registerButtonTextEnabled: {
+    color: '#FFFFFF',
   },
 });

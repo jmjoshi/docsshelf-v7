@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -296,6 +297,7 @@ export default function BackupScreen() {
           }}
         />
       )}
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

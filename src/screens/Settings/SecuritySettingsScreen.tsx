@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { getDatabase } from '@/src/services/database/dbInit';
 import { getCurrentUserId } from '@/src/services/database/userService';
@@ -402,6 +403,7 @@ export default function SecuritySettingsScreen() {
         </>
         )}
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

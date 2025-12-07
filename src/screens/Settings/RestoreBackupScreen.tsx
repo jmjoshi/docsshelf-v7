@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import {
     getBackupInfo,
     importBackup,
@@ -414,6 +415,7 @@ export default function RestoreBackupScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

@@ -29,10 +29,18 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
+    // Suppress non-critical keep-awake errors
+    if (error.message?.includes('Unable to activate keep awake')) {
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Suppress non-critical keep-awake errors
+    if (error.message?.includes('Unable to activate keep awake')) {
+      return;
+    }
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,

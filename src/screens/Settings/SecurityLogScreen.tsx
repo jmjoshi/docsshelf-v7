@@ -1,3 +1,4 @@
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { getDatabase } from '@/src/services/database/dbInit';
 import { getCurrentUserId } from '@/src/services/database/userService';
 import { Ionicons } from '@expo/vector-icons';
@@ -302,6 +303,7 @@ export default function SecurityLogScreen() {
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
       />
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

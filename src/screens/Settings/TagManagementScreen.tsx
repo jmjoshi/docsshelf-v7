@@ -3,6 +3,7 @@
  * Allows users to create, edit, and delete tags
  */
 
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -317,6 +318,7 @@ export default function TagManagementScreen() {
           </ScrollView>
         </View>
       </Modal>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

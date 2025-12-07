@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
+import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPreferences, resetPreferences, setPreference } from '@/src/services/database/preferenceService';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -18,9 +19,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
 
 export default function PreferencesScreen() {
-  const colorScheme = useColorScheme();
+  const { colorScheme, refreshTheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const toast = useToast();
+
+  // Helper to show messages with Alert fallback
+  const showMessage = (message: string, type: 'success' | 'danger' = 'danger') => {
+    if (toast) {
+      toast.show(message, { type });
+    } else {
+      Alert.alert(type === 'success' ? 'Success' : 'Error', message);
+    }
+  };
 
   // App preferences state
   const [loading, setLoading] = useState(true);
@@ -46,7 +56,7 @@ export default function PreferencesScreen() {
       setShowThumbnailsEnabled(prefs.showThumbnails);
     } catch (error) {
       console.error('Error loading preferences:', error);
-      toast.show('Failed to load preferences', { type: 'danger' });
+      showMessage('Failed to load preferences', 'danger');
     } finally {
       setLoading(false);
     }
@@ -59,10 +69,12 @@ export default function PreferencesScreen() {
       const newValue = !darkModeEnabled;
       await setPreference('darkMode', newValue);
       setDarkModeEnabled(newValue);
-      toast.show(`Dark mode ${newValue ? 'enabled' : 'disabled'}`, { type: 'success' });
+      // Refresh theme to apply changes immediately
+      await refreshTheme();
+      showMessage(`Dark mode ${newValue ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
       console.error('Error toggling dark mode:', error);
-      toast.show('Failed to update dark mode', { type: 'danger' });
+      showMessage('Failed to update dark mode', 'danger');
     }
   };
 
@@ -71,10 +83,10 @@ export default function PreferencesScreen() {
       const newValue = !notificationsEnabled;
       await setPreference('notifications', newValue);
       setNotificationsEnabled(newValue);
-      toast.show(`Notifications ${newValue ? 'enabled' : 'disabled'}`, { type: 'success' });
+      showMessage(`Notifications ${newValue ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
       console.error('Error toggling notifications:', error);
-      toast.show('Failed to update notifications', { type: 'danger' });
+      showMessage('Failed to update notifications', 'danger');
     }
   };
 
@@ -83,10 +95,10 @@ export default function PreferencesScreen() {
       const newValue = !autoBackupEnabled;
       await setPreference('autoBackup', newValue);
       setAutoBackupEnabled(newValue);
-      toast.show(`Auto backup ${newValue ? 'enabled' : 'disabled'}`, { type: 'success' });
+      showMessage(`Auto backup ${newValue ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
       console.error('Error toggling auto backup:', error);
-      toast.show('Failed to update auto backup', { type: 'danger' });
+      showMessage('Failed to update auto backup', 'danger');
     }
   };
 
@@ -102,7 +114,7 @@ export default function PreferencesScreen() {
           onPress: () => {
             // Cache clearing will be implemented when Document Management screen is built
             // For now, just show success message
-            toast.show('Cache cleared successfully', { type: 'success' });
+            showMessage('Cache cleared successfully', 'success');
           },
         },
       ]
@@ -122,10 +134,10 @@ export default function PreferencesScreen() {
             try {
               await resetPreferences();
               await loadPreferences();
-              toast.show('Settings reset to defaults', { type: 'success' });
+              showMessage('Settings reset to defaults', 'success');
             } catch (error) {
               console.error('Error resetting settings:', error);
-              toast.show('Failed to reset settings', { type: 'danger' });
+              showMessage('Failed to reset settings', 'danger');
             }
           },
         },
@@ -137,10 +149,10 @@ export default function PreferencesScreen() {
     try {
       await setPreference('compactView', value);
       setCompactViewEnabled(value);
-      toast.show(`Compact view ${value ? 'enabled' : 'disabled'}`, { type: 'success' });
+      showMessage(`Compact view ${value ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
       console.error('Error toggling compact view:', error);
-      toast.show('Failed to update compact view', { type: 'danger' });
+      showMessage('Failed to update compact view', 'danger');
     }
   };
 
@@ -148,10 +160,10 @@ export default function PreferencesScreen() {
     try {
       await setPreference('showThumbnails', value);
       setShowThumbnailsEnabled(value);
-      toast.show(`Thumbnails ${value ? 'enabled' : 'disabled'}`, { type: 'success' });
+      showMessage(`Thumbnails ${value ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
       console.error('Error toggling thumbnails:', error);
-      toast.show('Failed to update thumbnails', { type: 'danger' });
+      showMessage('Failed to update thumbnails', 'danger');
     }
   };
 
@@ -399,6 +411,7 @@ export default function PreferencesScreen() {
           </Text>
         </View>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

@@ -1,11 +1,13 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { router } from 'expo-router';
 import React from 'react';
 import {
     Alert,
     Linking,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -22,16 +24,52 @@ export default function AboutScreen() {
   const buildNumber = '1';
   const appName = 'DocsShelf';
 
-  const handleRateApp = () => {
-    Alert.alert('Coming Soon', 'App Store link will be available after release');
+  const handleRateApp = async () => {
+    const packageId = 'com.docsshelf.app';
+    const appStoreId = 'YOUR_APP_STORE_ID'; // Replace when app is published to iOS App Store
+    
+    try {
+      let url = '';
+      
+      if (Platform.OS === 'android') {
+        // Try to open Google Play Store app first
+        url = `market://details?id=${packageId}`;
+        const canOpen = await Linking.canOpenURL(url);
+        
+        if (!canOpen) {
+          // Fallback to web URL if Play Store app is not available
+          url = `https://play.google.com/store/apps/details?id=${packageId}`;
+        }
+      } else if (Platform.OS === 'ios') {
+        // iOS App Store URL
+        url = `itms-apps://apps.apple.com/app/id${appStoreId}`;
+        const canOpen = await Linking.canOpenURL(url);
+        
+        if (!canOpen) {
+          // Fallback to web URL
+          url = `https://apps.apple.com/app/id${appStoreId}`;
+        }
+      } else {
+        Alert.alert('Not Available', 'Rating is only available on mobile devices');
+        return;
+      }
+      
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error('Error opening store:', error);
+      Alert.alert(
+        'Unable to Open Store',
+        'We could not open the app store. Please search for "DocsShelf" in your app store.'
+      );
+    }
   };
 
   const handleViewPrivacyPolicy = () => {
-    Linking.openURL('https://github.com/jmjoshi/docsshelf-v7/blob/master/documents/legal/PRIVACY_POLICY.md');
+    router.push('/settings/privacy-policy' as any);
   };
 
   const handleViewTerms = () => {
-    Linking.openURL('https://github.com/jmjoshi/docsshelf-v7/blob/master/documents/legal/TERMS_OF_SERVICE.md');
+    router.push('/settings/terms-of-service' as any);
   };
 
   const handleViewLicenses = () => {
@@ -232,6 +270,7 @@ export default function AboutScreen() {
           </Text>
         </View>
       </ScrollView>
+      <BottomNavBar />
     </SafeAreaView>
   );
 }

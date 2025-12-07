@@ -1,3 +1,5 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -7,6 +9,7 @@ import { getCurrentUserProfile } from '../../src/services/database/userService';
 import { UserProfile } from '../../src/types/user';
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
   const { logout } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -72,10 +75,10 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors[colorScheme ?? 'light'].headerBackground }]} edges={['top']}>
+      <ScrollView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].headerBackground }]}>
           <Text style={styles.welcomeText}>
             Welcome{userProfile ? `, ${userProfile.firstName}` : ''}! 👋
           </Text>
@@ -84,45 +87,45 @@ export default function HomeScreen() {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Documents</Text>
+        <View style={[styles.statCard, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
+          <Text style={[styles.statNumber, { color: Colors[colorScheme ?? 'light'].tint }]}>0</Text>
+          <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Documents</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Categories</Text>
+        <View style={[styles.statCard, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
+          <Text style={[styles.statNumber, { color: Colors[colorScheme ?? 'light'].tint }]}>0</Text>
+          <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Categories</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Tags</Text>
+        <View style={[styles.statCard, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
+          <Text style={[styles.statNumber, { color: Colors[colorScheme ?? 'light'].tint }]}>0</Text>
+          <Text style={[styles.statLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Tags</Text>
         </View>
       </View>
 
       {/* Feature Cards */}
       <View style={styles.featuresContainer}>
-        <Text style={styles.sectionTitle}>Features</Text>
+        <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Features</Text>
         {featureCards.map((feature) => (
           <TouchableOpacity
             key={feature.id}
-            style={[styles.featureCard, { borderLeftColor: feature.color }]}
+            style={[styles.featureCard, { borderLeftColor: feature.color, backgroundColor: Colors[colorScheme ?? 'light'].card }]}
             onPress={() => router.push(feature.route as any)}
           >
-            <Text style={styles.featureTitle}>{feature.title}</Text>
-            <Text style={styles.featureDescription}>{feature.description}</Text>
+            <Text style={[styles.featureTitle, { color: Colors[colorScheme ?? 'light'].text }]}>{feature.title}</Text>
+            <Text style={[styles.featureDescription, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>{feature.description}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Logout Button */}
       <View style={styles.logoutContainer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: '#ff3b30' }]} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       {/* Version Info */}
       <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>DocsShelf v1.0.0</Text>
+        <Text style={[styles.versionText, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>DocsShelf v1.0.0</Text>
       </View>
       </ScrollView>
     </SafeAreaView>
@@ -132,14 +135,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#007AFF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#007AFF',
     padding: 24,
     paddingBottom: 32,
   },
@@ -158,8 +158,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 20,
-    backgroundColor: '#fff',
-    marginTop: -20,
+    marginTop: 16,
     marginHorizontal: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -174,11 +173,9 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#007AFF',
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
     marginTop: 4,
   },
   featuresContainer: {
@@ -188,12 +185,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 16,
     marginLeft: 4,
   },
   featureCard: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
     marginBottom: 12,
@@ -207,12 +202,10 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#666',
     lineHeight: 20,
   },
   logoutContainer: {
@@ -241,6 +234,5 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 12,
-    color: '#999',
   },
 });
