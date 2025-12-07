@@ -193,18 +193,33 @@ export default function DocumentViewerScreen() {
     if (document?.mime_type.startsWith('image/') && typeof decryptedContent === 'string') {
       // For images, content would be base64 or file URI
       return (
-        <ScrollView
-          style={styles.imageContainer}
-          contentContainerStyle={styles.imageContentContainer}
-          maximumZoomScale={3}
-          minimumZoomScale={1}
-        >
-          <Image
-            source={{ uri: decryptedContent }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </ScrollView>
+        <View style={styles.imageContainer}>
+          <ScrollView
+            contentContainerStyle={styles.imageContentContainer}
+            maximumZoomScale={3}
+            minimumZoomScale={1}
+          >
+            <Image
+              source={{ uri: decryptedContent }}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </ScrollView>
+          {/* Timestamp overlay */}
+          <View style={styles.timestampOverlay}>
+            <Text style={styles.timestampText}>
+              {new Date(document.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+              }).replace(/\//g, '.')} {new Date(document.created_at).toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              })}
+            </Text>
+          </View>
+        </View>
       );
     }
 
@@ -256,7 +271,7 @@ export default function DocumentViewerScreen() {
         </TouchableOpacity>
         
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={styles.headerTitle} numberOfLines={2}>
             {document.filename}
           </Text>
           <Text style={styles.headerSubtitle}>
@@ -271,12 +286,16 @@ export default function DocumentViewerScreen() {
 
       {/* Document Info */}
       <View style={styles.infoBar}>
-        <View style={styles.infoItem}>
+        <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Created</Text>
+        </View>
+        <View style={styles.infoRow}>
           <Text style={styles.infoValue}>{formatDate(document.created_at)}</Text>
         </View>
-        <View style={styles.infoItem}>
+        <View style={[styles.infoRow, styles.lastInfoRow]}>
           <Text style={styles.infoLabel}>Last Accessed</Text>
+        </View>
+        <View style={styles.infoRow}>
           <Text style={styles.infoValue}>
             {document.last_accessed_at ? formatDate(document.last_accessed_at) : 'Never'}
           </Text>
@@ -289,12 +308,16 @@ export default function DocumentViewerScreen() {
       {/* Action Bar */}
       <View style={styles.actionBar}>
         <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
-          <Text style={styles.actionIcon}>✏️</Text>
+          <View style={styles.actionIconContainer}>
+            <Text style={styles.actionIcon}>✏️</Text>
+          </View>
           <Text style={styles.actionText}>Edit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-          <Text style={styles.actionIcon}>📤</Text>
+          <View style={styles.actionIconContainer}>
+            <Text style={styles.actionIcon}>🧺</Text>
+          </View>
           <Text style={styles.actionText}>Share</Text>
         </TouchableOpacity>
 
@@ -302,7 +325,9 @@ export default function DocumentViewerScreen() {
           style={[styles.actionButton, styles.deleteActionButton]}
           onPress={handleDelete}
         >
-          <Text style={styles.actionIcon}>🗑️</Text>
+          <View style={styles.actionIconContainer}>
+            <Text style={[styles.actionIcon, styles.deleteIcon]}>🗑️</Text>
+          </View>
           <Text style={[styles.actionText, styles.deleteActionText]}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -366,21 +391,26 @@ const styles = StyleSheet.create({
   },
   infoBar: {
     backgroundColor: '#fff',
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
-  infoItem: {
-    marginBottom: 10,
+  infoRow: {
+    paddingVertical: 6,
+  },
+  lastInfoRow: {
+    marginTop: 12,
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#999',
-    marginBottom: 3,
+    fontWeight: '400',
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#333',
+    fontWeight: '400',
   },
   descriptionContainer: {
     marginTop: 5,
@@ -430,16 +460,32 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flex: 1,
+    backgroundColor: '#000',
+    position: 'relative',
   },
   imageContentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
   },
   image: {
-    width: SCREEN_WIDTH - 20,
+    width: SCREEN_WIDTH,
     height: '100%',
+  },
+  timestampOverlay: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  timestampText: {
+    fontSize: 12,
+    color: '#FFD700',
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   unsupportedContainer: {
     flex: 1,
@@ -468,6 +514,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    paddingVertical: 8,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -477,19 +524,24 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     alignItems: 'center',
-    padding: 15,
+    paddingVertical: 10,
+  },
+  actionIconContainer: {
+    marginBottom: 4,
   },
   actionIcon: {
-    fontSize: 24,
-    marginBottom: 5,
+    fontSize: 28,
+  },
+  deleteIcon: {
+    fontSize: 26,
   },
   actionText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
+    fontWeight: '400',
   },
   deleteActionButton: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#ffebee',
+    // No additional border needed
   },
   deleteActionText: {
     color: '#f44336',
