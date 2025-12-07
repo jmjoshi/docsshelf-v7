@@ -33,7 +33,11 @@ export default function ExplorerTree({
     for (const node of nodes) {
       flattened.push({ ...node, depth });
       
-      if (node.children && node.children.length > 0 && expanded.has(node.id)) {
+      // Show children if node is in expanded set OR if node has isExpanded=true (for search results)
+      const shouldShowChildren = node.children && node.children.length > 0 && 
+        (expanded.has(node.id) || node.isExpanded);
+      
+      if (shouldShowChildren) {
         flattened.push(...flattenNodes(node.children, expanded, depth + 1));
       }
     }

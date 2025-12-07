@@ -190,6 +190,7 @@ export default function FileExplorerScreen() {
     
     const lowerQuery = query.toLowerCase();
     const filtered: ExplorerNode[] = [];
+    const nodesToExpand = new Set<string>();
     
     const matchNode = (node: ExplorerNode): boolean => {
       return node.name.toLowerCase().includes(lowerQuery);
@@ -206,13 +207,16 @@ export default function FileExplorerScreen() {
       }
       
       if (matches || filteredChildren.length > 0) {
-        // When filtering, always expand nodes that have children to show results
-        // This makes search results immediately visible
+        // When filtering, mark nodes with children to be auto-expanded
+        if (filteredChildren.length > 0) {
+          nodesToExpand.add(node.id);
+        }
+        
         return {
           ...node,
           children: filteredChildren,
           hasChildren: filteredChildren.length > 0,
-          isExpanded: filteredChildren.length > 0, // Expand if has filtered children
+          isExpanded: explorerState.expandedNodes.has(node.id) || filteredChildren.length > 0,
         };
       }
       
@@ -226,8 +230,16 @@ export default function FileExplorerScreen() {
       }
     });
     
+    // Auto-expand nodes with search results
+    if (nodesToExpand.size > 0) {
+      setExplorerState((prev) => ({
+        ...prev,
+        expandedNodes: new Set([...prev.expandedNodes, ...nodesToExpand]),
+      }));
+    }
+    
     return filtered;
-  }, []);
+  }, [explorerState.expandedNodes]);
   
   const explorerNodes = buildExplorerNodes();
   const filteredNodes = filterNodes(explorerNodes, explorerState.searchQuery);
