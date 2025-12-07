@@ -538,46 +538,15 @@ Encrypted: Yes`;
       )}
 
       {/* Move to Category Modal */}
-      <Modal
+      <HierarchicalCategoryPicker
         visible={showMoveModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowMoveModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Move to Category</Text>
-              <TouchableOpacity onPress={() => setShowMoveModal(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.categoryItem}
-              onPress={() => handleMoveToCategory(null, 'Uncategorized')}
-            >
-              <View style={[styles.colorIndicator, { backgroundColor: '#999' }]} />
-              <Text style={styles.categoryItemText}>Uncategorized</Text>
-            </TouchableOpacity>
-
-            <FlatList
-              data={categories}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.categoryItem}
-                  onPress={() => handleMoveToCategory(item.id, item.name)}
-                >
-                  <View style={[styles.colorIndicator, { backgroundColor: item.color || '#2196F3' }]} />
-                  <Text style={styles.categoryItemText}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.id.toString()}
-              style={styles.categoryList}
-            />
-          </View>
-        </View>
-      </Modal>
+        categories={categories}
+        selectedCategoryId={document?.category_id || null}
+        onSelectCategory={handleMoveToCategory}
+        onClose={() => setShowMoveModal(false)}
+        showUncategorized={true}
+        title="Move to Category"
+      />
     </SafeAreaView>
   );
 }
@@ -853,56 +822,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
     fontWeight: '500',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  modalCloseButton: {
-    fontSize: 28,
-    color: '#666',
-    fontWeight: '300',
-  },
-  categoryList: {
-    maxHeight: 400,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  colorIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  categoryItemText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
   },
 });

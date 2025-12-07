@@ -9,16 +9,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
-    FlatList,
-    Modal,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
+import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -226,19 +225,6 @@ export default function DocumentUploadScreen() {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  const renderCategoryItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.categoryItem}
-      onPress={() => handleSelectCategory(item.id, item.name)}
-    >
-      <View style={[styles.colorIndicator, { backgroundColor: item.color || '#2196F3' }]} />
-      <Text style={styles.categoryItemText}>{item.name}</Text>
-      {item.document_count !== undefined && (
-        <Text style={styles.documentCount}>({item.document_count})</Text>
-      )}
-    </TouchableOpacity>
-  );
-
   const renderUploadProgress = ({ item }: { item: any }) => (
     <View style={styles.uploadProgressItem}>
       <Text style={styles.uploadFileName} numberOfLines={1}>
@@ -379,38 +365,15 @@ export default function DocumentUploadScreen() {
       )}
 
       {/* Category Selection Modal */}
-      <Modal
+      <HierarchicalCategoryPicker
         visible={showCategoryModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { paddingBottom: insets.bottom }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Category</Text>
-              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.categoryItem}
-              onPress={() => handleSelectCategory(null, 'Uncategorized')}
-            >
-              <View style={[styles.colorIndicator, { backgroundColor: '#999' }]} />
-              <Text style={styles.categoryItemText}>Uncategorized</Text>
-            </TouchableOpacity>
-
-            <FlatList
-              data={categories}
-              renderItem={renderCategoryItem}
-              keyExtractor={(item) => item.id.toString()}
-              style={styles.categoryList}
-            />
-          </View>
-        </View>
-      </Modal>
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={handleSelectCategory}
+        onClose={() => setShowCategoryModal(false)}
+        showUncategorized={true}
+        title="Select Category"
+      />
 
       {/* Post-Upload Options Modal */}
       <Modal
@@ -696,60 +659,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  modalCloseButton: {
-    fontSize: 28,
-    color: '#666',
-    fontWeight: '300',
-  },
-  categoryList: {
-    maxHeight: 400,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  colorIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  categoryItemText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  documentCount: {
-    fontSize: 14,
-    color: '#999',
   },
   // Post-Upload Modal Styles
   postUploadModalOverlay: {

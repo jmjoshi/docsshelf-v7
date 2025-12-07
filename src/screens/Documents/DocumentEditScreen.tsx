@@ -7,7 +7,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
-    Modal,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,9 +14,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import TagList from '../../components/documents/TagList';
 import TagPicker from '../../components/documents/TagPicker';
+import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -54,7 +54,6 @@ export default function DocumentEditScreen() {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const insets = useSafeAreaInsets();
   const documentTags = useAppSelector(selectDocumentTags(documentId));
 
   useEffect(() => {
@@ -333,44 +332,15 @@ export default function DocumentEditScreen() {
       )}
 
       {/* Category Selection Modal */}
-      <Modal
+      <HierarchicalCategoryPicker
         visible={showCategoryModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { paddingBottom: insets.bottom }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Category</Text>
-              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.categoryItem}
-              onPress={() => handleSelectCategory(null, 'Uncategorized')}
-            >
-              <View style={[styles.colorIndicator, { backgroundColor: '#999' }]} />
-              <Text style={styles.categoryItemText}>Uncategorized</Text>
-            </TouchableOpacity>
-
-            <ScrollView style={styles.categoryList}>
-              {categories.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.categoryItem}
-                  onPress={() => handleSelectCategory(item.id, item.name)}
-                >
-                  <View style={[styles.colorIndicator, { backgroundColor: item.color || '#2196F3' }]} />
-                  <Text style={styles.categoryItemText}>{item.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={handleSelectCategory}
+        onClose={() => setShowCategoryModal(false)}
+        showUncategorized={true}
+        title="Select Category"
+      />
 
       {/* Tag Picker Modal */}
       <TagPicker
@@ -600,59 +570,5 @@ const styles = StyleSheet.create({
   errorBannerText: {
     color: '#c62828',
     fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  modalCloseButton: {
-    fontSize: 28,
-    color: '#666',
-    fontWeight: '300',
-  },
-  categoryList: {
-    maxHeight: 400,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  colorIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  categoryItemText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  documentCount: {
-    fontSize: 14,
-    color: '#999',
   },
 });
