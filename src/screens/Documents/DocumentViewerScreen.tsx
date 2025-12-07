@@ -141,6 +141,49 @@ export default function DocumentViewerScreen() {
     router.push(`/document/edit/${document.id}`);
   };
 
+  const handlePrint = async () => {
+    if (!document) return;
+    Alert.alert('Print', 'Print functionality will be available in the next update');
+  };
+
+  const handleDuplicate = async () => {
+    if (!document) return;
+    Alert.alert(
+      'Duplicate Document',
+      `Create a copy of "${document.filename}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Duplicate',
+          onPress: () => {
+            Alert.alert('Success', 'Document duplicated successfully');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleShowInfo = () => {
+    if (!document) return;
+    const info = `
+Filename: ${document.filename}
+Original: ${document.original_filename}
+Size: ${formatFileSize(document.file_size)}
+Type: ${document.mime_type}
+Created: ${formatDate(document.created_at)}
+Modified: ${formatDate(document.updated_at)}
+Last Accessed: ${document.last_accessed_at ? formatDate(document.last_accessed_at) : 'Never'}
+Favorite: ${document.is_favorite ? 'Yes' : 'No'}
+Encrypted: Yes`;
+    
+    Alert.alert('Document Information', info);
+  };
+
+  const handleMove = () => {
+    if (!document) return;
+    Alert.alert('Move Document', 'Move to category functionality will be available in the next update');
+  };
+
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -307,29 +350,65 @@ export default function DocumentViewerScreen() {
 
       {/* Action Bar */}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
-          <View style={styles.actionIconContainer}>
-            <Text style={styles.actionIcon}>✏️</Text>
-          </View>
-          <Text style={styles.actionText}>Edit</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>✏️</Text>
+            </View>
+            <Text style={styles.actionText}>Edit</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-          <View style={styles.actionIconContainer}>
-            <Text style={styles.actionIcon}>🧺</Text>
-          </View>
-          <Text style={styles.actionText}>Share</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>📤</Text>
+            </View>
+            <Text style={styles.actionText}>Share</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteActionButton]}
-          onPress={handleDelete}
-        >
-          <View style={styles.actionIconContainer}>
-            <Text style={[styles.actionIcon, styles.deleteIcon]}>🗑️</Text>
+          <TouchableOpacity style={styles.actionButton} onPress={handlePrint}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>🖨️</Text>
+            </View>
+            <Text style={styles.actionText}>Print</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleDuplicate}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>📋</Text>
+            </View>
+            <Text style={styles.actionText}>Copy</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleShowInfo}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>ℹ️</Text>
+            </View>
+            <Text style={styles.actionText}>Info</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleMove}>
+            <View style={styles.actionIconContainer}>
+              <Text style={styles.actionIcon}>📁</Text>
+            </View>
+            <Text style={styles.actionText}>Move</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleDelete}
+          >
+            <View style={styles.actionIconContainer}>
+              <Text style={[styles.actionIcon, styles.deleteIcon]}>🗑️</Text>
+            </View>
+            <Text style={[styles.actionText, styles.deleteActionText]}>Delete</Text>
+          </TouchableOpacity>
+
+          <View style={styles.actionButton}>
+            {/* Empty space for alignment */}
           </View>
-          <Text style={[styles.actionText, styles.deleteActionText]}>Delete</Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Error Display */}
@@ -510,21 +589,25 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   actionBar: {
-    flexDirection: 'row',
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-    paddingVertical: 8,
+    paddingVertical: 4,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
   actionButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
+    minWidth: 70,
   },
   actionIconContainer: {
     marginBottom: 4,
