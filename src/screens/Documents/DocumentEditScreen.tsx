@@ -67,7 +67,7 @@ export default function DocumentEditScreen() {
     if (document) {
       setFilename(document.filename);
       setSelectedCategoryId(document.category_id);
-      setIsFavorite(document.is_favorite);
+      setIsFavorite(Boolean(document.is_favorite));
       
       const category = categories.find((cat) => cat.id === document.category_id);
       setSelectedCategoryName(category?.name || 'Uncategorized');
@@ -283,7 +283,7 @@ export default function DocumentEditScreen() {
 
           <TouchableOpacity style={styles.favoriteToggle} onPress={handleToggleFavorite}>
             <View style={[styles.checkbox, isFavorite && styles.checkboxChecked]}>
-              {isFavorite && <Text style={styles.checkmark}>✓</Text>}
+              {isFavorite ? <Text style={styles.checkmark}>✓</Text> : null}
             </View>
             <Text style={styles.favoriteLabel}>Mark as Favorite</Text>
           </TouchableOpacity>

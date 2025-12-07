@@ -411,6 +411,49 @@ Encrypted: Yes`;
         </View>
       </View>
 
+      {/* Bottom Navigation Menu */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/(tabs)/')}
+        >
+          <Text style={styles.navIcon}>🏠</Text>
+          <Text style={styles.navText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/(tabs)/categories')}
+        >
+          <Text style={styles.navIcon}>📁</Text>
+          <Text style={styles.navText}>Categories</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/(tabs)/documents')}
+        >
+          <Text style={styles.navIcon}>📄</Text>
+          <Text style={styles.navText}>Documents</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/(tabs)/explorer')}
+        >
+          <Text style={styles.navIcon}>🗂️</Text>
+          <Text style={styles.navText}>Explorer</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/(tabs)/explore')}
+        >
+          <Text style={styles.navIcon}>⚙️</Text>
+          <Text style={styles.navText}>Settings</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Error Display */}
       {error && (
         <View style={styles.errorBanner}>
@@ -665,5 +708,32 @@ const styles = StyleSheet.create({
   errorBannerText: {
     color: '#c62828',
     fontSize: 14,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingVertical: 8,
+    paddingBottom: 4,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  navIcon: {
+    fontSize: 22,
+    marginBottom: 2,
+  },
+  navText: {
+    fontSize: 10,
+    color: '#666',
+    fontWeight: '500',
   },
 });

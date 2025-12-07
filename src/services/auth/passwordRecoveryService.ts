@@ -7,6 +7,7 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { getUserPasswordHashKey, getUserSaltKey } from '../../utils/auth/secureStoreKeys';
+import { emailService } from '../email/emailService';
 
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
@@ -174,65 +175,181 @@ export async function resetPassword(
 
 /**
  * Send password reset email
- * TODO: Implement actual email sending service integration
  */
 async function sendPasswordResetEmail(
   email: string,
   resetLink: string,
   expiresAt: Date
 ): Promise<void> {
-  const message = `
-    Password Reset Request - DocsShelf
-    
-    We received a request to reset your password for your DocsShelf account (${email}).
-    
-    To reset your password, click the link below:
-    
-    ${resetLink}
-    
-    This link will expire at: ${expiresAt.toLocaleString()}
-    
-    If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-    
-    For security reasons, this link can only be used once and will expire in 1 hour.
-    
-    If you're having trouble clicking the link, copy and paste it into your browser.
-    
-    - The DocsShelf Team
+  const textBody = `
+Password Reset Request - DocsShelf
+
+We received a request to reset your password for your DocsShelf account (${email}).
+
+To reset your password, click the link below:
+
+${resetLink}
+
+This link will expire at: ${expiresAt.toLocaleString()}
+
+If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+
+For security reasons, this link can only be used once and will expire in 1 hour.
+
+If you're having trouble clicking the link, copy and paste it into your browser.
+
+- The DocsShelf Team
+  `;
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #007AFF; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #007AFF; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Password Reset Request</h1>
+    </div>
+    <div class="content">
+      <p>Hello,</p>
+      <p>We received a request to reset your password for your DocsShelf account (<strong>${email}</strong>).</p>
+      <p>To reset your password, click the button below:</p>
+      <center>
+        <a href="${resetLink}" class="button">Reset Password</a>
+      </center>
+      <p>Or copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; background-color: #f0f0f0; padding: 10px; border-radius: 5px;">${resetLink}</p>
+      <div class="warning">
+        <strong>⚠️ Security Information:</strong>
+        <ul>
+          <li>This link will expire at: <strong>${expiresAt.toLocaleString()}</strong></li>
+          <li>The link can only be used once</li>
+          <li>If you didn't request this reset, you can safely ignore this email</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">
+      <p>This is an automated message from DocsShelf. Please do not reply to this email.</p>
+      <p>&copy; ${new Date().getFullYear()} DocsShelf. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
   `;
   
-  console.log('[Email Notification] Password Reset Request', message);
+  console.log('[Password Reset] Sending email to:', email);
   
-  // TODO: Actual implementation with email service
-  // await emailService.send({
-  //   to: email,
-  //   subject: 'Password Reset Request - DocsShelf',
-  //   body: message,
-  // });
+  try {
+    const result = await emailService.send({
+      to: email,
+      subject: 'Password Reset Request - DocsShelf',
+      body: textBody,
+      html: htmlBody,
+    });
+
+    if (result.success) {
+      console.log('[Password Reset] Email sent successfully');
+    } else {
+      console.error('[Password Reset] Email send failed:', result.error);
+      // Don't throw error to avoid breaking the flow
+      // The reset token is still valid even if email fails
+    }
+  } catch (error) {
+    console.error('[Password Reset] Email service error:', error);
+    // Continue even if email fails
+  }
 }
 
 /**
  * Send password reset confirmation email
  */
 async function sendPasswordResetConfirmation(email: string): Promise<void> {
-  const message = `
-    Password Reset Successful - DocsShelf
-    
-    Your DocsShelf account password (${email}) has been successfully reset.
-    
-    If you did not make this change, please contact support immediately and consider:
-    1. Enabling two-factor authentication
-    2. Reviewing your recent account activity
-    3. Updating your recovery email
-    
-    Your account security is important to us.
-    
-    - The DocsShelf Team
+  const textBody = `
+Password Reset Successful - DocsShelf
+
+Your DocsShelf account password (${email}) has been successfully reset.
+
+If you did not make this change, please contact support immediately and consider:
+1. Enabling two-factor authentication
+2. Reviewing your recent account activity
+3. Updating your recovery email
+
+Your account security is important to us.
+
+- The DocsShelf Team
+  `;
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #4caf50; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    .success-icon { font-size: 48px; text-align: center; margin: 20px 0; }
+    .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Password Reset Successful</h1>
+    </div>
+    <div class="content">
+      <p>Hello,</p>
+      <p>Your DocsShelf account password (<strong>${email}</strong>) has been successfully reset.</p>
+      <p>You can now log in with your new password.</p>
+      <div class="warning">
+        <strong>⚠️ Didn't make this change?</strong>
+        <p>If you did not reset your password, please contact support immediately and consider:</p>
+        <ul>
+          <li>Enabling two-factor authentication</li>
+          <li>Reviewing your recent account activity</li>
+          <li>Updating your recovery email</li>
+        </ul>
+      </div>
+      <p>Your account security is important to us.</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated message from DocsShelf. Please do not reply to this email.</p>
+      <p>&copy; ${new Date().getFullYear()} DocsShelf. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
   `;
   
-  console.log('[Email Notification] Password Reset Confirmation', message);
+  console.log('[Password Reset] Sending confirmation email to:', email);
   
-  // TODO: Actual implementation with email service
+  try {
+    const result = await emailService.send({
+      to: email,
+      subject: 'Password Reset Successful - DocsShelf',
+      body: textBody,
+      html: htmlBody,
+    });
+
+    if (result.success) {
+      console.log('[Password Reset] Confirmation email sent successfully');
+    } else {
+      console.error('[Password Reset] Confirmation email send failed:', result.error);
+    }
+  } catch (error) {
+    console.error('[Password Reset] Confirmation email service error:', error);
+  }
 }
 
 /**

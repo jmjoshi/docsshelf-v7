@@ -1,10 +1,115 @@
 # DocsShelf Development Command Reference
 **Project:** DocsShelf v7 - Secure Document Management App  
 **Framework:** React Native + Expo (SDK 54) - **Native Android Builds Only**  
-**Last Updated:** December 6, 2025  
-**Build Method:** Direct native Android builds (expo-dev-client removed)
+**Last Updated:** December 7, 2025  
+**Build Method:** Direct native Android builds (expo-dev-client removed)  
+**Latest Features:** Enhanced Document Viewer with 7-button action menu
 
 This document captures all essential commands used during the development of DocsShelf v7, organized by category for future reference.
+
+---
+
+## 🎨 RECENT DEVELOPMENT SESSIONS (December 6-7, 2025)
+
+### Session 1: Enhanced Document Viewer Interface
+**Feature:** FR-MAIN-024 - Professional document viewing with improved layout
+
+**Commands Used:**
+```powershell
+# Build and test enhanced document viewer
+cd android
+.\gradlew assembleDebug
+cd ..
+
+# Install on device
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# Git operations
+git add src/screens/Documents/DocumentViewerScreen.tsx
+git add development-plans/fr-main-024-enhanced-document-viewer-plan.md
+git add DEVELOPMENT_CONTEXT.md
+git commit -m "feat(FR-MAIN-024): Enhanced document viewer interface with improved layout"
+git tag -a v1.0.0-enhanced-document-viewer -m "Professional document viewing interface"
+git push origin master
+git push origin v1.0.0-enhanced-document-viewer
+```
+
+**Changes Made:**
+- Modified DocumentViewerScreen.tsx (~150 lines)
+- Added black background for images
+- Added timestamp overlay on images
+- Improved metadata display layout
+- Enhanced header with 2-line filename support
+
+**Git Commit:** `4f46b13`  
+**Git Tag:** `v1.0.0-enhanced-document-viewer`
+
+---
+
+### Session 2: File Explorer Bugfix
+**Issue:** `filtered.push is not a function` render error
+
+**Commands Used:**
+```powershell
+# Fix variable naming bug in FileExplorerScreen
+# Build and test fix
+cd android
+.\gradlew assembleDebug
+cd ..
+
+# Install fixed version
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# Git operations
+git add src/screens/Explorer/FileExplorerScreen.tsx
+git commit -m "fix(FR-MAIN-022): Fix 'filtered.push is not a function' error in FileExplorerScreen"
+git push origin master
+```
+
+**Fix Applied:**
+- Changed variable name from `filtered` to `filteredNode` in forEach loop
+- Resolved variable shadowing issue in search filter function
+- Line 221 in FileExplorerScreen.tsx
+
+**Git Commit:** `27490ba`
+
+---
+
+### Session 3: Comprehensive Action Menu
+**Enhancement:** Expanded document viewer from 3 to 7 action buttons
+
+**Commands Used:**
+```powershell
+# Build with enhanced action menu
+cd android
+.\gradlew assembleDebug
+cd ..
+
+# Install updated version
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+
+# Git operations
+git add src/screens/Documents/DocumentViewerScreen.tsx
+git commit -m "feat(FR-MAIN-024): Add comprehensive action menu with 7 buttons"
+git push origin master
+```
+
+**Features Added:**
+- 2-row grid layout (4 buttons per row)
+- New buttons: Print, Copy/Duplicate, Info, Move
+- Info dialog with comprehensive metadata
+- Handler functions: handlePrint, handleDuplicate, handleShowInfo, handleMove
+- Grid styling with actionRow components
+
+**Code Changes:**
+- Added 106 lines
+- Removed 23 lines
+- 4 new handler functions
+- Updated action bar layout
+
+**Git Commit:** `7e51175`
+
+---
 
 ---
 

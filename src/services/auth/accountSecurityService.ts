@@ -5,6 +5,7 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
+import { emailService } from '../email/emailService';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -147,42 +148,105 @@ export function formatLockoutTime(milliseconds: number): string {
 
 /**
  * Send lockout notification email
- * TODO: Implement actual email sending service integration
  */
 async function sendLockoutNotification(email: string, lockedUntil: number): Promise<void> {
-  // Placeholder for email service integration
-  // In production, integrate with services like:
-  // - SendGrid
-  // - AWS SES
-  // - Firebase Cloud Functions
-  // - Expo Notifications (push)
-  
   const lockoutDate = new Date(lockedUntil);
-  const message = `
-    Security Alert: Account Lockout
-    
-    Your DocsShelf account (${email}) has been locked due to multiple failed login attempts.
-    
-    Lockout Details:
-    - Reason: 5 consecutive failed login attempts
-    - Locked Until: ${lockoutDate.toLocaleString()}
-    - Duration: 15 minutes
-    
-    If this wasn't you, please secure your account immediately.
-    
-    The lockout will automatically expire after 15 minutes, or you can reset your password to unlock immediately.
-    
-    - The DocsShelf Team
+  
+  const textBody = `
+Security Alert: Account Lockout
+
+Your DocsShelf account (${email}) has been locked due to multiple failed login attempts.
+
+Lockout Details:
+- Reason: 5 consecutive failed login attempts
+- Locked Until: ${lockoutDate.toLocaleString()}
+- Duration: 15 minutes
+
+If this wasn't you, please secure your account immediately by resetting your password.
+
+The lockout will automatically expire after 15 minutes, or you can reset your password to unlock immediately.
+
+- The DocsShelf Team
+  `;
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #d32f2f; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    .alert-box { background-color: #ffebee; border-left: 4px solid #d32f2f; padding: 15px; margin: 15px 0; }
+    .info-table { width: 100%; background-color: white; border-collapse: collapse; margin: 15px 0; }
+    .info-table td { padding: 10px; border: 1px solid #ddd; }
+    .info-table td:first-child { font-weight: bold; width: 40%; background-color: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔒 Security Alert: Account Lockout</h1>
+    </div>
+    <div class="content">
+      <div class="alert-box">
+        <strong>⚠️ Your account has been temporarily locked</strong>
+        <p>Your DocsShelf account (<strong>${email}</strong>) has been locked due to multiple failed login attempts.</p>
+      </div>
+      
+      <h3>Lockout Details:</h3>
+      <table class="info-table">
+        <tr>
+          <td>Reason</td>
+          <td>5 consecutive failed login attempts</td>
+        </tr>
+        <tr>
+          <td>Locked Until</td>
+          <td><strong>${lockoutDate.toLocaleString()}</strong></td>
+        </tr>
+        <tr>
+          <td>Duration</td>
+          <td>15 minutes</td>
+        </tr>
+      </table>
+      
+      <h3>What to do:</h3>
+      <ul>
+        <li><strong>If this was you:</strong> Wait 15 minutes and try again with the correct password</li>
+        <li><strong>If this wasn't you:</strong> Reset your password immediately to secure your account</li>
+      </ul>
+      
+      <p style="margin-top: 20px;">The lockout will automatically expire after 15 minutes, or you can reset your password to unlock immediately.</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated security message from DocsShelf. Please do not reply to this email.</p>
+      <p>&copy; ${new Date().getFullYear()} DocsShelf. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
   `;
   
-  console.log('[Email Notification]', message);
+  console.log('[Account Security] Sending lockout notification to:', email);
   
-  // TODO: Actual implementation
-  // await emailService.send({
-  //   to: email,
-  //   subject: 'Security Alert: Account Lockout - DocsShelf',
-  //   body: message,
-  // });
+  try {
+    const result = await emailService.send({
+      to: email,
+      subject: '🔒 Security Alert: Account Lockout - DocsShelf',
+      body: textBody,
+      html: htmlBody,
+    });
+
+    if (result.success) {
+      console.log('[Account Security] Lockout notification sent successfully');
+    } else {
+      console.error('[Account Security] Lockout notification send failed:', result.error);
+    }
+  } catch (error) {
+    console.error('[Account Security] Lockout notification service error:', error);
+  }
 }
 
 /**

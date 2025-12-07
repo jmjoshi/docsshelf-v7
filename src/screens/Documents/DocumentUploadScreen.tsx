@@ -190,7 +190,6 @@ export default function DocumentUploadScreen() {
         // Traditional file picker upload - go straight to document view
         router.push(`/document/${result.id}`);
       }
-      router.push(`/document/${result.id}`);
     } catch (err) {
       console.error('Upload failed:', err);
       await hapticFeedback.error();

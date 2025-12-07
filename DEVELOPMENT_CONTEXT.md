@@ -1,15 +1,125 @@
 # DocsShelf v7 - Development Context & Knowledge Base
 
-**Last Updated:** December 6, 2025  
-**Project Status:** Native Android Build Transition - React Version & Dark Mode Fixes Complete  
-**Current Sprint:** 🚀 Native Build Migration: Expo Dev Client Removed ✅ | React 19.1.0 Pinned ✅ | Dark Mode Fixed ✅ | Rate App Added ✅  
-**Recent Major Achievement:** Transitioned to native Android builds only, fixed React version mismatch, completed dark mode UI polish  
+**Last Updated:** December 7, 2025  
+**Project Status:** Enhanced Document Viewer with Comprehensive Action Menu Complete  
+**Current Sprint:** 🎨 UI/UX Enhancements: Document Viewer Polish ✅ | 7-Button Action Menu ✅ | File Explorer Bugfix ✅  
+**Recent Major Achievement:** Professional document viewing interface with enhanced action menu (Edit, Share, Print, Copy, Info, Move, Delete)  
 **Test Coverage:** 802 tests passing (80%+ coverage ✅, target: 80% - ACHIEVED!)  
-**Note:** Native builds working | React 19.1.0 compatibility restored | Dark mode complete | Rate This App implemented | Ready for physical device testing
+**Note:** Enhanced document viewer ready | File Explorer bug fixed | Comprehensive action menu implemented | Ready for production
 
 ---
 
-## 🔥 LATEST DEVELOPMENT SESSION (December 6, 2025)
+## 🔥 LATEST DEVELOPMENT SESSIONS (December 6-7, 2025)
+
+### Session 1: Enhanced Document Viewer Interface (December 6, 2025) ✅
+**Feature:** FR-MAIN-024 - Enhanced Document Viewer with Improved Layout
+
+**Improvements Made:**
+1. **Professional Header Layout**
+   - 2-line filename truncation for long document names
+   - Clean file size and MIME type display
+   - Favorite star toggle button
+   - Back navigation button
+
+2. **Improved Metadata Display**
+   - Created and Last Accessed dates in separate rows
+   - Better visual hierarchy with enhanced typography
+   - Cleaner label and value formatting
+   - Consistent spacing between sections
+
+3. **Enhanced Image Viewing**
+   - Black background container for better image contrast
+   - Full-screen image display with proper centering
+   - Zoom support maintained
+   - Professional photo viewing experience
+
+4. **Timestamp Overlay**
+   - Yellow timestamp on images (DD.MM.YY HH:MM:SS format)
+   - Positioned at bottom center
+   - Text shadow for visibility
+   - Shows document creation date/time
+
+5. **Initial Action Buttons (3-button layout)**
+   - Edit button with pencil icon
+   - Share button with basket icon
+   - Delete button with trash icon (red text)
+
+**Git Details:**
+- Commit: `4f46b13`
+- Tag: `v1.0.0-enhanced-document-viewer`
+- Files Modified: DocumentViewerScreen.tsx (~150 lines changed)
+
+### Session 2: File Explorer Bugfix (December 6, 2025) ✅
+**Issue:** `filtered.push is not a function` error in FileExplorerScreen
+
+**Root Cause:**
+- Variable name shadowing in search filter function
+- Line 221: `filtered.push(filtered)` instead of `filtered.push(filteredNode)`
+
+**Solution:**
+```typescript
+// Before (broken):
+const filtered = filterNodeRecursive(node);
+if (filtered) {
+  filtered.push(filtered); // ❌ Error!
+}
+
+// After (fixed):
+const filteredNode = filterNodeRecursive(node);
+if (filteredNode) {
+  filtered.push(filteredNode); // ✅ Works!
+}
+```
+
+**Git Details:**
+- Commit: `27490ba`
+- Files Modified: src/screens/Explorer/FileExplorerScreen.tsx
+
+### Session 3: Comprehensive Action Menu (December 7, 2025) ✅
+**Enhancement:** Expanded document viewer action menu from 3 to 7 buttons
+
+**New 2-Row Grid Layout:**
+
+**Row 1:**
+- ✏️ **Edit** - Edit document metadata
+- 📤 **Share** - Share with other apps
+- 🖨️ **Print** - Print document functionality
+- 📋 **Copy** - Duplicate document
+
+**Row 2:**
+- ℹ️ **Info** - Show detailed document information dialog
+- 📁 **Move** - Move to different category
+- 🗑️ **Delete** - Delete document (red text)
+- Empty slot for future expansion
+
+**Features Implemented:**
+1. **Info Dialog** - Comprehensive metadata display:
+   - Filename and original filename
+   - File size and MIME type
+   - Created, modified, and last accessed dates
+   - Favorite status
+   - Encryption status
+
+2. **Duplicate Function** - Create document copies with confirmation
+3. **Print Function** - Placeholder for future implementation
+4. **Move Function** - Placeholder for category migration
+5. **Grid Layout** - 2 rows × 4 columns for better organization
+6. **Confirmation Dialogs** - For all destructive actions
+
+**Technical Implementation:**
+- Added 4 new handler functions: `handlePrint`, `handleDuplicate`, `handleShowInfo`, `handleMove`
+- Restructured action bar with `actionRow` components
+- Updated styles for grid layout
+- Maintained existing functionality
+- All actions have appropriate user feedback
+
+**Git Details:**
+- Commit: `7e51175`
+- Files Modified: DocumentViewerScreen.tsx (+106 lines, -23 lines)
+
+---
+
+## 🔥 PREVIOUS DEVELOPMENT SESSION (December 6, 2025)
 
 ### Critical Issues Resolved
 
