@@ -50,23 +50,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuthStatus = async () => {
     try {
-      const authStatus = await SecureStore.getItemAsync('user_authenticated');
-      if (authStatus === 'true') {
-        const validSession = await isSessionValid();
-        if (validSession) {
-          setIsAuthenticated(true);
+      console.log('[Auth] Checking auth status...');
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth check timeout')), 3000)
+      );
+      
+      const authCheckPromise = async () => {
+        const authStatus = await SecureStore.getItemAsync('user_authenticated');
+        console.log('[Auth] Auth status from SecureStore:', authStatus);
+        
+        if (authStatus === 'true') {
+          const validSession = await isSessionValid();
+          console.log('[Auth] Session valid:', validSession);
+          
+          if (validSession) {
+            setIsAuthenticated(true);
+          } else {
+            await SecureStore.deleteItemAsync('user_authenticated');
+            setIsAuthenticated(false);
+          }
         } else {
-          await SecureStore.deleteItemAsync('user_authenticated');
           setIsAuthenticated(false);
         }
-      } else {
-        setIsAuthenticated(false);
-      }
+      };
+      
+      await Promise.race([authCheckPromise(), timeoutPromise]);
+      console.log('[Auth] Auth check completed');
     } catch (e) {
-      console.warn('Auth check failed:', e);
+      console.warn('[Auth] Auth check failed or timed out:', e);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+      console.log('[Auth] Auth loading complete');
     }
   };
 

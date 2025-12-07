@@ -81,42 +81,64 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
-  // Initialize database on app start
+  // Initialize database on app start with timeout
   useEffect(() => {
-    initializeDatabase().catch((error) => {
-      console.error('Failed to initialize database:', error);
-    });
+    console.log('[App] Initializing database...');
+    const timeoutId = setTimeout(() => {
+      console.warn('[App] Database initialization timed out after 5s');
+    }, 5000);
+
+    initializeDatabase()
+      .then(() => {
+        console.log('[App] Database initialized successfully');
+        clearTimeout(timeoutId);
+      })
+      .catch((error) => {
+        console.error('[App] Failed to initialize database:', error);
+        clearTimeout(timeoutId);
+      });
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      console.log('[App] Still loading auth state...');
+      return;
+    }
 
+    console.log('[App] Auth loading complete. Authenticated:', isAuthenticated);
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to login if not authenticated
+      console.log('[App] Redirecting to login');
       router.replace('/(auth)/login' as any);
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to tabs if authenticated
+      console.log('[App] Redirecting to tabs');
       router.replace('/(tabs)' as any);
     }
   }, [isAuthenticated, segments, isLoading]);
 
   useEffect(() => {
     if (!isLoading) {
-      SplashScreen.hideAsync().catch(() => {
-        // Suppress splash screen errors (common on iOS with modals)
+      console.log('[App] Hiding splash screen');
+      SplashScreen.hideAsync().catch((err) => {
+        console.log('[App] Splash screen already hidden or error:', err);
       });
     }
   }, [isLoading]);
 
-  // Fallback: Force hide splash screen after 10 seconds
+  // Fallback: Force hide splash screen after 5 seconds
   useEffect(() => {
+    console.log('[App] Setting up 5-second splash screen timeout');
     const timeout = setTimeout(() => {
+      console.warn('[App] Force hiding splash screen after 5s timeout');
       SplashScreen.hideAsync().catch(() => {
-        // Suppress splash screen errors
+        console.log('[App] Splash screen already hidden');
       });
-    }, 10000);
+    }, 5000);
     return () => clearTimeout(timeout);
   }, []);
 
