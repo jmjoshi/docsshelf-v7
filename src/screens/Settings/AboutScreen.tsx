@@ -216,6 +216,22 @@ export default function AboutScreen() {
 
           <TouchableOpacity
             style={[styles.linkItem, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}
+            onPress={() => router.push('/settings/quick-reference' as any)}>
+            <View style={styles.linkContent}>
+              <IconSymbol name="bolt.fill" size={20} color="#FF9500" />
+              <Text style={[styles.linkTitleWithIcon, { color: Colors[colorScheme ?? 'light'].text }]}>
+                Quick Reference Guide
+              </Text>
+            </View>
+            <IconSymbol
+              name="chevron.right"
+              size={20}
+              color={Colors[colorScheme ?? 'light'].textSecondary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.linkItem, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}
             onPress={handleRateApp}>
             <Text style={[styles.linkTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
               Rate This App
