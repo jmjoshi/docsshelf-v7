@@ -190,7 +190,6 @@ export default function FileExplorerScreen() {
     
     const lowerQuery = query.toLowerCase();
     const filtered: ExplorerNode[] = [];
-    const nodesToExpand = new Set<string>();
     
     const matchNode = (node: ExplorerNode): boolean => {
       return node.name.toLowerCase().includes(lowerQuery);
@@ -207,16 +206,13 @@ export default function FileExplorerScreen() {
       }
       
       if (matches || filteredChildren.length > 0) {
-        // When filtering, mark nodes with children to be auto-expanded
-        if (filteredChildren.length > 0) {
-          nodesToExpand.add(node.id);
-        }
-        
+        // For search results, always show as expanded if has filtered children
+        // This allows clicking to toggle expansion state
         return {
           ...node,
           children: filteredChildren,
           hasChildren: filteredChildren.length > 0,
-          isExpanded: explorerState.expandedNodes.has(node.id) || filteredChildren.length > 0,
+          isExpanded: filteredChildren.length > 0 || explorerState.expandedNodes.has(node.id),
         };
       }
       
@@ -229,14 +225,6 @@ export default function FileExplorerScreen() {
         filtered.push(filteredNode);
       }
     });
-    
-    // Auto-expand nodes with search results
-    if (nodesToExpand.size > 0) {
-      setExplorerState((prev) => ({
-        ...prev,
-        expandedNodes: new Set([...prev.expandedNodes, ...nodesToExpand]),
-      }));
-    }
     
     return filtered;
   }, [explorerState.expandedNodes]);
