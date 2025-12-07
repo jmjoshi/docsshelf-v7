@@ -22,10 +22,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Set up session monitoring when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
+      console.log('[Auth] Starting session monitoring');
       startActivityMonitoring(() => {
         // Session expired callback
-        console.log('[Auth] Session expired, logging out');
+        console.log('[Auth] Session expired callback triggered');
+        stopActivityMonitoring(); // Stop immediately to prevent loops
         Alert.alert(
           'Session Expired',
           'Your session has expired due to inactivity. Please log in again.',
@@ -39,47 +41,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ]
         );
       });
-    } else {
+    } else if (!isAuthenticated) {
+      console.log('[Auth] Stopping session monitoring (not authenticated)');
       stopActivityMonitoring();
     }
 
     return () => {
       stopActivityMonitoring();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   const checkAuthStatus = async () => {
     try {
       console.log('[Auth] Checking auth status...');
       
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auth check timeout')), 3000)
-      );
+      const authStatus = await SecureStore.getItemAsync('user_authenticated');
+      console.log('[Auth] Auth status from SecureStore:', authStatus);
       
-      const authCheckPromise = async () => {
-        const authStatus = await SecureStore.getItemAsync('user_authenticated');
-        console.log('[Auth] Auth status from SecureStore:', authStatus);
+      if (authStatus === 'true') {
+        // Check session validity with timeout
+        const validSession = await Promise.race([
+          isSessionValid(),
+          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2000))
+        ]);
         
-        if (authStatus === 'true') {
-          const validSession = await isSessionValid();
-          console.log('[Auth] Session valid:', validSession);
-          
-          if (validSession) {
-            setIsAuthenticated(true);
-          } else {
-            await SecureStore.deleteItemAsync('user_authenticated');
-            setIsAuthenticated(false);
-          }
+        console.log('[Auth] Session valid:', validSession);
+        
+        if (validSession) {
+          setIsAuthenticated(true);
         } else {
+          // Session expired, clean up and show login
+          console.log('[Auth] Session expired, clearing auth');
+          await SecureStore.deleteItemAsync('user_authenticated');
+          await endSession(); // Make sure session is cleared
           setIsAuthenticated(false);
         }
-      };
+      } else {
+        console.log('[Auth] No auth status found, user not authenticated');
+        setIsAuthenticated(false);
+      }
       
-      await Promise.race([authCheckPromise(), timeoutPromise]);
       console.log('[Auth] Auth check completed');
     } catch (e) {
-      console.warn('[Auth] Auth check failed or timed out:', e);
+      console.warn('[Auth] Auth check failed:', e);
+      // On error, assume not authenticated
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
