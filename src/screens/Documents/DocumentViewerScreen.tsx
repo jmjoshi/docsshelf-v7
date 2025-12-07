@@ -3,13 +3,17 @@
  * Displays document content with support for multiple file types
  */
 
+import * as FileSystemLegacy from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     Dimensions,
+    FlatList,
     Image,
+    Modal,
     ScrollView,
     Share,
     StyleSheet,
@@ -19,7 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PdfViewer from '../../components/documents/PdfViewer';
-import { readDocument } from '../../services/database/documentService';
+import { readDocument, updateDocument } from '../../services/database/documentService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
     removeDocument,
@@ -39,14 +43,27 @@ export default function DocumentViewerScreen() {
   const document = useAppSelector((state) => selectDocumentById(state, documentId));
   const error = useAppSelector(selectDocumentError);
 
-  const [decryptedContent, setDecryptedContent] = useState<Uint8Array | string | null>(null);
+  const [decryptedContent, setDecryptedContent] = useState<string | Uint8Array | null>(null);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string }>>([]);
   const [isDecrypting, setIsDecrypting] = useState(false);
 
   useEffect(() => {
     if (document) {
       loadDocument();
     }
+    loadCategories();
   }, [document]);
+
+  const loadCategories = async () => {
+    try {
+      const { getAllCategories } = await import('../../services/database/categoryService');
+      const allCategories = await getAllCategories();
+      setCategories(allCategories);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
 
   const loadDocument = async () => {
     if (!document) return;
@@ -97,10 +114,50 @@ export default function DocumentViewerScreen() {
           message: decryptedContent,
           title: document.filename,
         });
-      } else {
-        // For other files, would need to save decrypted content to temp file
-        Alert.alert('Share', 'File sharing will be implemented in next update');
+        return;
       }
+
+      // For binary files (images, PDFs, etc.), save to temp file and share
+      const tempDir = `${FileSystemLegacy.cacheDirectory}share/`;
+      await FileSystemLegacy.makeDirectoryAsync(tempDir, { intermediates: true });
+      
+      const tempFilePath = `${tempDir}${document.original_filename}`;
+      
+      // Convert content to base64 if it's Uint8Array
+      let base64Content: string;
+      if (decryptedContent instanceof Uint8Array) {
+        base64Content = arrayBufferToBase64(decryptedContent);
+      } else {
+        base64Content = decryptedContent;
+      }
+
+      // Write decrypted content to temp file
+      await FileSystemLegacy.writeAsStringAsync(tempFilePath, base64Content, {
+        encoding: FileSystemLegacy.EncodingType.Base64,
+      });
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Error', 'Sharing is not available on this device');
+        return;
+      }
+
+      // Share the file
+      await Sharing.shareAsync(tempFilePath, {
+        mimeType: document.mime_type,
+        dialogTitle: `Share ${document.filename}`,
+        UTI: document.mime_type,
+      });
+
+      // Clean up temp file after a delay
+      setTimeout(async () => {
+        try {
+          await FileSystemLegacy.deleteAsync(tempFilePath, { idempotent: true });
+        } catch (cleanupErr) {
+          console.log('Failed to cleanup temp file:', cleanupErr);
+        }
+      }, 5000);
     } catch (err) {
       console.error('Failed to share:', err);
       Alert.alert('Error', 'Failed to share document');
@@ -181,7 +238,26 @@ Encrypted: Yes`;
 
   const handleMove = () => {
     if (!document) return;
-    Alert.alert('Move Document', 'Move to category functionality will be available in the next update');
+    setShowMoveModal(true);
+  };
+
+  const handleMoveToCategory = async (categoryId: number | null, categoryName: string) => {
+    if (!document) return;
+
+    try {
+      await updateDocument(document.id, {
+        category_id: categoryId,
+      });
+
+      setShowMoveModal(false);
+      Alert.alert('Success', `Document moved to ${categoryName}`);
+      
+      // Reload document to reflect changes
+      loadDocument();
+    } catch (err) {
+      console.error('Failed to move document:', err);
+      Alert.alert('Error', 'Failed to move document');
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -460,6 +536,48 @@ Encrypted: Yes`;
           <Text style={styles.errorBannerText}>{error}</Text>
         </View>
       )}
+
+      {/* Move to Category Modal */}
+      <Modal
+        visible={showMoveModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMoveModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Move to Category</Text>
+              <TouchableOpacity onPress={() => setShowMoveModal(false)}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.categoryItem}
+              onPress={() => handleMoveToCategory(null, 'Uncategorized')}
+            >
+              <View style={[styles.colorIndicator, { backgroundColor: '#999' }]} />
+              <Text style={styles.categoryItemText}>Uncategorized</Text>
+            </TouchableOpacity>
+
+            <FlatList
+              data={categories}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.categoryItem}
+                  onPress={() => handleMoveToCategory(item.id, item.name)}
+                >
+                  <View style={[styles.colorIndicator, { backgroundColor: item.color || '#2196F3' }]} />
+                  <Text style={styles.categoryItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              style={styles.categoryList}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -735,5 +853,56 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
     fontWeight: '500',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalCloseButton: {
+    fontSize: 28,
+    color: '#666',
+    fontWeight: '300',
+  },
+  categoryList: {
+    maxHeight: 400,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  colorIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 12,
+  },
+  categoryItemText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
   },
 });
