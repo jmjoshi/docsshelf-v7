@@ -38,6 +38,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="explorer"
+        options={{
+          title: 'Explorer',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="filemenu.and.selection" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           title: 'Settings',
