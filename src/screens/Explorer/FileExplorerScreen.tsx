@@ -217,9 +217,9 @@ export default function FileExplorerScreen() {
     };
     
     nodes.forEach(node => {
-      const filtered = filterNodeRecursive(node);
-      if (filtered) {
-        filtered.push(filtered);
+      const filteredNode = filterNodeRecursive(node);
+      if (filteredNode) {
+        filtered.push(filteredNode);
       }
     });
     
