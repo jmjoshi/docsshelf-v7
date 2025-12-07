@@ -39,6 +39,7 @@ if (typeof global.addEventListener === 'function') {
   });
 }
 
+import { PersistentBottomNav } from '../components/PersistentBottomNav';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { Toast } from '../src/components/common/Toast';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
@@ -151,10 +152,24 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="document" />
+        <Stack.Screen 
+          name="document" 
+          options={{ 
+            presentation: 'card',
+            animation: 'slide_from_right'
+          }} 
+        />
+        <Stack.Screen 
+          name="settings" 
+          options={{ 
+            presentation: 'card',
+            animation: 'slide_from_right'
+          }} 
+        />
         <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
+      <PersistentBottomNav />
       <StatusBar style="auto" />
     </ThemeProvider>
   );
