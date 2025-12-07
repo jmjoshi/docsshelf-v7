@@ -15,7 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import TagList from '../../components/documents/TagList';
 import TagPicker from '../../components/documents/TagPicker';
 import { getCurrentUserId } from '../../services/database/userService';
@@ -54,6 +54,7 @@ export default function DocumentEditScreen() {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
+  const insets = useSafeAreaInsets();
   const documentTags = useAppSelector(selectDocumentTags(documentId));
 
   useEffect(() => {
@@ -339,7 +340,7 @@ export default function DocumentEditScreen() {
         onRequestClose={() => setShowCategoryModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { paddingBottom: insets.bottom }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Category</Text>
               <TouchableOpacity onPress={() => setShowCategoryModal(false)}>

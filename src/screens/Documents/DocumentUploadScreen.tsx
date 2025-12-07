@@ -17,7 +17,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
 import { getCurrentUserId } from '../../services/database/userService';
 import { imageConverter } from '../../services/scan/imageConverter';
@@ -58,6 +58,7 @@ export default function DocumentUploadScreen() {
   
   // Track if we've already processed the scanned document
   const processedUriRef = useRef<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     loadUserData();
@@ -385,7 +386,7 @@ export default function DocumentUploadScreen() {
         onRequestClose={() => setShowCategoryModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { paddingBottom: insets.bottom }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Category</Text>
               <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
