@@ -200,19 +200,25 @@ export default function FileExplorerScreen() {
       let filteredChildren: ExplorerNode[] = [];
       
       if (node.children) {
-        filteredChildren = node.children
-          .map(filterNodeRecursive)
-          .filter((n): n is ExplorerNode => n !== null);
+        // If this node matches, include ALL its children (don't filter them)
+        // Otherwise, recursively filter children
+        if (matches) {
+          filteredChildren = node.children;
+        } else {
+          filteredChildren = node.children
+            .map(filterNodeRecursive)
+            .filter((n): n is ExplorerNode => n !== null);
+        }
       }
       
       if (matches || filteredChildren.length > 0) {
-        // For search results, always show as expanded if has filtered children
-        // This allows clicking to toggle expansion state
+        // If node matches or has matching descendants, include it
         return {
           ...node,
           children: filteredChildren,
           hasChildren: filteredChildren.length > 0,
-          isExpanded: filteredChildren.length > 0 || explorerState.expandedNodes.has(node.id),
+          // Show as expanded if has children, allowing user to click to collapse/expand
+          isExpanded: explorerState.expandedNodes.has(node.id),
         };
       }
       
