@@ -323,8 +323,14 @@ DocsShelf is a React Native mobile app (iOS/Android) for secure, offline-first d
   - Auto-populates upload form with scanned document
   - processedUriRef prevents duplicate processing
   - Split useEffects to avoid infinite loops
-  - Success dialog with "Done" button
-  - Seamless flow: Scan → Preview → Upload → View
+  - **Post-Upload Options Modal** (NEW - Dec 6, 2025)
+    * Shows after successful scan upload (not for file picker uploads)
+    * Three options: Scan More, View Document, Done
+    * Scan More: Loop back to camera for batch scanning
+    * View Document: Navigate to document viewer
+    * Done: Go to documents list
+    * Enables efficient multi-document scanning sessions
+  - Seamless flow: Scan → Preview → Upload → Options → Repeat/View/Done
 - ✅ **Encryption Fixes**
   - Chunked base64 encoding prevents stack overflow
   - Supports files of any size (500KB-700KB JPEG files tested)
@@ -332,11 +338,13 @@ DocsShelf is a React Native mobile app (iOS/Android) for secure, offline-first d
   - Splash screen error suppression for modal presentations
   - SafeAreaView throughout (proper iPhone notch/status bar handling)
   - Camera overlay moved outside CameraView to prevent warnings
-- ✅ **Testing Complete** (Physical iPhone via Expo Go)
+- ✅ **Testing Complete** (Physical iPhone via Expo Go + Comprehensive Unit Tests)
   - Complete end-to-end scan flow tested and working
-  - Format selection → Camera → Capture → Preview → Upload → View
-  - All navigation paths work correctly
+  - Format selection → Camera → Capture → Preview → Upload → Options Modal
+  - All navigation paths work correctly (including loop back)
   - All cancel/back buttons functional
+  - 10 new test cases for post-upload flow
+  - Traditional file picker uploads unaffected
 
 #### FR-MAIN-004: OCR & Intelligent Processing (PENDING)
 - Text extraction from images and PDFs

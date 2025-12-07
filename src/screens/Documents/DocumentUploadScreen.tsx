@@ -52,6 +52,9 @@ export default function DocumentUploadScreen() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('Uncategorized');
   const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [showPostUploadModal, setShowPostUploadModal] = useState(false);
+  const [uploadedDocumentId, setUploadedDocumentId] = useState<number | null>(null);
+  const [isFromScan, setIsFromScan] = useState(false);
   
   // Track if we've already processed the scanned document
   const processedUriRef = useRef<string | null>(null);
@@ -65,6 +68,7 @@ export default function DocumentUploadScreen() {
     if (params.scannedImageUri && params.scannedFormat && 
         params.scannedImageUri !== processedUriRef.current) {
       processedUriRef.current = params.scannedImageUri;
+      setIsFromScan(true); // Mark that this upload came from scan flow
       handleScannedDocument(params.scannedImageUri, params.scannedFormat);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,19 +172,24 @@ export default function DocumentUploadScreen() {
           },
         })
       ).unwrap();
-
-      // Success - show toast and navigate
+      // Success - show toast
       await hapticFeedback.success();
       if (toast) {
         toast.show('Document uploaded successfully', {
           type: 'success',
           duration: 2000,
         });
-      } else {
-        Alert.alert('Success', 'Document uploaded successfully');
       }
       
-      // Navigate to document view
+      // If this is from scan flow, show post-upload options modal
+      // Otherwise, navigate directly to document view (traditional upload)
+      if (isFromScan) {
+        setUploadedDocumentId(result.id);
+        setShowPostUploadModal(true);
+      } else {
+        // Traditional file picker upload - go straight to document view
+        router.push(`/document/${result.id}`);
+      }
       router.push(`/document/${result.id}`);
     } catch (err) {
       console.error('Upload failed:', err);
@@ -263,6 +272,31 @@ export default function DocumentUploadScreen() {
     } else {
       router.back();
     }
+  };
+
+  // Post-upload modal handlers
+  const handleScanMore = () => {
+    setShowPostUploadModal(false);
+    // Reset the upload form
+    setSelectedFile(null);
+    setUploadedDocumentId(null);
+    processedUriRef.current = null;
+    
+    // Navigate back to scan flow
+    router.replace('/scan');
+  };
+
+  const handleViewDocument = () => {
+    setShowPostUploadModal(false);
+    if (uploadedDocumentId) {
+      router.replace(`/document/${uploadedDocumentId}`);
+    }
+  };
+
+  const handleDone = () => {
+    setShowPostUploadModal(false);
+    // Navigate to documents list
+    router.replace('/(tabs)/documents');
   };
 
   return (
@@ -374,6 +408,52 @@ export default function DocumentUploadScreen() {
               keyExtractor={(item) => item.id.toString()}
               style={styles.categoryList}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Post-Upload Options Modal */}
+      <Modal
+        visible={showPostUploadModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleDone}
+      >
+        <View style={styles.postUploadModalOverlay}>
+          <View style={styles.postUploadModalContainer}>
+            <View style={styles.postUploadHeader}>
+              <Text style={styles.postUploadTitle}>✓ Document Uploaded</Text>
+              <Text style={styles.postUploadSubtitle}>What would you like to do next?</Text>
+            </View>
+
+            <View style={styles.postUploadOptions}>
+              <TouchableOpacity
+                style={styles.postUploadButton}
+                onPress={handleScanMore}
+              >
+                <Text style={styles.postUploadButtonIcon}>📷</Text>
+                <Text style={styles.postUploadButtonText}>Scan More</Text>
+                <Text style={styles.postUploadButtonSubtext}>Continue scanning documents</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.postUploadButton}
+                onPress={handleViewDocument}
+              >
+                <Text style={styles.postUploadButtonIcon}>👁️</Text>
+                <Text style={styles.postUploadButtonText}>View Document</Text>
+                <Text style={styles.postUploadButtonSubtext}>See what you just uploaded</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.postUploadButton, styles.postUploadButtonDone]}
+                onPress={handleDone}
+              >
+                <Text style={styles.postUploadButtonIcon}>✓</Text>
+                <Text style={styles.postUploadButtonText}>Done</Text>
+                <Text style={styles.postUploadButtonSubtext}>Go to documents list</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -670,5 +750,72 @@ const styles = StyleSheet.create({
   documentCount: {
     fontSize: 14,
     color: '#999',
+  },
+  // Post-Upload Modal Styles
+  postUploadModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  postUploadModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  postUploadHeader: {
+    padding: 24,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  postUploadTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 8,
+  },
+  postUploadSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  postUploadOptions: {
+    padding: 16,
+  },
+  postUploadButton: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+  },
+  postUploadButtonDone: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+  },
+  postUploadButtonIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  postUploadButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  postUploadButtonSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
 });

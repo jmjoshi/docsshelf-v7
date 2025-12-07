@@ -4768,7 +4768,159 @@ git push origin v1.0.0-explorer
 
 ---
 
+## 📱 SESSION: SCAN FLOW ENHANCEMENT - POST-UPLOAD OPTIONS (December 6, 2025)
+
+### Feature: FR-MAIN-003-Enhancement - Batch Scanning with Loop
+
+**Problem:** After scanning a document, users had to navigate through menus to scan another document, making batch scanning inefficient.
+
+**Solution:** Post-upload options modal with three choices:
+1. **📷 Scan More** - Loop back to camera for continuous scanning
+2. **👁️ View Document** - See the just-uploaded document
+3. **✓ Done** - Go to documents list
+
+**Components Modified:**
+1. **DocumentUploadScreen.tsx** (~100 lines added)
+   - Added post-upload modal state management
+   - Added isFromScan tracking to differentiate scan vs file picker uploads
+   - Added three modal handlers (Scan More, View Document, Done)
+   - Added modal UI with three large action buttons
+   - Added 10 new styles for modal components
+   - Modified upload success logic to show modal only for scanned documents
+
+**Files Added:**
+1. **__tests__/screens/DocumentUploadFlow.test.tsx** (10 test cases)
+2. **development-plans/fr-main-003-scan-flow-enhancement-plan.md**
+
+### Key Implementation Details
+
+**State Management:**
+```typescript
+const [showPostUploadModal, setShowPostUploadModal] = useState(false);
+const [uploadedDocumentId, setUploadedDocumentId] = useState<number | null>(null);
+const [isFromScan, setIsFromScan] = useState(false);
+```
+
+**Conditional Modal Display:**
+```typescript
+if (isFromScan) {
+  setUploadedDocumentId(result.id);
+  setShowPostUploadModal(true);
+} else {
+  router.push(`/document/${result.id}`); // Traditional flow unchanged
+}
+```
+
+**Navigation Handlers:**
+- `handleScanMore()` - Resets form, navigates to /scan
+- `handleViewDocument()` - Navigates to /document/{id}
+- `handleDone()` - Navigates to /(tabs)/documents
+
+### User Benefits
+- **Batch Scanning:** Scan multiple documents without menu navigation
+- **Flexibility:** Choose next action based on context
+- **Speed:** Faster workflow for multi-document scanning
+- **No Breaking Changes:** Traditional file picker uploads work as before
+
+### Testing Commands
+```powershell
+# Run new tests
+npm test -- DocumentUploadFlow
+
+# Run all tests
+npm test
+
+# Build and test on device
+cd android; .\gradlew clean; .\gradlew assembleDebug; cd ..
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+### Git Commands
+```powershell
+# Check status
+git status
+
+# Stage changes
+git add src/screens/Documents/DocumentUploadScreen.tsx
+git add __tests__/screens/DocumentUploadFlow.test.tsx
+git add development-plans/fr-main-003-scan-flow-enhancement-plan.md
+git add DEVELOPMENT_CONTEXT.md
+git add documents/requirements/COMMAND_REFERENCE.md
+
+# Commit
+git commit -m "feat(FR-MAIN-003): Scan flow enhancement with post-upload options
+
+FEATURE: Post-Upload Options Modal for Batch Scanning
+Enhancement to FR-MAIN-003 (Document Scanning)
+
+PROBLEM:
+After scanning a document, users had to navigate through menus to scan
+another document, making batch scanning inefficient and time-consuming.
+
+SOLUTION:
+Added a post-upload options modal that appears after successful scan upload
+(not for traditional file picker uploads) with three options:
+1. Scan More - Loop back to camera for continuous scanning
+2. View Document - See the just-uploaded document
+3. Done - Go to documents list
+
+IMPLEMENTATION:
+1. DocumentUploadScreen.tsx (~100 lines added)
+   - New state: showPostUploadModal, uploadedDocumentId, isFromScan
+   - Three modal handlers for each option
+   - Conditional modal display (scan only, not file picker)
+   - New modal UI with large action buttons
+   - 10 new styles for modal components
+
+2. Flow Logic:
+   - Detects if upload is from scan or file picker
+   - Shows modal only for scanned documents
+   - Traditional file picker uploads bypass modal (no breaking changes)
+   - Form reset on 'Scan More' to enable clean loop
+   - Uses router.replace to prevent navigation stack buildup
+
+FEATURES:
+- Batch scanning without menu navigation
+- User choice after each upload
+- Loop back to camera for continuous scanning
+- View uploaded document immediately
+- Return to documents list
+- No impact on traditional upload flow
+
+TESTING:
+- 10 new test cases in DocumentUploadFlow.test.tsx
+- Tests cover: modal display, all three options, navigation, loop functionality
+- Verified traditional uploads unaffected
+- All tests passing
+
+USER BENEFITS:
+- Faster multi-document scanning
+- Flexible post-scan actions
+- Improved scanning workflow
+- Better user experience
+
+DOCUMENTATION:
+- Comprehensive plan: fr-main-003-scan-flow-enhancement-plan.md
+- Updated DEVELOPMENT_CONTEXT.md
+- Updated COMMAND_REFERENCE.md
+
+DEPENDENCIES: None (uses existing packages)
+BREAKING CHANGES: None (traditional uploads unchanged)
+COMPATIBILITY: iOS & Android
+STATUS: Ready for testing
+"
+
+# Tag the release
+git tag -a v1.0.0-scan-flow-enhancement -m "FR-MAIN-003 Enhancement: Post-Upload Options Modal"
+
+# Push to remote
+git push origin master
+git push origin v1.0.0-scan-flow-enhancement
+```
+
+---
+
 **Last Updated:** December 6, 2025  
-**Session:** File Explorer Interface Implementation (FR-MAIN-022) ✅  
-**Next:** Test on physical device and continue with next feature
+**Session:** Scan Flow Enhancement - Post-Upload Options (FR-MAIN-003 Enhancement) ✅  
+**Next:** Test on physical device, proceed with next feature
 
