@@ -206,10 +206,15 @@ export default function FileExplorerScreen() {
       }
       
       if (matches || filteredChildren.length > 0) {
+        // When filtering, auto-expand nodes that have matching children
+        // This ensures users can see the filtered results
+        const shouldExpand = filteredChildren.length > 0 || matches;
+        
         return {
           ...node,
           children: filteredChildren,
           hasChildren: filteredChildren.length > 0,
+          isExpanded: shouldExpand, // Auto-expand during search to show results
         };
       }
       
@@ -228,6 +233,31 @@ export default function FileExplorerScreen() {
   
   const explorerNodes = buildExplorerNodes();
   const filteredNodes = filterNodes(explorerNodes, explorerState.searchQuery);
+  
+  // Auto-expand filtered nodes when searching
+  useEffect(() => {
+    if (explorerState.searchQuery.trim()) {
+      const nodesToExpand = new Set<string>();
+      
+      const collectExpandableNodes = (nodes: ExplorerNode[]) => {
+        nodes.forEach(node => {
+          if (node.type === 'category' && node.hasChildren) {
+            nodesToExpand.add(node.id);
+          }
+          if (node.children) {
+            collectExpandableNodes(node.children);
+          }
+        });
+      };
+      
+      collectExpandableNodes(filteredNodes);
+      
+      setExplorerState(prev => ({
+        ...prev,
+        expandedNodes: nodesToExpand,
+      }));
+    }
+  }, [explorerState.searchQuery, filteredNodes]);
   
   const handleNodePress = (node: ExplorerNode) => {
     if (node.type === 'document' && node.documentId) {
