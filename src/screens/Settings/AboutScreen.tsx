@@ -76,6 +76,10 @@ export default function AboutScreen() {
     Alert.alert('Open Source Licenses', 'License viewer will be available soon');
   };
 
+  const handleViewUserManual = () => {
+    router.push('/settings/user-manual' as any);
+  };
+
   const handleContactSupport = () => {
     Alert.alert(
       'Contact Support',
@@ -193,6 +197,22 @@ export default function AboutScreen() {
           <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
             More Information
           </Text>
+
+          <TouchableOpacity
+            style={[styles.linkItem, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}
+            onPress={handleViewUserManual}>
+            <View style={styles.linkContent}>
+              <IconSymbol name="book.fill" size={20} color={Colors.primary} />
+              <Text style={[styles.linkTitleWithIcon, { color: Colors[colorScheme ?? 'light'].text }]}>
+                User Manual
+              </Text>
+            </View>
+            <IconSymbol
+              name="chevron.right"
+              size={20}
+              color={Colors[colorScheme ?? 'light'].textSecondary}
+            />
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.linkItem, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}
@@ -392,6 +412,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   linkTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  linkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  linkTitleWithIcon: {
     fontSize: 16,
     fontWeight: '500',
   },
