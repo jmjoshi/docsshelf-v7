@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "buildNumber": "3",
+  "buildDate": "2025-12-08T00:35:16.690Z",
+  "buildType": "release",
+  "gitCommit": "77092ef",
+  "features": [
+    "FR-MAIN-003: Scan Flow Enhancement",
+    "FR-MAIN-022: File Explorer Interface"
+  ]
+}

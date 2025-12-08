@@ -16,12 +16,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// Import version info
+const versionInfo = require('../../../version.json');
+
 export default function AboutScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const appVersion = '1.0.0';
-  const buildNumber = '1';
+  const appVersion = versionInfo.version || '1.0.0';
+  const buildNumber = versionInfo.buildNumber || '2';
+  const buildDate = versionInfo.buildDate ? new Date(versionInfo.buildDate).toLocaleDateString() : '';
+  const buildType = versionInfo.buildType || 'release';
+  const gitCommit = versionInfo.gitCommit || '';
   const appName = 'DocsShelf';
 
   const handleRateApp = async () => {
@@ -124,8 +130,21 @@ export default function AboutScreen() {
           </Text>
           <View style={styles.versionBadge}>
             <Text style={[styles.versionText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
-              Version {appVersion} ({buildNumber})
+              Version {appVersion}
             </Text>
+            <Text style={[styles.buildText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
+              Build {buildNumber} • {buildType}
+            </Text>
+            {buildDate && (
+              <Text style={[styles.buildDateText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
+                {buildDate}
+              </Text>
+            )}
+            {gitCommit && (
+              <Text style={[styles.commitText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>
+                {gitCommit}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -368,10 +387,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f0f0f0',
+    alignItems: 'center',
   },
   versionText: {
     fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  buildText: {
+    fontSize: 12,
     fontWeight: '500',
+    marginBottom: 2,
+  },
+  buildDateText: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  commitText: {
+    fontSize: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   section: {
     marginBottom: 32,
