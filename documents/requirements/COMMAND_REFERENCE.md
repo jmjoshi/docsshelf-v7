@@ -1,15 +1,153 @@
 # DocsShelf Development Command Reference
 **Project:** DocsShelf v7 - Secure Document Management App  
 **Framework:** React Native + Expo (SDK 54) - **Native Android Builds Only**  
-**Last Updated:** December 7, 2025  
+**Last Updated:** December 9, 2025  
 **Build Method:** Direct native Android builds (expo-dev-client removed)  
-**Latest Features:** Production-Ready Release APK | Email Service | User Documentation | UI Polish Complete
+**Latest Build:** Build 35 - Global UI Fixes & Document Sharing  
+**Latest Features:** Bottom Navigation Visibility Fixed Globally | Document Sharing to WhatsApp Working
 
 This document captures all essential commands used during the development of DocsShelf v7, organized by category for future reference.
 
 ---
 
-## 🚀 LATEST DEVELOPMENT SESSION (December 7, 2025)
+## 🚀 LATEST DEVELOPMENT SESSION (December 9, 2025)
+
+### Session 5: Global UI Fixes & Document Sharing (December 9, 2025)
+**Build:** 35  
+**Focus:** Bottom Navigation Content Visibility | Document Sharing Fix
+
+**Issues Fixed:**
+1. Content hidden behind bottom navigation bar on physical devices
+2. Document sharing to WhatsApp/Messenger not working
+3. Upload progress messages partially hidden
+
+**Commands Used:**
+
+#### Build Increment (Build 35)
+```powershell
+# Increment build number
+npm run build:increment
+# Output: Build incremented to 35
+
+# Build release APK
+cd android
+.\gradlew assembleRelease
+cd ..
+
+# Install on physical device
+& "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s R9ZX90HXSVA install -r android\app\build\outputs\apk\release\app-release.apk
+```
+
+#### Git Operations - Build 35
+```powershell
+# Check status
+git status
+# Result: 38 modified files, 2 new prompt files
+
+# Stage all modified files
+git add -u
+
+# Add new prompt documentation
+git add "documents/prompts/prompts-v7-fixing issues nearing prod 1.0 release.md"
+git add "documents/prompts/prompts-v7-issue fixing.md"
+
+# Commit with comprehensive summary
+git commit -m "fix: Global UI fixes for bottom navigation visibility and document sharing
+
+FIXES IMPLEMENTED:
+1. Bottom Navigation Content Visibility (Global Fix)
+   - Added paddingBottom: 250 to ALL scrollable screens
+   - Ensures last items/lines visible above bottom navigation
+   - Fixes issue on physical devices with smaller resolutions
+
+2. Document Sharing Fix
+   - Fixed share functionality for images/PDFs to WhatsApp and other apps
+   - Properly extracts base64 content from data URI format
+   - Handles data:image/jpeg;base64,xxx format correctly
+
+FILES MODIFIED:
+Bottom Navigation Visibility Fix (23 screens):
+- app/(tabs)/explore.tsx (Main Settings screen)
+- app/(tabs)/index.tsx (Home screen)
+- app/settings/privacy-policy.tsx
+- app/settings/terms-of-service.tsx
+- src/screens/Documents/DocumentUploadScreen.tsx
+- All 13 Settings sub-screens
+- CategoryManagementScreen, FileExplorerScreen
+- DocumentListScreen, DocumentEditScreen
+- ExplorerTree component
+
+Document Sharing Fix:
+- src/screens/Documents/DocumentViewerScreen.tsx
+
+ISSUES RESOLVED:
+- Last menu items visible when scrolling
+- Content not hidden behind bottom navigation
+- Upload progress messages visible
+- Document sharing to WhatsApp works
+
+TAGS: #ui-fix #navigation #scrolling #sharing #production-ready
+BUILD: 35"
+
+# Result: Commit db28460 created
+
+# Push to GitHub
+git push origin master
+
+# Create and push tag
+git tag -a v1.0.0-build35 -m "Build 35: Global UI fixes for bottom navigation and document sharing"
+git push origin v1.0.0-build35
+```
+
+**Files Modified Summary:**
+- **Total:** 38 files changed, 6318 insertions(+), 338 deletions(-)
+- **Screens with paddingBottom fix:** 23 files
+- **Sharing fix:** 1 file (DocumentViewerScreen.tsx)
+- **New documentation:** 2 prompt files
+
+**Technical Details:**
+
+1. **Bottom Navigation Visibility Fix:**
+```typescript
+// Pattern applied to all scrollable screens:
+<ScrollView 
+  style={styles.scrollContent}
+  contentContainerStyle={styles.scrollContentContainer}
+>
+  {/* Content */}
+</ScrollView>
+
+// Style definition:
+scrollContentContainer: {
+  paddingBottom: 250, // Extra space for bottom navigation and text wrapping
+}
+```
+
+2. **Document Sharing Fix:**
+```typescript
+// Before (broken):
+let base64Content = decryptedContent; // data:image/jpeg;base64,xxx
+
+// After (working):
+if (decryptedContent.startsWith('data:')) {
+  const base64Index = decryptedContent.indexOf('base64,');
+  if (base64Index !== -1) {
+    base64Content = decryptedContent.substring(base64Index + 7);
+  }
+}
+```
+
+**Testing Results:**
+- ✅ Tested on physical Android device (R9ZX90HXSVA)
+- ✅ All screens scroll properly with content visible
+- ✅ "About" menu item in Settings now visible
+- ✅ Upload progress messages fully visible
+- ✅ Document sharing to WhatsApp working
+- ✅ Images and PDFs share correctly
+
+---
+
+## 🚀 PREVIOUS SESSIONS (December 7, 2025)
 
 ### Session 4: Production Release Guide & Document Actions (December 7, 2025)
 **Features:** Production Release Documentation | Category Picker Fix | Persistent Navigation | Move & Share
@@ -5303,3 +5441,16 @@ git push origin v1.0.0-scan-flow-enhancement
 **Session:** Scan Flow Enhancement - Post-Upload Options (FR-MAIN-003 Enhancement) ✅  
 **Next:** Test on physical device, proceed with next feature
 
+
+
+
+npm run build:increment
+cd android; .\gradlew assembleRelease
+install in emulator: 
+& "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s emulator-5554 install -r android\app\build\outputs\apk\release\app-release.apk
+
+
+Should be at app root else use this:
+cd ..; & "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s emulator-5554 install -r android\app\build\outputs\apk\release\app-release.apk
+
+cd ..; & "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s R9ZX90HXSVA install -r C:\Projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk
