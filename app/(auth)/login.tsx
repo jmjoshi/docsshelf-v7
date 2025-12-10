@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
-import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/colors';
+import { BorderRadius, Shadows, Spacing, Typography } from '../../constants/colors';
+import { Colors } from '../../constants/theme';
+import { useColorScheme } from '../../src/hooks/use-color-scheme';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { formatLockoutTime, isAccountLocked, recordFailedAttempt, resetFailedAttempts } from '../../src/services/auth/accountSecurityService';
@@ -15,6 +17,7 @@ import { logger } from '../../src/utils/helpers/logger';
 import { sanitizeEmail, validateEmail } from '../../src/utils/validators/emailValidator';
 
 function LoginScreenContent() {
+  const colorScheme = useColorScheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -153,24 +156,28 @@ function LoginScreenContent() {
   // Show loading while database initializes
   if (!dbReady) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Initializing...</Text>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+        <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>Initializing...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} edges={['top']}>
       <View style={styles.header}>
         <DocsShelfMascot size={100} />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your DocsShelf account</Text>
+        <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>Welcome Back</Text>
+        <Text style={[styles.subtitle, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>Sign in to your DocsShelf account</Text>
       </View>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { 
+          borderColor: Colors[colorScheme ?? 'light'].border,
+          backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+          color: Colors[colorScheme ?? 'light'].text
+        }]}
         placeholder="Email"
-        placeholderTextColor={Colors.text.placeholder}
+        placeholderTextColor={Colors[colorScheme ?? 'light'].textTertiary}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -178,9 +185,13 @@ function LoginScreenContent() {
         editable={!loading}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { 
+          borderColor: Colors[colorScheme ?? 'light'].border,
+          backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+          color: Colors[colorScheme ?? 'light'].text
+        }]}
         placeholder="Password"
-        placeholderTextColor={Colors.text.placeholder}
+        placeholderTextColor={Colors[colorScheme ?? 'light'].textTertiary}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -189,22 +200,24 @@ function LoginScreenContent() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Verifying credentials...</Text>
+          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+          <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].textSecondary }]}>Verifying credentials...</Text>
         </View>
       ) : (
         <>
-          <Button 
-            title="Login" 
+          <TouchableOpacity 
+            style={[styles.loginButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
             onPress={handleLogin}
             disabled={loading}
-          />
+          >
+            <Text style={[styles.loginButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>LOGIN</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.forgotPasswordContainer}
             onPress={() => router.push('/(auth)/forgot-password' as any)}
             disabled={loading}
           >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            <Text style={[styles.forgotPasswordText, { color: Colors[colorScheme ?? 'light'].tint }]}>Forgot Password?</Text>
           </TouchableOpacity>
         </>
       )}
@@ -213,7 +226,7 @@ function LoginScreenContent() {
         onPress={() => router.push('/(auth)/register' as any)}
         disabled={loading}
       >
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
+        <Text style={[styles.linkText, { color: Colors[colorScheme ?? 'light'].tint }]}>Don't have an account? Register</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -232,7 +245,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: Spacing['2xl'],
-    backgroundColor: Colors.background.paper,
   },
   centerContent: {
     justifyContent: 'center',
@@ -248,41 +260,45 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
     textAlign: 'center',
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: Typography.fontSize.sm,
     marginBottom: Spacing.lg,
     textAlign: 'center',
-    color: Colors.text.secondary,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border.main,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
     fontSize: Typography.fontSize.base,
-    backgroundColor: Colors.background.default,
-    color: Colors.text.primary,
     ...Shadows.sm,
   },
   error: {
-    color: Colors.error.main,
+    color: '#fff',
     marginBottom: Spacing.md,
     textAlign: 'center',
-    backgroundColor: Colors.error.light,
+    backgroundColor: '#ef4444',
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
+  },
+  loginButton: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  loginButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold,
   },
   linkContainer: {
     marginTop: Spacing.xl,
     alignItems: 'center',
   },
   linkText: {
-    color: Colors.primary.main,
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.medium,
   },
@@ -291,7 +307,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   forgotPasswordText: {
-    color: Colors.primary.main,
     fontSize: Typography.fontSize.sm,
     textDecorationLine: 'underline',
   },
@@ -301,7 +316,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: Spacing.md,
-    color: Colors.text.secondary,
     fontSize: Typography.fontSize.sm,
   },
 });

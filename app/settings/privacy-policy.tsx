@@ -284,6 +284,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   lastUpdated: {
     fontSize: 12,

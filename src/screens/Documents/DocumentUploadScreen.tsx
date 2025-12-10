@@ -9,13 +9,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
+    FlatList,
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
 import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import { getCurrentUserId } from '../../services/database/userService';
@@ -296,7 +298,10 @@ export default function DocumentUploadScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentContainer}
+      >
         <View style={styles.header}>
           <Text style={styles.headerSubtitle}>
             Select a file and provide details for secure encrypted storage
@@ -466,6 +471,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 250, // Extra space for bottom navigation and upload progress messages
   },
   header: {
     backgroundColor: '#fff',

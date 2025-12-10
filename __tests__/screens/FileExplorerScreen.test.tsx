@@ -3,8 +3,8 @@
  * Tests for the tree view container component
  */
 
-import React from 'react';
 import { render } from '@testing-library/react-native';
+import React from 'react';
 import ExplorerTree from '../../src/components/explorer/ExplorerTree';
 import { ExplorerNode } from '../../src/types/explorer';
 

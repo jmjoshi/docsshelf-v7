@@ -226,19 +226,19 @@ export default function CategoryManagementScreen() {
             style={[styles.actionButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
             onPress={() => handleAddSubcategory(item.id)}
           >
-            <Text style={styles.actionButtonText}>+</Text>
+            <Text style={[styles.actionButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>+</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: Colors[colorScheme ?? 'light'].inputBackground }]}
             onPress={() => handleEditCategory(item)}
           >
-            <Text style={styles.actionButtonText}>✏️</Text>
+            <Text style={[styles.actionButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>✏️</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeleteCategory(item)}
           >
-            <Text style={styles.actionButtonText}>🗑️</Text>
+            <Text style={[styles.actionButtonText, { color: '#fff' }]}>🗑️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -496,6 +496,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   categoryItemContainer: {
     marginBottom: 8,

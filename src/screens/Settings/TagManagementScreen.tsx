@@ -423,6 +423,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   tagItem: {
     flexDirection: 'row',

@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     gap: 12,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   settingItem: {
     flexDirection: 'row',

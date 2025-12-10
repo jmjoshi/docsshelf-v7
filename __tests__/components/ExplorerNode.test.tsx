@@ -3,8 +3,8 @@
  * Tests for the individual tree node component
  */
 
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 import ExplorerNode from '../../src/components/explorer/ExplorerNode';
 import { ExplorerNode as ExplorerNodeType } from '../../src/types/explorer';
 

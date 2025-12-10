@@ -3,6 +3,7 @@
  * Advanced filtering options for documents
  */
 
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useState } from 'react';
 import {
     Modal,
@@ -67,6 +68,8 @@ export default function FilterModal({
     onReset,
     onClose,
 }: FilterModalProps) {
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
     const [localFilters, setLocalFilters] = useState<DocumentFilters>(filters);
 
     const toggleCategory = (categoryId: number) => {
@@ -145,10 +148,10 @@ export default function FilterModal({
             onRequestClose={onClose}
         >
             <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
+                <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
                     {/* Header */}
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Filter Documents</Text>
+                    <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+                        <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Filter Documents</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Text style={styles.closeButton}>✕</Text>
                         </TouchableOpacity>
@@ -157,13 +160,14 @@ export default function FilterModal({
                     <ScrollView style={styles.modalBody}>
                         {/* Categories */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterSectionTitle}>Categories</Text>
+                            <Text style={[styles.filterSectionTitle, isDark && styles.filterSectionTitleDark]}>Categories</Text>
                             <View style={styles.filterOptions}>
                                 {categories.map((category) => (
                                     <TouchableOpacity
                                         key={category.id}
                                         style={[
                                             styles.filterChip,
+                                            isDark && styles.filterChipDark,
                                             localFilters.categoryIds.includes(category.id) &&
                                                 styles.filterChipActive,
                                         ]}
@@ -172,6 +176,7 @@ export default function FilterModal({
                                         <Text
                                             style={[
                                                 styles.filterChipText,
+                                                isDark && styles.filterChipTextDark,
                                                 localFilters.categoryIds.includes(category.id) &&
                                                     styles.filterChipTextActive,
                                             ]}
@@ -185,13 +190,14 @@ export default function FilterModal({
 
                         {/* File Types */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterSectionTitle}>File Types</Text>
+                            <Text style={[styles.filterSectionTitle, isDark && styles.filterSectionTitleDark]}>File Types</Text>
                             <View style={styles.filterOptions}>
                                 {FILE_TYPES.map((type) => (
                                     <TouchableOpacity
                                         key={type.value}
                                         style={[
                                             styles.filterChip,
+                                            isDark && styles.filterChipDark,
                                             localFilters.fileTypes.includes(type.value) &&
                                                 styles.filterChipActive,
                                         ]}
@@ -201,6 +207,7 @@ export default function FilterModal({
                                         <Text
                                             style={[
                                                 styles.filterChipText,
+                                                isDark && styles.filterChipTextDark,
                                                 localFilters.fileTypes.includes(type.value) &&
                                                     styles.filterChipTextActive,
                                             ]}
@@ -214,7 +221,7 @@ export default function FilterModal({
 
                         {/* Date Range */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterSectionTitle}>Date Range</Text>
+                            <Text style={[styles.filterSectionTitle, isDark && styles.filterSectionTitleDark]}>Date Range</Text>
                             <View style={styles.filterOptions}>
                                 {DATE_RANGES.map((range) => {
                                     const isActive =
@@ -227,6 +234,7 @@ export default function FilterModal({
                                             key={range.label}
                                             style={[
                                                 styles.filterChip,
+                                                isDark && styles.filterChipDark,
                                                 isActive && styles.filterChipActive,
                                             ]}
                                             onPress={() => setDateRange(range.days)}
@@ -234,6 +242,7 @@ export default function FilterModal({
                                             <Text
                                                 style={[
                                                     styles.filterChipText,
+                                                    isDark && styles.filterChipTextDark,
                                                     isActive && styles.filterChipTextActive,
                                                 ]}
                                             >
@@ -247,7 +256,7 @@ export default function FilterModal({
 
                         {/* File Size */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterSectionTitle}>File Size</Text>
+                            <Text style={[styles.filterSectionTitle, isDark && styles.filterSectionTitleDark]}>File Size</Text>
                             <View style={styles.filterOptions}>
                                 {SIZE_RANGES.map((range) => {
                                     const isActive =
@@ -259,6 +268,7 @@ export default function FilterModal({
                                             key={range.label}
                                             style={[
                                                 styles.filterChip,
+                                                isDark && styles.filterChipDark,
                                                 isActive && styles.filterChipActive,
                                             ]}
                                             onPress={() => setSizeRange(range.min, range.max)}
@@ -266,6 +276,7 @@ export default function FilterModal({
                                             <Text
                                                 style={[
                                                     styles.filterChipText,
+                                                    isDark && styles.filterChipTextDark,
                                                     isActive && styles.filterChipTextActive,
                                                 ]}
                                             >
@@ -288,7 +299,7 @@ export default function FilterModal({
                                     })
                                 }
                             >
-                                <Text style={styles.favoriteToggleText}>Favorites Only</Text>
+                                <Text style={[styles.favoriteToggleText, isDark && styles.favoriteToggleTextDark]}>Favorites Only</Text>
                                 <View
                                     style={[
                                         styles.toggle,
@@ -307,9 +318,9 @@ export default function FilterModal({
                     </ScrollView>
 
                     {/* Footer */}
-                    <View style={styles.modalFooter}>
-                        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-                            <Text style={styles.resetButtonText}>Reset</Text>
+                    <View style={[styles.modalFooter, isDark && styles.modalFooterDark]}>
+                        <TouchableOpacity style={[styles.resetButton, isDark && styles.resetButtonDark]} onPress={handleReset}>
+                            <Text style={[styles.resetButtonText, isDark && styles.resetButtonTextDark]}>Reset</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
                             <Text style={styles.applyButtonText}>
@@ -331,52 +342,57 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        maxHeight: '80%',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        height: '75%', // Changed from maxHeight to height for consistent size
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 8, // Reduced for compactness
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
     },
     modalTitle: {
-        fontSize: 20,
+        fontSize: 16, // Smaller for compactness
         fontWeight: 'bold',
         color: '#333',
     },
     closeButton: {
         fontSize: 24,
         color: '#666',
+        padding: 4,
     },
     modalBody: {
-        flex: 1,
-        padding: 20,
+        flexGrow: 1, // Changed from flex: 1 to allow ScrollView to expand
+        paddingHorizontal: 14, // Reduced padding
+        paddingTop: 8, // Minimal top padding
+        paddingBottom: 4, // Minimal bottom padding
     },
     filterSection: {
-        marginBottom: 24,
+        marginBottom: 10, // More compact
     },
     filterSectionTitle: {
-        fontSize: 16,
+        fontSize: 13, // Smaller
         fontWeight: '600',
         color: '#333',
-        marginBottom: 12,
+        marginBottom: 5, // Tighter
+        letterSpacing: 0.2,
     },
     filterOptions: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 8,
+        gap: 5, // Tighter spacing
     },
     filterChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#f0f0f0',
+        paddingHorizontal: 9, // More compact
+        paddingVertical: 4, // More compact
+        borderRadius: 12, // Smaller
+        backgroundColor: '#f5f5f5',
         borderWidth: 1,
         borderColor: '#e0e0e0',
     },
@@ -385,11 +401,11 @@ const styles = StyleSheet.create({
         borderColor: '#2196F3',
     },
     filterChipIcon: {
-        fontSize: 16,
-        marginRight: 6,
+        fontSize: 13, // Smaller
+        marginRight: 3, // Tighter
     },
     filterChipText: {
-        fontSize: 14,
+        fontSize: 12, // Smaller
         color: '#666',
     },
     filterChipTextActive: {
@@ -400,18 +416,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 4,
+        paddingVertical: 4, // More compact
+        paddingHorizontal: 0,
     },
     favoriteToggleText: {
-        fontSize: 16,
+        fontSize: 13, // Smaller
         color: '#333',
         fontWeight: '500',
     },
     toggle: {
-        width: 50,
-        height: 28,
-        borderRadius: 14,
+        width: 42, // Slightly smaller
+        height: 22, // Slightly smaller
+        borderRadius: 11,
         backgroundColor: '#e0e0e0',
         padding: 2,
     },
@@ -419,43 +435,78 @@ const styles = StyleSheet.create({
         backgroundColor: '#2196F3',
     },
     toggleThumb: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
+        width: 18, // Proportional
+        height: 18,
+        borderRadius: 9,
         backgroundColor: '#fff',
     },
     toggleThumbActive: {
-        transform: [{ translateX: 22 }],
+        transform: [{ translateX: 20 }],
     },
     modalFooter: {
         flexDirection: 'row',
-        padding: 20,
-        gap: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 8, // More compact
+        gap: 8,
         borderTopWidth: 1,
         borderTopColor: '#e0e0e0',
+        backgroundColor: '#fafafa',
     },
     resetButton: {
         flex: 1,
-        paddingVertical: 14,
+        paddingVertical: 9, // More compact
         borderRadius: 8,
         backgroundColor: '#f0f0f0',
         alignItems: 'center',
     },
     resetButtonText: {
-        fontSize: 16,
+        fontSize: 13, // Smaller
         fontWeight: '600',
         color: '#666',
     },
     applyButton: {
         flex: 2,
-        paddingVertical: 14,
+        paddingVertical: 9, // More compact
         borderRadius: 8,
         backgroundColor: '#2196F3',
         alignItems: 'center',
     },
     applyButtonText: {
-        fontSize: 16,
+        fontSize: 13, // Smaller
         fontWeight: '600',
         color: '#fff',
+    },
+    // Dark mode styles
+    modalContentDark: {
+        backgroundColor: '#1c1c1e',
+    },
+    modalHeaderDark: {
+        borderBottomColor: '#38383a',
+    },
+    modalTitleDark: {
+        color: '#fff',
+    },
+    filterSectionTitleDark: {
+        color: '#e5e5e7',
+    },
+    filterChipDark: {
+        backgroundColor: '#2c2c2e',
+        borderColor: '#38383a',
+    },
+    filterChipTextDark: {
+        color: '#e5e5e7',
+    },
+    favoriteToggleTextDark: {
+        color: '#e5e5e7',
+    },
+    modalFooterDark: {
+        borderTopColor: '#38383a',
+        backgroundColor: '#2c2c2e',
+    },
+    resetButtonDark: {
+        backgroundColor: '#38383a',
+    },
+    resetButtonTextDark: {
+        color: '#e5e5e7',
     },
 });

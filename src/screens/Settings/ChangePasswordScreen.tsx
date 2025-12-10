@@ -376,6 +376,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   header: {
     marginBottom: 30,

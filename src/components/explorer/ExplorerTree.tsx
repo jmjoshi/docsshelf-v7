@@ -82,6 +82,7 @@ export default function ExplorerTree({
       renderItem={renderNode}
       keyExtractor={(item) => item.id}
       style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={true}
       initialNumToRender={20}
       maxToRenderPerBatch={10}
@@ -99,6 +100,9 @@ export default function ExplorerTree({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  listContent: {
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   emptyContainer: {
     flex: 1,

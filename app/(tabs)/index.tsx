@@ -59,6 +59,13 @@ export default function HomeScreen() {
       color: '#2196F3',
     },
     {
+      id: 'explorer',
+      title: '🗂️ Explorer',
+      description: 'Browse and manage files in a tree view',
+      route: '/(tabs)/explorer',
+      color: '#FF5722',
+    },
+    {
       id: 'search',
       title: '🔍 Search',
       description: 'Find documents quickly with full-text search',
@@ -76,7 +83,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors[colorScheme ?? 'light'].headerBackground }]} edges={['top']}>
-      <ScrollView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+      <ScrollView 
+        style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
+        contentContainerStyle={styles.contentContainer}
+      >
         {/* Header */}
         <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].headerBackground }]}>
           <Text style={styles.welcomeText}>
@@ -139,9 +149,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  contentContainer: {
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
+  },
   header: {
-    padding: 24,
-    paddingBottom: 32,
+    padding: 16,
+    paddingBottom: 0,
   },
   welcomeText: {
     fontSize: 28,
@@ -189,10 +202,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   featureCard: {
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 12,
-    borderLeftWidth: 4,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -200,13 +213,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   featureTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   featureDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   logoutContainer: {
     padding: 16,

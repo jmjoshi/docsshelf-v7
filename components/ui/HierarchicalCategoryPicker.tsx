@@ -5,12 +5,12 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Category } from '../../src/types/category';
@@ -49,15 +49,17 @@ export function HierarchicalCategoryPicker({
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    console.log('[HierarchicalCategoryPicker] Categories received:', categories.length);
+    console.log('[HierarchicalCategoryPicker] Categories data:', JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, parent_id: c.parent_id }))));
+    
     // Build category tree whenever categories change
     const tree = buildCategoryTree(categories);
+    console.log('[HierarchicalCategoryPicker] Tree built with', tree.length, 'root nodes');
     setCategoryTree(tree);
     
-    // Auto-expand path to selected category
-    if (selectedCategoryId) {
-      const pathIds = findPathToCategory(categories, selectedCategoryId);
-      setExpandedIds(new Set(pathIds));
-    }
+    // Auto-expand all categories on initial load to show full tree
+    const allIds = categories.map(c => c.id);
+    setExpandedIds(new Set(allIds));
   }, [categories, selectedCategoryId]);
 
   const buildCategoryTree = (cats: CategoryWithCount[]): CategoryNode[] => {
@@ -132,6 +134,15 @@ export function HierarchicalCategoryPicker({
       }
       return newSet;
     });
+  };
+
+  const expandAll = () => {
+    const allIds = categories.map(c => c.id);
+    setExpandedIds(new Set(allIds));
+  };
+
+  const collapseAll = () => {
+    setExpandedIds(new Set());
   };
 
   const handleSelectCategory = (categoryId: number | null, categoryName: string) => {
@@ -224,6 +235,18 @@ export function HierarchicalCategoryPicker({
             </TouchableOpacity>
           </View>
 
+          {/* Expand/Collapse All Buttons */}
+          {categoryTree.length > 0 && (
+            <View style={styles.controlButtons}>
+              <TouchableOpacity onPress={expandAll} style={styles.controlButton}>
+                <Text style={styles.controlButtonText}>▼ Expand All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={collapseAll} style={styles.controlButton}>
+                <Text style={styles.controlButtonText}>▶ Collapse All</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <ScrollView style={styles.categoryList} showsVerticalScrollIndicator={true}>
             {/* Uncategorized Option */}
             {showUncategorized && (
@@ -298,6 +321,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#666',
     fontWeight: 'bold',
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  controlButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+  },
+  controlButtonText: {
+    fontSize: 14,
+    color: '#2196F3',
+    fontWeight: '500',
   },
   categoryList: {
     paddingTop: 10,

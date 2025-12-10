@@ -18,8 +18,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          paddingBottom: insets.bottom + 8,
-          height: 60 + insets.bottom,
+          display: 'none', // Hide native tabs, using PersistentBottomNav instead
         },
         tabBarHideOnKeyboard: true,
       }}>

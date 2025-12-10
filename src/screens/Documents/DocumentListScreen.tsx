@@ -369,7 +369,7 @@ export default function DocumentListScreen() {
               router.push(`/document/${item.id}`);
             }}
           >
-            <Text style={styles.actionButtonText}>View</Text>
+            <Text style={[styles.actionButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>View</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -664,6 +664,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 10,
+    paddingBottom: 100, // Extra space for bottom nav + FABs
   },
   documentItem: {
     borderRadius: 8,
@@ -767,7 +768,7 @@ const styles = StyleSheet.create({
   scanFab: {
     position: 'absolute',
     right: 20,
-    bottom: 90,
+    bottom: 210, // Above bottom nav + more clearance
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -782,7 +783,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 20,
+    bottom: 140, // Above bottom nav + more clearance
     width: 56,
     height: 56,
     borderRadius: 28,

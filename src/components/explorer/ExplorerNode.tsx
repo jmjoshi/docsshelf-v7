@@ -4,9 +4,9 @@
  * Displays with proper indentation, icons, and expand/collapse controls
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ExplorerNodeProps } from '../../types/explorer';
@@ -112,7 +112,7 @@ export default function ExplorerNode({
         <Ionicons
           name={getNodeIcon()}
           size={20}
-          color="#FFF"
+          color={colorScheme === 'dark' && node.type === 'document' ? '#000' : '#FFF'}
         />
       </View>
       

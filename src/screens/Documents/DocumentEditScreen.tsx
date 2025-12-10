@@ -15,9 +15,9 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import TagList from '../../components/documents/TagList';
 import TagPicker from '../../components/documents/TagPicker';
-import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {

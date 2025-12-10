@@ -3,13 +3,12 @@
  * Shows tab bar across all screens in the app
  */
 
-import { useRouter, usePathname } from 'expo-router';
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconSymbol } from './ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePathname, useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface TabItem {
   name: string;
@@ -19,11 +18,11 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
-  { name: 'home', icon: 'house.fill', route: '/(tabs)', label: 'Home' },
-  { name: 'categories', icon: 'folder.fill', route: '/(tabs)/categories', label: 'Categories' },
-  { name: 'documents', icon: 'doc.fill', route: '/(tabs)/documents', label: 'Documents' },
-  { name: 'explorer', icon: 'filemenu.and.selection', route: '/(tabs)/explorer', label: 'Explorer' },
-  { name: 'settings', icon: 'gear', route: '/(tabs)/explore', label: 'Settings' },
+  { name: 'home', icon: '🏠', route: '/(tabs)', label: 'Home' },
+  { name: 'categories', icon: '📁', route: '/(tabs)/categories', label: 'Categories' },
+  { name: 'documents', icon: '📄', route: '/(tabs)/documents', label: 'Documents' },
+  { name: 'explorer', icon: '🗂️', route: '/(tabs)/explorer', label: 'Explorer' },
+  { name: 'settings', icon: '⚙️', route: '/(tabs)/explore', label: 'Settings' },
 ];
 
 export function PersistentBottomNav() {
@@ -52,15 +51,16 @@ export function PersistentBottomNav() {
     return pathname.startsWith(route) || pathname === route;
   };
 
-  const backgroundColor = Colors[colorScheme ?? 'light'].background;
-  const borderColor = colorScheme === 'dark' ? '#333' : '#e0e0e0';
+  const backgroundColor = colorScheme === 'dark' ? 'rgba(28, 28, 30, 0.98)' : 'rgba(255, 255, 255, 0.98)';
+  const borderColor = colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
   return (
     <View style={[
       styles.container, 
       { 
-        paddingBottom: insets.bottom + 8, 
-        height: 60 + insets.bottom,
+        paddingBottom: insets.bottom + 4, 
+        paddingTop: 8,
+        height: 68 + insets.bottom,
         backgroundColor,
         borderTopColor: borderColor,
       }
@@ -78,7 +78,8 @@ export function PersistentBottomNav() {
             onPress={() => handlePress(tab.route)}
             activeOpacity={0.7}
           >
-            <IconSymbol name={tab.icon} size={28} color={color} />
+            <Text style={styles.icon}>{tab.icon}</Text>
+            <Text style={[styles.label, { color }]}>{tab.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -93,17 +94,26 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    borderTopWidth: 1,
-    elevation: 8,
+    borderTopWidth: 0.5,
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
+  },
+  icon: {
+    fontSize: 22,
+    marginBottom: 3,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
   },
 });

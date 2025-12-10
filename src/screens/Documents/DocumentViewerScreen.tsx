@@ -4,33 +4,35 @@
  */
 
 import * as FileSystemLegacy from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     Dimensions,
-    FlatList,
     Image,
-    Modal,
     ScrollView,
     Share,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
 import PdfViewer from '../../components/documents/PdfViewer';
-import { readDocument, updateDocument } from '../../services/database/documentService';
+import { getCategories } from '../../services/database/categoryService';
+import { readDocument } from '../../services/database/documentService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
     removeDocument,
     selectDocumentById,
     selectDocumentError,
     toggleFavorite,
+    updateDocumentMetadata,
 } from '../../store/slices/documentSlice';
+import { Category } from '../../types/category';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -45,7 +47,7 @@ export default function DocumentViewerScreen() {
 
   const [decryptedContent, setDecryptedContent] = useState<string | Uint8Array | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
-  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string }>>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isDecrypting, setIsDecrypting] = useState(false);
 
   useEffect(() => {
@@ -57,11 +59,13 @@ export default function DocumentViewerScreen() {
 
   const loadCategories = async () => {
     try {
-      const { getAllCategories } = await import('../../services/database/categoryService');
-      const allCategories = await getAllCategories();
+      console.log('[DocumentViewerScreen] Loading categories...');
+      const allCategories = await getCategories();
+      console.log('[DocumentViewerScreen] Categories loaded:', allCategories.length);
+      console.log('[DocumentViewerScreen] First category:', allCategories[0]);
       setCategories(allCategories);
     } catch (err) {
-      console.error('Failed to load categories:', err);
+      console.error('[DocumentViewerScreen] Failed to load categories:', err);
     }
   };
 
@@ -127,8 +131,20 @@ export default function DocumentViewerScreen() {
       let base64Content: string;
       if (decryptedContent instanceof Uint8Array) {
         base64Content = arrayBufferToBase64(decryptedContent);
+      } else if (typeof decryptedContent === 'string') {
+        // If it's a data URI (data:image/jpeg;base64,xxxxx), extract base64 part
+        if (decryptedContent.startsWith('data:')) {
+          const base64Index = decryptedContent.indexOf('base64,');
+          if (base64Index !== -1) {
+            base64Content = decryptedContent.substring(base64Index + 7);
+          } else {
+            base64Content = decryptedContent;
+          }
+        } else {
+          base64Content = decryptedContent;
+        }
       } else {
-        base64Content = decryptedContent;
+        throw new Error('Unsupported content type for sharing');
       }
 
       // Write decrypted content to temp file
@@ -245,14 +261,16 @@ Encrypted: Yes`;
     if (!document) return;
 
     try {
-      await updateDocument(document.id, {
-        category_id: categoryId,
-      });
+      // Use Redux action to update both database and store
+      await dispatch(updateDocumentMetadata({
+        documentId: document.id,
+        updates: { category_id: categoryId },
+      })).unwrap();
 
       setShowMoveModal(false);
       Alert.alert('Success', `Document moved to ${categoryName}`);
       
-      // Reload document to reflect changes
+      // Reload document to reflect changes locally
       loadDocument();
     } catch (err) {
       console.error('Failed to move document:', err);
@@ -424,110 +442,44 @@ Encrypted: Yes`;
       {/* Content */}
       <View style={styles.contentArea}>{renderContent()}</View>
 
-      {/* Action Bar */}
+      {/* Action Bar - Compact Single Row */}
       <View style={styles.actionBar}>
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>✏️</Text>
-            </View>
+            <Text style={styles.actionIcon}>✏️</Text>
             <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>📤</Text>
-            </View>
+            <Text style={styles.actionIcon}>📤</Text>
             <Text style={styles.actionText}>Share</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handlePrint}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>🖨️</Text>
-            </View>
+            <Text style={styles.actionIcon}>🖨️</Text>
             <Text style={styles.actionText}>Print</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleDuplicate}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>📋</Text>
-            </View>
+            <Text style={styles.actionIcon}>📋</Text>
             <Text style={styles.actionText}>Copy</Text>
           </TouchableOpacity>
-        </View>
 
-        <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionButton} onPress={handleShowInfo}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>ℹ️</Text>
-            </View>
+            <Text style={styles.actionIcon}>ℹ️</Text>
             <Text style={styles.actionText}>Info</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleMove}>
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>📁</Text>
-            </View>
+            <Text style={styles.actionIcon}>📁</Text>
             <Text style={styles.actionText}>Move</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleDelete}
-          >
-            <View style={styles.actionIconContainer}>
-              <Text style={[styles.actionIcon, styles.deleteIcon]}>🗑️</Text>
-            </View>
+          <TouchableOpacity style={styles.actionButton} onPress={handleDelete}>
+            <Text style={styles.actionIcon}>🗑️</Text>
             <Text style={[styles.actionText, styles.deleteActionText]}>Delete</Text>
           </TouchableOpacity>
-
-          <View style={styles.actionButton}>
-            {/* Empty space for alignment */}
-          </View>
         </View>
-      </View>
-
-      {/* Bottom Navigation Menu */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => router.push('/(tabs)/')}
-        >
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => router.push('/(tabs)/categories')}
-        >
-          <Text style={styles.navIcon}>📁</Text>
-          <Text style={styles.navText}>Categories</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => router.push('/(tabs)/documents')}
-        >
-          <Text style={styles.navIcon}>📄</Text>
-          <Text style={styles.navText}>Documents</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => router.push('/(tabs)/explorer')}
-        >
-          <Text style={styles.navIcon}>🗂️</Text>
-          <Text style={styles.navText}>Explorer</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => router.push('/(tabs)/explore')}
-        >
-          <Text style={styles.navIcon}>⚙️</Text>
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Error Display */}
@@ -722,7 +674,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    marginBottom: 90,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -734,27 +687,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   actionButton: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    minWidth: 70,
-  },
-  actionIconContainer: {
-    marginBottom: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    minWidth: 45,
   },
   actionIcon: {
-    fontSize: 28,
-  },
-  deleteIcon: {
-    fontSize: 26,
+    fontSize: 20,
+    marginBottom: 2,
   },
   actionText: {
-    fontSize: 13,
+    fontSize: 9,
     color: '#666',
     fontWeight: '400',
-  },
-  deleteActionButton: {
-    // No additional border needed
   },
   deleteActionText: {
     color: '#f44336',
@@ -795,32 +740,5 @@ const styles = StyleSheet.create({
   errorBannerText: {
     color: '#c62828',
     fontSize: 14,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 8,
-    paddingBottom: 4,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  navButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  navIcon: {
-    fontSize: 22,
-    marginBottom: 2,
-  },
-  navText: {
-    fontSize: 10,
-    color: '#666',
-    fontWeight: '500',
   },
 });

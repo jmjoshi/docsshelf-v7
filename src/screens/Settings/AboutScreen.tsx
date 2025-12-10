@@ -359,6 +359,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
+    paddingBottom: 250, // Extra space for bottom navigation and text wrapping on small screens
   },
   appInfo: {
     alignItems: 'center',

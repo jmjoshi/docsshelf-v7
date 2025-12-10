@@ -4,39 +4,36 @@
  * Features: Tree view, expand/collapse, search, and document preview
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ScrollView,
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
+import ExplorerTree from '../../components/explorer/ExplorerTree';
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  loadCategories,
-  selectCategoryTree,
-  selectCategoryLoading,
+    loadCategories,
+    selectCategoryLoading,
+    selectCategoryTree,
 } from '../../store/slices/categorySlice';
 import {
-  loadDocuments,
-  selectAllDocuments,
-  selectDocumentLoading,
+    loadDocuments,
+    selectAllDocuments,
+    selectDocumentLoading,
 } from '../../store/slices/documentSlice';
-import ExplorerTree from '../../components/explorer/ExplorerTree';
-import { ExplorerNode, ExplorerState } from '../../types/explorer';
 import type { CategoryTreeNode } from '../../types/category';
-import type { Document } from '../../types/document';
+import { ExplorerNode, ExplorerState } from '../../types/explorer';
 
 export default function FileExplorerScreen() {
   const dispatch = useAppDispatch();
@@ -311,7 +308,7 @@ export default function FileExplorerScreen() {
   
   if (initialLoad && (categoryLoading || documentLoading)) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.text }]}>
@@ -323,7 +320,7 @@ export default function FileExplorerScreen() {
   }
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>File Explorer</Text>
