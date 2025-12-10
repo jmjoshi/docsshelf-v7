@@ -124,7 +124,7 @@ If you see "unauthorized", disconnect and reconnect the device, then allow USB d
 ```powershell
 cd C:\Projects
 git clone https://github.com/jmjoshi/docsshelf-v7.git
-cd docsshelf-v7
+cd DocsShelf
 ```
 
 ### 2. Install Dependencies

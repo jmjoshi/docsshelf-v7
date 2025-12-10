@@ -24,7 +24,7 @@ DocsShelf is a cross-platform (iOS/Android) mobile application for secure docume
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd docsshelf-v7
+   cd DocsShelf
    ```
 
 2. **Install dependencies**
@@ -81,7 +81,7 @@ npm run type-check
 ## 📁 Project Structure
 
 ```
-docsshelf-v7/
+DocsShelf/
 ├── app/                    # Expo Router pages
 ├── src/
 │   ├── components/         # Reusable UI components

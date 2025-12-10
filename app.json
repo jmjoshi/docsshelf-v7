@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "docsshelf-v7",
-    "slug": "docsshelf-v7",
+    "name": "DocsShelf",
+    "slug": "docsshelf",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

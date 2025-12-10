@@ -64,7 +64,7 @@ Verify and update the following critical fields:
 {
   "expo": {
     "name": "DocsShelf",
-    "slug": "docsshelf-v7",
+    "slug": "docsshelf",
     "version": "1.0.0",
     "android": {
       "package": "com.yourcompany.docsshelf",
