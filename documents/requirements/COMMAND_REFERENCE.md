@@ -1,16 +1,310 @@
 # DocsShelf Development Command Reference
 **Project:** DocsShelf v7 - Secure Document Management App  
 **Framework:** React Native + Expo (SDK 54) - **Native Android Builds Only**  
-**Last Updated:** December 9, 2025  
+**Last Updated:** December 12, 2025  
 **Build Method:** Direct native Android builds (expo-dev-client removed)  
-**Latest Build:** Build 35 - Global UI Fixes & Document Sharing  
-**Latest Features:** Bottom Navigation Visibility Fixed Globally | Document Sharing to WhatsApp Working
+**Latest Build:** Build 36 - Comprehensive Password Recovery System  
+**Latest Features:** Multi-Method Password Recovery | Forgot Password Flow | Recovery Management | Zero-Knowledge Maintained
 
 This document captures all essential commands used during the development of DocsShelf v7, organized by category for future reference.
 
 ---
 
-## 🚀 LATEST DEVELOPMENT SESSION (December 9, 2025)
+## 🚀 LATEST DEVELOPMENT SESSION (December 12, 2025)
+
+### Session 6: Comprehensive Password Recovery System (December 12, 2025)
+**Build:** 36  
+**Focus:** Multi-Method Password Recovery | Forgot Password Flow | Recovery Management
+
+**Features Implemented:**
+1. Complete password recovery system with 3 methods
+2. Recovery phrase (12-word BIP39-style)
+3. Recovery PIN (4-6 digits with validation)
+4. Security questions (10 predefined, 2 required)
+5. Registration flow with optional recovery setup
+6. Forgot password complete flow
+7. Recovery methods management UI
+8. Diagnostic and debug tools
+
+**Commands Used:**
+
+#### Git Operations - Build 36 (Password Recovery)
+```powershell
+# Check status
+git status
+# Result: 39 modified files, 10 new files
+
+# Stage all modified files
+git add -u
+
+# Add new recovery system files
+git add app/settings/recovery-methods.tsx
+git add build-release.ps1
+git add "documents/prompts/prompts-v7-all issues fixed.md"
+git add "documents/prompts/prompts-v7-forgot PW options.md"
+git add "documents/prompts/prompts-v7-recovery issue resolved.md"
+git add scripts/reset-password.ts
+git add src/components/auth/
+git add src/components/debug/
+git add src/screens/Settings/RecoveryMethodsScreen.tsx
+git add src/services/auth/recoveryService.ts
+
+# Commit with comprehensive summary
+git commit -m "feat: Comprehensive password recovery system with multiple methods
+
+MAJOR FEATURES IMPLEMENTED:
+1. Password Recovery System (Complete Solution)
+   - Multi-method recovery: Phrase, PIN, Security Questions
+   - User can select 1-2 recovery methods during registration
+   - All recovery data stored as secure hashes (SHA-256)
+   - Zero-knowledge architecture maintained
+
+2. Recovery Methods Implemented:
+   a) Recovery Phrase (12-word BIP39-style)
+      - Most secure option (recommended)
+      - Write-down-and-store model
+      - BIP39-compatible word generation
+      - One-time display during setup
+   
+   b) Recovery PIN (4-6 digits)
+      - Easy to remember fallback option
+      - Weak PIN detection (rejects 0000, 1234, etc.)
+      - Numeric only validation
+   
+   c) Security Questions (2 questions)
+      - Traditional recovery method
+      - 10 predefined questions
+      - Case-insensitive answer matching
+      - Normalized answer storage
+
+3. Registration Flow Enhancement:
+   - Optional recovery setup during registration
+   - Skip option available (with warning)
+   - Step-by-step guided setup
+   - Final confirmation with warnings
+   - Recovery phrase copy to clipboard
+
+4. Forgot Password Flow:
+   - Comprehensive forgot password screen
+   - Detects available recovery methods
+   - Validates recovery credentials
+   - Allows password reset without email
+   - MFA re-setup after recovery
+
+5. Recovery Methods Management:
+   - Settings screen to view/update methods
+   - Add or remove recovery methods
+   - Update existing methods
+   - Visual indicators for active methods
+
+6. Diagnostic & Debug Tools:
+   - Password diagnostic component
+   - Reset password utility script
+   - Extensive logging for troubleshooting
+
+NEW FILES ADDED:
+Authentication Components:
+- src/components/auth/RecoverySetupScreen.tsx (594 lines)
+  - Multi-step recovery method setup UI
+  - Phrase generation and confirmation
+  - PIN entry with validation
+  - Security question selection
+
+Debug & Utilities:
+- src/components/debug/PasswordDiagnostic.tsx (98 lines)
+  - Password hash verification tool
+  - Diagnostic output for troubleshooting
+- scripts/reset-password.ts (218 lines)
+  - Emergency password reset utility
+
+Settings Screens:
+- app/settings/recovery-methods.tsx (1 line placeholder)
+- src/screens/Settings/RecoveryMethodsScreen.tsx (268 lines)
+  - View and manage recovery methods
+  - Setup/update recovery options
+
+Services:
+- src/services/auth/recoveryService.ts (226 lines)
+  - Recovery phrase generation/verification
+  - PIN hashing and validation
+  - Security question handling
+  - All recovery method utilities
+
+Build & Deployment:
+- build-release.ps1 (PowerShell build script)
+
+Documentation:
+- documents/prompts/prompts-v7-all issues fixed.md
+- documents/prompts/prompts-v7-forgot PW options.md
+- documents/prompts/prompts-v7-recovery issue resolved.md
+
+MODIFIED FILES (39 total):
+Configuration:
+- app.json (version bump)
+- package.json, package-lock.json (dependencies)
+- version.json (build number)
+- scripts/increment-build.js
+
+Authentication Screens:
+- app/(auth)/forgot-password.tsx (Complete recovery flow)
+- app/(auth)/login.tsx (Link to forgot password)
+- app/(auth)/register.tsx (Recovery setup integration)
+- app/(auth)/mfa-setup.tsx (Post-recovery MFA)
+- app/(auth)/mfa-verify.tsx (Enhanced verification)
+
+Main App Screens:
+- app/(tabs)/explore.tsx (Settings navigation)
+- app/modal.tsx
+- app/settings/privacy-policy.tsx
+
+Document Screens (All with UI refinements):
+- src/components/documents/FilterModal.tsx
+- src/components/documents/TagPicker.tsx
+- src/screens/Documents/DocumentEditScreen.tsx
+- src/screens/Documents/DocumentListScreen.tsx
+- src/screens/Documents/DocumentUploadScreen.tsx
+- src/screens/Documents/DocumentViewerScreen.tsx
+
+Scan Screens:
+- src/screens/Scan/DocumentScanScreen.tsx
+- src/screens/Scan/ScanFlowScreen.tsx
+
+Settings Screens (All with recovery integration):
+- src/screens/Settings/AboutScreen.tsx
+- src/screens/Settings/BackupScreen.tsx
+- src/screens/Settings/ChangePasswordScreen.tsx
+- src/screens/Settings/DocumentManagementScreen.tsx
+- src/screens/Settings/PreferencesScreen.tsx
+- src/screens/Settings/ProfileScreen.tsx
+- src/screens/Settings/QuickReferenceScreen.tsx
+- src/screens/Settings/RestoreBackupScreen.tsx
+- src/screens/Settings/SecurityLogScreen.tsx
+- src/screens/Settings/SecuritySettingsScreen.tsx
+- src/screens/Settings/TagManagementScreen.tsx
+- src/screens/Settings/UserManualScreen.tsx
+
+Database & Services:
+- src/services/database/dbInit.ts (Recovery columns added)
+- src/services/database/userService.ts (Recovery methods)
+- src/utils/crypto/passwordHash.ts (Enhanced hashing)
+- documents/requirements/FIRST_RELEASE_ESSENTIALS.md (Updated)
+
+KEY TECHNICAL DETAILS:
+1. Database Schema Updates:
+   - recovery_phrase_hash TEXT
+   - recovery_pin_hash TEXT
+   - security_questions TEXT (JSON)
+   - recovery_methods_enabled TEXT (JSON array)
+
+2. Security Implementation:
+   - SHA-256 hashing for all recovery data
+   - Salted PIN hashing
+   - Normalized answer hashing (lowercase, no punctuation)
+   - No plain-text recovery data stored
+
+3. User Experience:
+   - Optional setup (can skip with warning)
+   - Clear warnings about data loss
+   - Visual method selection
+   - Copy-to-clipboard for recovery phrase
+   - Step-by-step guided process
+
+4. Validation:
+   - PIN format validation
+   - Weak PIN detection
+   - Duplicate question prevention
+   - Confirmation requirements
+
+FEATURES COMPLETED:
+✅ Multi-method password recovery
+✅ Recovery phrase generation (BIP39-style)
+✅ Recovery PIN with validation
+✅ Security questions (10 predefined)
+✅ Registration flow with recovery setup
+✅ Forgot password complete flow
+✅ Recovery methods management UI
+✅ Diagnostic and debug tools
+✅ Zero-knowledge architecture maintained
+✅ Comprehensive user warnings
+✅ Database schema with recovery support
+
+USER EXPERIENCE IMPROVEMENTS:
+- Clear recovery method selection
+- Visual progress indicators
+- Copy-to-clipboard for phrases
+- Strong warnings about data loss
+- Professional UI with color coding
+- Recommended method badges
+- Skip option with consequences
+
+PRODUCTION READY:
+- All recovery methods tested
+- Database migrations stable
+- UI/UX polished
+- Documentation complete
+- Error handling comprehensive
+- Security best practices followed
+
+TAGS: #authentication #password-recovery #security #forgot-password #recovery-methods #mfa #zero-knowledge #production-ready
+BUILD: 36"
+
+# Result: Commit c3f6864 created with 47 files changed, 11680 insertions(+), 289 deletions(-)
+
+# Push to GitHub
+git push origin master
+# Result: Successfully pushed to remote
+
+# Create and push tag
+git tag -a v1.0.0-build36-password-recovery -m "Build 36: Comprehensive password recovery system with multiple methods (phrase, PIN, security questions)"
+git push origin v1.0.0-build36-password-recovery
+# Result: Tag created and pushed successfully
+```
+
+#### Database Migration (Recovery Columns)
+```sql
+-- Added to users table in dbInit.ts
+ALTER TABLE users ADD COLUMN recovery_phrase_hash TEXT;
+ALTER TABLE users ADD COLUMN recovery_pin_hash TEXT;
+ALTER TABLE users ADD COLUMN security_questions TEXT;  -- JSON array
+ALTER TABLE users ADD COLUMN recovery_methods_enabled TEXT;  -- JSON array of method names
+```
+
+#### Emergency Password Reset Script
+```powershell
+# Run emergency password reset (development only)
+# Located at: scripts/reset-password.ts
+# Provides UI to reset password when locked out
+# Should only be used in development/testing
+```
+
+#### Password Diagnostic Tool
+```powershell
+# Access via app in development mode
+# Located at: src/components/debug/PasswordDiagnostic.tsx
+# Shows password hash comparison for troubleshooting
+# Verifies stored credentials match computed hashes
+```
+
+**Changes Summary:**
+- 47 files changed
+- 11,680 insertions(+)
+- 289 deletions(-)
+- 10 new files created
+- 39 existing files modified
+
+**Key Features:**
+- Recovery phrase generation with BIP39 word list
+- PIN validation with weak pattern detection
+- Security questions with answer normalization
+- Modal-based setup UI with step progression
+- Dark mode support throughout
+- Safe area insets for all modals
+- Comprehensive error handling
+- Zero-knowledge architecture maintained
+
+---
+
+## 🚀 PREVIOUS DEVELOPMENT SESSION (December 9, 2025)
 
 ### Session 5: Global UI Fixes & Document Sharing (December 9, 2025)
 **Build:** 35  
@@ -5447,10 +5741,16 @@ git push origin v1.0.0-scan-flow-enhancement
 npm run build:increment
 cd android; .\gradlew assembleRelease
 install in emulator: 
-& "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s emulator-5554 install -r android\app\build\outputs\apk\release\app-release.apk
+cd ..; & "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s emulator-5554 install -r android\app\build\outputs\apk\release\app-release.apk
 
 
 Should be at app root else use this:
-cd ..; & "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s emulator-5554 install -r android\app\build\outputs\apk\release\app-release.apk
+
 
 cd ..; & "C:\Users\janer\AppData\Local\Android\Sdk\platform-tools\adb.exe" -s R9ZX90HXSVA install -r C:\Projects\docsshelf-v7\android\app\build\outputs\apk\release\app-release.apk
+
+//Logs viewer
+adb -s emulator-5554 logcat -c; adb -s emulator-5554 logcat | Select-String -Pattern "docsshelf|recovery|register|Error"
+
+//DB clear
+adb -s emulator-5554 shell pm clear com.docsshelf.app

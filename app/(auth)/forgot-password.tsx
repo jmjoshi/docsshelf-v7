@@ -393,7 +393,7 @@ function ForgotPasswordContent() {
     if (!selectedMethod) return null;
 
     return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 250 }}>
         <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>
           Verify Your Identity
         </Text>

@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing['2xl'],
-    paddingBottom: Spacing['4xl'],
+    paddingBottom: 250,
   },
   header: {
     alignItems: 'center',

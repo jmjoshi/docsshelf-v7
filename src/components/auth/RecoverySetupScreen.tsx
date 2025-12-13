@@ -305,7 +305,7 @@ export default function RecoverySetupScreen({
   );
 
   const renderPhraseSetup = () => (
-    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 250 }}>
       <Text style={[styles.title, { color: colors.text }]}>Your Recovery Phrase</Text>
       <Text style={[styles.subtitle, { color: colors.tabIconDefault }]}>
         Write down these 12 words in order and store them safely
@@ -419,7 +419,7 @@ export default function RecoverySetupScreen({
   );
 
   const renderQuestionsSetup = () => (
-    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 250 }}>
       <Text style={[styles.title, { color: colors.text }]}>Security Questions</Text>
       <Text style={[styles.subtitle, { color: colors.tabIconDefault }]}>
         Select and answer 2 security questions
@@ -491,7 +491,7 @@ export default function RecoverySetupScreen({
   );
 
   const renderConfirmation = () => (
-    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.stepContainer} contentContainerStyle={{ paddingBottom: 250 }}>
       <Text style={[styles.title, { color: colors.text }]}>Confirm Recovery Setup</Text>
 
       <View style={styles.summaryContainer}>
