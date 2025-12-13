@@ -192,7 +192,7 @@ export default function DocumentEditScreen() {
 
   if (!document) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Document not found</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>

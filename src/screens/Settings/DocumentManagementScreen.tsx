@@ -394,7 +394,7 @@ export default function DocumentManagementScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top', 'left', 'right', 'bottom']}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Loading storage statistics...</Text>
       </SafeAreaView>
@@ -402,7 +402,7 @@ export default function DocumentManagementScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         {/* Storage Overview */}
         <View style={styles.section}>

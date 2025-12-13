@@ -288,7 +288,7 @@ export default function DocumentUploadScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       {/* Header with Cancel Button */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>

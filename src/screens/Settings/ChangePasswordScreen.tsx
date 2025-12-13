@@ -1,13 +1,16 @@
 import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { getDatabase } from '@/src/services/database/dbInit';
-import { getCurrentUserId } from '@/src/services/database/userService';
-import { hashPassword } from '@/src/utils/crypto/passwordHash';
+import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '@/src/utils/auth/secureStoreKeys';
+import { generateSalt, hashPassword, verifyPassword } from '@/src/utils/crypto/passwordHash';
+import { sanitizeEmail } from '@/src/utils/validators/emailValidator';
 import { validatePassword } from '@/src/utils/validators/passwordValidator';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -16,7 +19,6 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useToast } from 'react-native-toast-notifications';
 
 interface PasswordStrength {
   score: number;
@@ -35,8 +37,6 @@ export default function ChangePasswordScreen() {
   const [currentPasswordError, setCurrentPasswordError] = useState('');
   const [newPasswordError, setNewPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-
-  const toast = useToast();
 
   const getPasswordStrength = (password: string): PasswordStrength => {
     if (!password) {
@@ -71,26 +71,95 @@ export default function ChangePasswordScreen() {
     }
 
     try {
+      console.log('\n\n=== CHANGE PASSWORD START ===');
+      console.log('Current password being validated (length):', currentPassword.length);
+      console.log('Current password (first 5 chars):', currentPassword.substring(0, 5));
+      
+      // Get email directly from SecureStore and sanitize it (CRITICAL FIX)
+      const rawEmail = await SecureStore.getItemAsync(CURRENT_USER_EMAIL_KEY);
+      const email = rawEmail ? sanitizeEmail(rawEmail) : null;
+      
+      console.log('Retrieved email from CURRENT_USER_EMAIL_KEY (raw):', rawEmail);
+      console.log('Sanitized email:', email);
+      console.log('CURRENT_USER_EMAIL_KEY constant value:', CURRENT_USER_EMAIL_KEY);
+      
+      // Query database to see ALL registered users
+      console.log('\n--- DATABASE QUERY: ALL USERS ---');
       const db = await getDatabase();
-      const userId = await getCurrentUserId();
+      const allUsers = await db.getAllAsync('SELECT id, email, created_at FROM users ORDER BY created_at');
+      console.log('Total users in database:', allUsers.length);
+      allUsers.forEach((user: any, index: number) => {
+        console.log(`User ${index + 1}:`, { id: user.id, email: user.email, created_at: user.created_at });
+      });
+      
+      // Check SecureStore for all found emails
+      console.log('\n--- SECURESTORE CHECK FOR ALL USERS ---');
+      for (const user of allUsers as any[]) {
+        const saltKey = getUserSaltKey(user.email);
+        const hashKey = getUserPasswordHashKey(user.email);
+        const hasSalt = await SecureStore.getItemAsync(saltKey);
+        const hasHash = await SecureStore.getItemAsync(hashKey);
+        console.log(`${user.email}: salt=${!!hasSalt}, hash=${!!hasHash}`);
+      }
 
-      if (!userId) {
-        setCurrentPasswordError('User not found');
+      if (!email) {
+        console.error('No email found in SecureStore');
+        setCurrentPasswordError('User not found - please login again');
         return false;
       }
 
-      const user = await db.getFirstAsync<{ password_hash: string; salt: string }>(
-        'SELECT password_hash, salt FROM users WHERE id = ?',
-        [userId]
-      );
+      // Retrieve stored credentials from SecureStore
+      const storedSalt = await SecureStore.getItemAsync(getUserSaltKey(email));
+      const storedHash = await SecureStore.getItemAsync(getUserPasswordHashKey(email));
 
-      if (!user) {
-        setCurrentPasswordError('User not found');
+      console.log('Stored salt exists:', !!storedSalt);
+      console.log('Stored hash exists:', !!storedHash);
+
+      if (!storedSalt || !storedHash) {
+        console.error('Credentials not found in SecureStore');
+        setCurrentPasswordError('User credentials not found - please login again');
         return false;
       }
 
-      const currentHash = await hashPassword(currentPassword, user.salt);
-      if (currentHash !== user.password_hash) {
+      // TEST: Try verifying with the login flow to compare
+      console.log('\n=== PASSWORD VERIFICATION TEST ===');
+      console.log('Test 1: Direct verification');
+      const testIsValid = await verifyPassword(currentPassword, storedSalt, storedHash);
+      console.log('Direct verification result:', testIsValid);
+      
+      // Test 2: Manual hash computation
+      console.log('\nTest 2: Manual hash computation');
+      const manualHash = await hashPassword(currentPassword, storedSalt);
+      console.log('Manual hash (first 20):', manualHash.substring(0, 20));
+      console.log('Stored hash (first 20):', storedHash.substring(0, 20));
+      console.log('Manual hashes match:', manualHash === storedHash);
+      
+      // Test 3: Character-by-character comparison
+      console.log('\nTest 3: Character comparison');
+      console.log('Password string:', currentPassword);
+      console.log('Password bytes:', Array.from(currentPassword).map(c => c.charCodeAt(0)));
+      console.log('Salt length:', storedSalt.length);
+      console.log('Hash length:', storedHash.length);
+      console.log('Computed hash length:', manualHash.length);
+      
+      // Find first difference
+      let firstDiff = -1;
+      for (let i = 0; i < Math.max(manualHash.length, storedHash.length); i++) {
+        if (manualHash[i] !== storedHash[i]) {
+          firstDiff = i;
+          break;
+        }
+      }
+      console.log('First difference at position:', firstDiff);
+      if (firstDiff >= 0) {
+        console.log(`Computed[${firstDiff}]: "${manualHash[firstDiff]}" (code: ${manualHash.charCodeAt(firstDiff)})`);
+        console.log(`Stored[${firstDiff}]: "${storedHash[firstDiff]}" (code: ${storedHash.charCodeAt(firstDiff)})`);
+      }
+      
+      const isValid = testIsValid;
+      console.log('\n=== FINAL RESULT:', isValid, '===\n');
+      
+      if (!isValid) {
         setCurrentPasswordError('Current password is incorrect');
         return false;
       }
@@ -137,67 +206,77 @@ export default function ChangePasswordScreen() {
   };
 
   const handleChangePassword = async () => {
+    console.log('Change password button clicked');
+    
     // Clear previous errors
     setCurrentPasswordError('');
     setNewPasswordError('');
     setConfirmPasswordError('');
 
     // Validate all fields
+    console.log('Validating current password...');
     const isCurrentValid = await validateCurrentPassword();
+    console.log('Current password valid:', isCurrentValid);
+    
+    console.log('Validating new password...');
     const isNewValid = validateNewPassword();
+    console.log('New password valid:', isNewValid);
+    
+    console.log('Validating confirm password...');
     const isConfirmValid = validateConfirmPassword();
+    console.log('Confirm password valid:', isConfirmValid);
 
     if (!isCurrentValid || !isNewValid || !isConfirmValid) {
+      console.log('Validation failed, aborting password change');
       return;
     }
 
     setLoading(true);
 
     try {
-      const db = await getDatabase();
-      const userId = await getCurrentUserId();
+      console.log('Getting current user email from SecureStore...');
+      const rawEmail = await SecureStore.getItemAsync(CURRENT_USER_EMAIL_KEY);
+      const email = rawEmail ? sanitizeEmail(rawEmail) : null;
+      console.log('Current user email (raw):', rawEmail);
+      console.log('Current user email (sanitized):', email);
 
-      if (!userId) {
-        toast.show('User not found', { type: 'danger' });
+      if (!email) {
+        console.error('No email found in SecureStore');
+        Alert.alert('Error', 'User not found - please login again');
+        setLoading(false);
         return;
       }
 
-      // Get user's salt
-      const user = await db.getFirstAsync<{ salt: string }>(
-        'SELECT salt FROM users WHERE id = ?',
-        [userId]
-      );
+      // Generate new salt for better security
+      console.log('Generating new salt...');
+      const newSalt = await generateSalt();
+      console.log('New salt generated');
 
-      if (!user) {
-        toast.show('User not found', { type: 'danger' });
-        return;
-      }
+      // Hash new password with new salt
+      console.log('Hashing new password...');
+      const newPasswordHash = await hashPassword(newPassword, newSalt);
+      console.log('New password hashed');
 
-      // Hash new password with existing salt
-      const newPasswordHash = await hashPassword(newPassword, user.salt);
+      // Update password credentials in SecureStore using sanitized email
+      console.log('Updating SecureStore...');
+      await SecureStore.setItemAsync(getUserSaltKey(email), newSalt);
+      await SecureStore.setItemAsync(getUserPasswordHashKey(email), newPasswordHash);
+      console.log('SecureStore updated successfully');
 
-      // Update password in database
-      await db.runAsync(
-        'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newPasswordHash, userId]
-      );
+      Alert.alert('Success', 'Password changed successfully', [
+        {
+          text: 'OK',
+          onPress: () => router.back()
+        }
+      ]);
 
-      // Log the password change in audit log
-      await db.runAsync(
-        `INSERT INTO audit_log (user_id, action, entity_type, details, ip_address) 
-         VALUES (?, 'PASSWORD_CHANGE', 'user', 'Password changed successfully', ?)`,
-        [userId, 'local']
-      );
-
-      toast.show('Password changed successfully', { type: 'success' });
-
-      // Navigate back after a short delay
-      setTimeout(() => {
-        router.back();
-      }, 1000);
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.show('Failed to change password', { type: 'danger' });
+      Alert.alert('Error', 'Failed to change password');
     } finally {
       setLoading(false);
     }
@@ -212,7 +291,7 @@ export default function ChangePasswordScreen() {
     !confirmPasswordError;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}

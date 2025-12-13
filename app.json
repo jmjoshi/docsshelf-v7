@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.docsshelf.app",
-      "versionCode": 40,
+      "versionCode": 79,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

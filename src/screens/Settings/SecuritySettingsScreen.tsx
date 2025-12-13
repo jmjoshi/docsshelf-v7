@@ -176,7 +176,7 @@ export default function SecuritySettingsScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      edges={['top']}>
+      edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <IconSymbol name="chevron.left" size={28} color={Colors.primary} />
@@ -268,6 +268,31 @@ export default function SecuritySettingsScreen() {
                   { color: Colors[colorScheme ?? 'light'].textSecondary },
                 ]}>
                 Update your account password
+              </Text>
+            </View>
+            <IconSymbol
+              name="chevron.right"
+              size={20}
+              color={Colors[colorScheme ?? 'light'].textSecondary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' },
+            ]}
+            onPress={() => router.push('/settings/recovery-methods')}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
+                Recovery Methods
+              </Text>
+              <Text
+                style={[
+                  styles.settingDescription,
+                  { color: Colors[colorScheme ?? 'light'].textSecondary },
+                ]}>
+                Setup password recovery options
               </Text>
             </View>
             <IconSymbol

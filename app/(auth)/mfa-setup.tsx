@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { checkBiometricSupport, enableBiometric, setupTOTP, verifyAndActivateTOTP } from '../../src/services/auth/mfaService';
@@ -155,8 +156,9 @@ function MFASetupScreenContent() {
 
   if (step === 'choice') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Secure Your Account</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Secure Your Account</Text>
         <Text style={styles.subtitle}>
           Add an extra layer of security with two-factor authentication
         </Text>
@@ -194,14 +196,16 @@ function MFASetupScreenContent() {
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
           <Text style={styles.skipText}>Skip for now</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (step === 'totp-setup') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Setup Authenticator</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Setup Authenticator</Text>
         <Text style={styles.subtitle}>
           Scan this QR code with your authenticator app
         </Text>
@@ -234,7 +238,8 @@ function MFASetupScreenContent() {
         >
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -250,8 +255,9 @@ function MFASetupScreenContent() {
     };
 
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Verify Authenticator</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Verify Authenticator</Text>
         <Text style={styles.subtitle}>
           Enter the 6-digit code from your authenticator app
         </Text>
@@ -304,7 +310,8 @@ function MFASetupScreenContent() {
         >
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -320,6 +327,10 @@ export default function MFASetupScreen() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -340,6 +351,10 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
     color: '#666',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
   optionCard: {
     backgroundColor: '#f5f5f5',

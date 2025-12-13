@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { authenticateWithBiometrics, checkBiometricSupport, getMFASettings, verifyTOTPLogin } from '../../src/services/auth/mfaService';
@@ -138,8 +139,9 @@ function MFAVerifyScreenContent() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Two-Factor Authentication</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Two-Factor Authentication</Text>
       <Text style={styles.subtitle}>
         Enter the 6-digit code from your authenticator app
       </Text>
@@ -187,7 +189,8 @@ function MFAVerifyScreenContent() {
           </TouchableOpacity>
         </>
       )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -200,6 +203,10 @@ export default function MFAVerifyScreen() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

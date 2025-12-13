@@ -50,5 +50,14 @@ export async function verifyPassword(
   storedHash: string
 ): Promise<boolean> {
   const hash = await hashPassword(password, salt);
+  
+  console.log('=== VERIFY PASSWORD DETAILED ===');
+  console.log('Input password length:', password.length);
+  console.log('Input password (first 5 chars):', password.substring(0, 5));
+  console.log('Input salt (first 10 chars):', salt.substring(0, 10));
+  console.log('Computed hash (first 20 chars):', hash.substring(0, 20));
+  console.log('Stored hash (first 20 chars):', storedHash.substring(0, 20));
+  console.log('Hashes match:', hash === storedHash);
+  
   return hash === storedHash;
 }

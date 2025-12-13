@@ -8,7 +8,7 @@ import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'docsshelf.db';
 // Database version - increment when schema changes
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
 
 // Singleton database instance
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -94,6 +94,10 @@ export async function initializeDatabase(): Promise<void> {
           mfa_enabled INTEGER DEFAULT 0,
           mfa_type TEXT,
           biometric_enabled INTEGER DEFAULT 0,
+          recovery_phrase_hash TEXT,
+          recovery_pin_hash TEXT,
+          security_questions TEXT,
+          recovery_methods_enabled TEXT DEFAULT '[]',
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -389,6 +393,27 @@ async function verifySchemaIntegrity(db: SQLite.SQLiteDatabase): Promise<void> {
     if (!userColumns.includes('biometric_enabled')) {
       console.log('⚠️  Missing biometric_enabled column, adding it now...');
       await db.execAsync('ALTER TABLE users ADD COLUMN biometric_enabled INTEGER DEFAULT 0;');
+    }
+    
+    // Check if users table has recovery method columns (v7)
+    if (!userColumns.includes('recovery_phrase_hash')) {
+      console.log('⚠️  Missing recovery_phrase_hash column, adding it now...');
+      await db.execAsync('ALTER TABLE users ADD COLUMN recovery_phrase_hash TEXT;');
+    }
+    
+    if (!userColumns.includes('recovery_pin_hash')) {
+      console.log('⚠️  Missing recovery_pin_hash column, adding it now...');
+      await db.execAsync('ALTER TABLE users ADD COLUMN recovery_pin_hash TEXT;');
+    }
+    
+    if (!userColumns.includes('security_questions')) {
+      console.log('⚠️  Missing security_questions column, adding it now...');
+      await db.execAsync('ALTER TABLE users ADD COLUMN security_questions TEXT;');
+    }
+    
+    if (!userColumns.includes('recovery_methods_enabled')) {
+      console.log('⚠️  Missing recovery_methods_enabled column, adding it now...');
+      await db.execAsync('ALTER TABLE users ADD COLUMN recovery_methods_enabled TEXT DEFAULT \'[]\';');
     }
     
     // Check if app_preferences table exists
@@ -708,6 +733,47 @@ async function runMigrations(db: SQLite.SQLiteDatabase, fromVersion: number): Pr
       
       console.log('Created app_preferences table');
       console.log('Migration to version 6 completed');
+    }
+    
+    // Migration v6 → v7: Add password recovery methods
+    if (fromVersion < 7) {
+      console.log('Migrating database from version 6 to 7...');
+      
+      // Add password recovery columns to users table
+      const userColumns = await db.getAllAsync<{ name: string }>(
+        `PRAGMA table_info(users)`
+      );
+      const userColumnNames = userColumns.map((col) => col.name);
+      
+      if (!userColumnNames.includes('recovery_phrase_hash')) {
+        await db.execAsync(`
+          ALTER TABLE users ADD COLUMN recovery_phrase_hash TEXT;
+        `);
+        console.log('Added recovery_phrase_hash column to users table');
+      }
+      
+      if (!userColumnNames.includes('recovery_pin_hash')) {
+        await db.execAsync(`
+          ALTER TABLE users ADD COLUMN recovery_pin_hash TEXT;
+        `);
+        console.log('Added recovery_pin_hash column to users table');
+      }
+      
+      if (!userColumnNames.includes('security_questions')) {
+        await db.execAsync(`
+          ALTER TABLE users ADD COLUMN security_questions TEXT;
+        `);
+        console.log('Added security_questions column to users table');
+      }
+      
+      if (!userColumnNames.includes('recovery_methods_enabled')) {
+        await db.execAsync(`
+          ALTER TABLE users ADD COLUMN recovery_methods_enabled TEXT DEFAULT '[]';
+        `);
+        console.log('Added recovery_methods_enabled column to users table');
+      }
+      
+      console.log('Migration to version 7 completed');
     }
     
     await setDatabaseVersion(db, DATABASE_VERSION);

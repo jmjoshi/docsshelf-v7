@@ -15,16 +15,20 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Application from 'expo-application';
 
-// Import version info
+// Import version info (fallback only)
 const versionInfo = require('../../../version.json');
 
 export default function AboutScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const appVersion = versionInfo.version || '1.0.0';
-  const buildNumber = versionInfo.buildNumber || '2';
+  // Use runtime app version, but buildNumber from version.json (nativeBuildVersion returns version name "1" not versionCode)
+  const runtimeAppVersion = Application.nativeApplicationVersion;
+
+  const appVersion = runtimeAppVersion || versionInfo.version || '1.0.0';
+  const buildNumber = versionInfo.buildNumber || '1';
   const buildDate = versionInfo.buildDate ? new Date(versionInfo.buildDate).toLocaleDateString() : '';
   const buildType = versionInfo.buildType || 'release';
   const gitCommit = versionInfo.gitCommit || '';
@@ -105,7 +109,7 @@ export default function AboutScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      edges={['top']}>
+      edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <IconSymbol name="chevron.left" size={28} color={Colors.primary} />

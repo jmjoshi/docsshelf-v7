@@ -213,7 +213,7 @@ export default function DocumentScanScreen({
 
   // Camera view
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="light-content" />
       
       {/* Camera Preview */}

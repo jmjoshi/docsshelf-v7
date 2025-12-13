@@ -35,7 +35,12 @@ export async function createUser(profile: UserProfile): Promise<number> {
 /**
  * Get user profile by email
  */
-export async function getUserByEmail(email: string): Promise<UserProfile | null> {
+export async function getUserByEmail(email: string): Promise<(UserProfile & { 
+  recovery_methods_enabled?: string;
+  recovery_phrase_hash?: string;
+  recovery_pin_hash?: string;
+  security_questions?: string;
+}) | null> {
   const db = getDatabase();
   
   try {
@@ -49,6 +54,10 @@ export async function getUserByEmail(email: string): Promise<UserProfile | null>
       work_phone: string | null;
       created_at: string;
       updated_at: string;
+      recovery_methods_enabled?: string;
+      recovery_phrase_hash?: string;
+      recovery_pin_hash?: string;
+      security_questions?: string;
     }>(
       'SELECT * FROM users WHERE email = ?',
       [email]
@@ -70,6 +79,10 @@ export async function getUserByEmail(email: string): Promise<UserProfile | null>
       },
       createdAt: result.created_at,
       updatedAt: result.updated_at,
+      recovery_methods_enabled: result.recovery_methods_enabled,
+      recovery_phrase_hash: result.recovery_phrase_hash,
+      recovery_pin_hash: result.recovery_pin_hash,
+      security_questions: result.security_questions,
     };
   } catch (error) {
     console.error('Get user failed:', error);

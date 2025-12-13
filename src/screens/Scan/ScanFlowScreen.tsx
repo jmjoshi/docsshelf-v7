@@ -95,7 +95,7 @@ export default function ScanFlowScreen() {
   console.log('[ScanFlowScreen] Rendering with step:', currentStep);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       {/* Format Selection Modal */}
       {currentStep === 'format-selection' && (
         <FormatSelectionModal

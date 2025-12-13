@@ -13,10 +13,13 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Category } from '../../types/category';
+import type { Tag } from '../../types/document';
 
 export interface DocumentFilters {
     categoryIds: number[];
+    tagIds: number[];
     fileTypes: string[];
     dateRange: {
         start: Date | null;
@@ -33,6 +36,7 @@ interface FilterModalProps {
     visible: boolean;
     filters: DocumentFilters;
     categories: Category[];
+    tags: Tag[];
     onApply: (filters: DocumentFilters) => void;
     onReset: () => void;
     onClose: () => void;
@@ -64,6 +68,7 @@ export default function FilterModal({
     visible,
     filters,
     categories,
+    tags,
     onApply,
     onReset,
     onClose,
@@ -78,6 +83,14 @@ export default function FilterModal({
             : [...localFilters.categoryIds, categoryId];
         
         setLocalFilters({ ...localFilters, categoryIds: newCategoryIds });
+    };
+
+    const toggleTag = (tagId: number) => {
+        const newTagIds = localFilters.tagIds.includes(tagId)
+            ? localFilters.tagIds.filter((id) => id !== tagId)
+            : [...localFilters.tagIds, tagId];
+        
+        setLocalFilters({ ...localFilters, tagIds: newTagIds });
     };
 
     const toggleFileType = (fileType: string) => {
@@ -120,6 +133,7 @@ export default function FilterModal({
     const handleReset = () => {
         const resetFilters: DocumentFilters = {
             categoryIds: [],
+            tagIds: [],
             fileTypes: [],
             dateRange: { start: null, end: null },
             sizeRange: { min: null, max: null },
@@ -133,6 +147,7 @@ export default function FilterModal({
     const getActiveFilterCount = () => {
         let count = 0;
         if (localFilters.categoryIds.length > 0) count++;
+        if (localFilters.tagIds.length > 0) count++;
         if (localFilters.fileTypes.length > 0) count++;
         if (localFilters.dateRange.start || localFilters.dateRange.end) count++;
         if (localFilters.sizeRange.min !== null || localFilters.sizeRange.max !== null) count++;
@@ -148,7 +163,7 @@ export default function FilterModal({
             onRequestClose={onClose}
         >
             <View style={styles.modalOverlay}>
-                <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
+                <SafeAreaView style={[styles.modalContent, isDark && styles.modalContentDark]} edges={['bottom']}>
                     {/* Header */}
                     <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
                         <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Filter Documents</Text>
@@ -185,6 +200,44 @@ export default function FilterModal({
                                         </Text>
                                     </TouchableOpacity>
                                 ))}
+                            </View>
+                        </View>
+
+                        {/* Tags */}
+                        <View style={styles.filterSection}>
+                            <Text style={[styles.filterSectionTitle, isDark && styles.filterSectionTitleDark]}>Tags</Text>
+                            <View style={styles.filterOptions}>
+                                {tags.length === 0 ? (
+                                    <Text style={[styles.filterChipText, isDark && styles.filterChipTextDark]}>
+                                        No tags available
+                                    </Text>
+                                ) : (
+                                    tags.map((tag) => (
+                                        <TouchableOpacity
+                                            key={tag.id}
+                                            style={[
+                                                styles.filterChip,
+                                                isDark && styles.filterChipDark,
+                                                localFilters.tagIds.includes(tag.id) &&
+                                                    styles.filterChipActive,
+                                                { borderColor: tag.color },
+                                            ]}
+                                            onPress={() => toggleTag(tag.id)}
+                                        >
+                                            <View style={[styles.tagColorDot, { backgroundColor: tag.color }]} />
+                                            <Text
+                                                style={[
+                                                    styles.filterChipText,
+                                                    isDark && styles.filterChipTextDark,
+                                                    localFilters.tagIds.includes(tag.id) &&
+                                                        styles.filterChipTextActive,
+                                                ]}
+                                            >
+                                                {tag.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))
+                                )}
                             </View>
                         </View>
 
@@ -328,7 +381,7 @@ export default function FilterModal({
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </View>
+                </SafeAreaView>
             </View>
         </Modal>
     );
@@ -411,6 +464,12 @@ const styles = StyleSheet.create({
     filterChipTextActive: {
         color: '#fff',
         fontWeight: '600',
+    },
+    tagColorDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginRight: 6,
     },
     favoriteToggle: {
         flexDirection: 'row',

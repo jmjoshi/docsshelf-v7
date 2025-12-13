@@ -3,7 +3,6 @@
  * Allows users to create, edit, and delete tags
  */
 
-import { BottomNavBar } from '@/src/components/navigation/BottomNavBar';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -176,7 +175,7 @@ export default function TagManagementScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.avgTagsPerDocument.toFixed(1)}</Text>
+            <Text style={styles.statValue}>{(stats.avgTagsPerDocument || 0).toFixed(1)}</Text>
             <Text style={styles.statLabel}>Avg Tags/Doc</Text>
           </View>
         </View>
@@ -244,7 +243,7 @@ export default function TagManagementScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setEditingTag(null)}
       >
-        <View style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer} edges={['top']}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setEditingTag(null)}>
               <Text style={styles.modalCancel}>Cancel</Text>
@@ -316,9 +315,8 @@ export default function TagManagementScreen() {
               </View>
             )}
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
-      <BottomNavBar />
     </SafeAreaView>
   );
 }

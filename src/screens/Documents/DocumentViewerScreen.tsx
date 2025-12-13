@@ -8,16 +8,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HierarchicalCategoryPicker } from '../../../components/ui/HierarchicalCategoryPicker';
@@ -26,11 +26,11 @@ import { getCategories } from '../../services/database/categoryService';
 import { readDocument } from '../../services/database/documentService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-    removeDocument,
-    selectDocumentById,
-    selectDocumentError,
-    toggleFavorite,
-    updateDocumentMetadata,
+  removeDocument,
+  selectDocumentById,
+  selectDocumentError,
+  toggleFavorite,
+  updateDocumentMetadata,
 } from '../../store/slices/documentSlice';
 import { Category } from '../../types/category';
 
@@ -400,7 +400,7 @@ Encrypted: Yes`;
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backIconButton} onPress={() => router.back()}>

@@ -8,14 +8,14 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from 'react-native-toast-notifications';
@@ -24,20 +24,24 @@ import FilterModal, { DocumentFilters } from '../../components/documents/FilterM
 import { getCurrentUserId } from '../../services/database/userService';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-    loadCategories,
-    selectAllCategories,
+  loadCategories,
+  selectAllCategories,
 } from '../../store/slices/categorySlice';
 import {
-    loadDocuments,
-    loadDocumentStats,
-    removeDocument,
-    selectAllDocuments,
-    selectDocumentError,
-    selectDocumentLoading,
-    selectDocumentStats,
-    selectFavoriteDocuments,
-    selectRecentDocuments,
-    toggleFavorite,
+  loadTags,
+  selectAllTags,
+} from '../../store/slices/tagSlice';
+import {
+  loadDocuments,
+  loadDocumentStats,
+  removeDocument,
+  selectAllDocuments,
+  selectDocumentError,
+  selectDocumentLoading,
+  selectDocumentStats,
+  selectFavoriteDocuments,
+  selectRecentDocuments,
+  toggleFavorite,
 } from '../../store/slices/documentSlice';
 import type { Document } from '../../types/document';
 
@@ -53,6 +57,7 @@ export default function DocumentListScreen() {
   const favoriteDocuments = useAppSelector(selectFavoriteDocuments);
   const recentDocuments = useAppSelector((state) => selectRecentDocuments(state, 20));
   const categories = useAppSelector(selectAllCategories);
+  const tags = useAppSelector(selectAllTags);
   const loading = useAppSelector(selectDocumentLoading);
   const error = useAppSelector(selectDocumentError);
   const stats = useAppSelector(selectDocumentStats);
@@ -65,19 +70,49 @@ export default function DocumentListScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filters, setFilters] = useState<DocumentFilters>({
     categoryIds: [],
+    tagIds: [],
     fileTypes: [],
     dateRange: { start: null, end: null },
     sizeRange: { min: null, max: null },
     favoritesOnly: false,
   });
+  const [documentTags, setDocumentTags] = useState<Record<number, number[]>>({});
+
+  const loadDocumentTagRelationships = useCallback(async () => {
+    try {
+      // Import dynamically to avoid circular dependencies
+      const { getDatabase } = await import('../../services/database/dbInit');
+      const db = await getDatabase();
+      
+      const result = await db.getAllAsync<{document_id: number; tag_id: number}>(
+        'SELECT document_id, tag_id FROM document_tags'
+      );
+      
+      // Group tag IDs by document ID
+      const tagsByDoc: Record<number, number[]> = {};
+      result.forEach(row => {
+        if (!tagsByDoc[row.document_id]) {
+          tagsByDoc[row.document_id] = [];
+        }
+        tagsByDoc[row.document_id].push(row.tag_id);
+      });
+      
+      setDocumentTags(tagsByDoc);
+    } catch (err) {
+      console.error('Failed to load document-tag relationships:', err);
+    }
+  }, []);
 
   const loadUserData = useCallback(async () => {
     try {
       const id = await getCurrentUserId();
       if (id) {
         dispatch(loadCategories(id));
+        dispatch(loadTags());
         dispatch(loadDocuments(undefined));
         dispatch(loadDocumentStats());
+        // Load document-tag relationships
+        loadDocumentTagRelationships();
       }
     } catch (err) {
       console.error('Failed to load user:', err);
@@ -95,7 +130,9 @@ export default function DocumentListScreen() {
       await Promise.all([
         dispatch(loadDocuments(undefined)),
         dispatch(loadDocumentStats()),
+        dispatch(loadTags()),
       ]);
+      await loadDocumentTagRelationships();
     } finally {
       setRefreshing(false);
     }
@@ -163,6 +200,7 @@ export default function DocumentListScreen() {
   const getActiveFilterCount = (): number => {
     let count = 0;
     if (filters.categoryIds.length > 0) count++;
+    if (filters.tagIds.length > 0) count++;
     if (filters.fileTypes.length > 0) count++;
     if (filters.dateRange.start || filters.dateRange.end) count++;
     if (filters.sizeRange.min !== null || filters.sizeRange.max !== null) count++;
@@ -178,6 +216,7 @@ export default function DocumentListScreen() {
   const handleResetFilters = () => {
     setFilters({
       categoryIds: [],
+      tagIds: [],
       fileTypes: [],
       dateRange: { start: null, end: null },
       sizeRange: { min: null, max: null },
@@ -214,6 +253,15 @@ export default function DocumentListScreen() {
       documents = documents.filter((doc) => 
         doc.category_id !== null && filters.categoryIds.includes(doc.category_id)
       );
+    }
+
+    // Filter by tag IDs
+    if (filters.tagIds.length > 0) {
+      documents = documents.filter((doc) => {
+        const docTagIds = documentTags[doc.id] || [];
+        // Document must have at least one of the selected tags
+        return filters.tagIds.some(tagId => docTagIds.includes(tagId));
+      });
     }
 
     // Filter by file types
@@ -303,7 +351,7 @@ export default function DocumentListScreen() {
     }
 
     return sorted;
-  }, [viewMode, allDocuments, favoriteDocuments, recentDocuments, selectedCategoryId, filters, searchQuery, sortMode]);
+  }, [viewMode, allDocuments, favoriteDocuments, recentDocuments, selectedCategoryId, filters, searchQuery, sortMode, documentTags]);
 
   const formatFileSize = useCallback((bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -398,7 +446,7 @@ export default function DocumentListScreen() {
   const displayDocuments = getDisplayDocuments;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} edges={['top', 'left', 'right', 'bottom']}>
       {/* Header with Stats */}
       {stats && (
         <View style={[styles.statsContainer, { backgroundColor: Colors[colorScheme ?? 'light'].card, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
@@ -550,6 +598,7 @@ export default function DocumentListScreen() {
         visible={filterModalVisible}
         filters={filters}
         categories={categories}
+        tags={tags}
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
         onClose={() => setFilterModalVisible(false)}

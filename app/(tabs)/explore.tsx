@@ -44,6 +44,14 @@ export default function SettingsScreen() {
       onPress: () => router.push('/settings/document-management' as any),
     },
     {
+      id: 'tags',
+      title: 'Tag Management',
+      subtitle: 'Create and organize document tags',
+      icon: 'tag.fill' as any,
+      color: '#FF6B6B',
+      onPress: () => router.push('/settings/tags' as any),
+    },
+    {
       id: 'backup',
       title: 'Backup & Restore',
       subtitle: 'Export and import your data',

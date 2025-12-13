@@ -168,7 +168,7 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-        edges={['top']}>
+        edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
             <IconSymbol name="chevron.left" size={28} color={Colors.primary} />
@@ -192,7 +192,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      edges={['top']}>
+      edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}>

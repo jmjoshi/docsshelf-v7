@@ -5,8 +5,10 @@ import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextIn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocsShelfMascot } from '../../components/branding/Logo';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/colors';
+import RecoverySetupScreen from '../../src/components/auth/RecoverySetupScreen';
 import { ErrorBoundary } from '../../src/components/common/ErrorBoundary';
-import { initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
+import { RecoverySetup } from '../../src/services/auth/recoveryService';
+import { getDatabase, initializeDatabase, isDatabaseInitialized } from '../../src/services/database/dbInit';
 import { createUser, userExists } from '../../src/services/database/userService';
 import { UserProfile } from '../../src/types/user';
 import { CURRENT_USER_EMAIL_KEY, getUserPasswordHashKey, getUserSaltKey } from '../../src/utils/auth/secureStoreKeys';
@@ -30,6 +32,8 @@ function RegisterScreenContent() {
   const [dbReady, setDbReady] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showRecoverySetup, setShowRecoverySetup] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Initialize database on component mount
   useEffect(() => {
@@ -153,12 +157,31 @@ function RegisterScreenContent() {
         },
       };
       
+      console.log('=== REGISTRATION START ===');
+      console.log('Email being registered:', sanitizedEmail);
+      console.log('Salt (first 10 chars):', salt.substring(0, 10));
+      console.log('Hash (first 20 chars):', passwordHash.substring(0, 20));
+      console.log('Password length:', password.length);
+      
       await createUser(userProfile);
       
       // Store authentication credentials securely per-user
       await SecureStore.setItemAsync(CURRENT_USER_EMAIL_KEY, sanitizedEmail); // Keep current user
       await SecureStore.setItemAsync(getUserSaltKey(sanitizedEmail), salt);
       await SecureStore.setItemAsync(getUserPasswordHashKey(sanitizedEmail), passwordHash);
+      
+      console.log('Stored CURRENT_USER_EMAIL_KEY:', sanitizedEmail);
+      console.log('Stored salt key:', getUserSaltKey(sanitizedEmail));
+      console.log('Stored hash key:', getUserPasswordHashKey(sanitizedEmail));
+      
+      // Verify what was stored
+      const verifyEmail = await SecureStore.getItemAsync(CURRENT_USER_EMAIL_KEY);
+      const verifySalt = await SecureStore.getItemAsync(getUserSaltKey(sanitizedEmail));
+      const verifyHash = await SecureStore.getItemAsync(getUserPasswordHashKey(sanitizedEmail));
+      console.log('VERIFIED - Email in SecureStore:', verifyEmail);
+      console.log('VERIFIED - Salt exists:', !!verifySalt);
+      console.log('VERIFIED - Hash exists:', !!verifyHash);
+      console.log('=== REGISTRATION END ===');
       
       // Clear form
       setFirstName('');
@@ -173,9 +196,12 @@ function RegisterScreenContent() {
       setAgreedToPrivacy(false);
       
       logger.info('User registration successful', { email: sanitizedEmail });
-      Alert.alert('Success', 'Account created successfully! Now let\'s secure your account with two-factor authentication.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/mfa-setup' as any) }
-      ]);
+      
+      // Save email for recovery setup
+      setRegisteredEmail(sanitizedEmail);
+      
+      // Show recovery setup modal
+      setShowRecoverySetup(true);
     } catch (err) {
       logger.error('Registration failed', err as Error, { email: sanitizeEmail(email) });
       setError('Failed to create account. Please try again.');
@@ -183,6 +209,100 @@ function RegisterScreenContent() {
       setLoading(false);
     }
   }, [firstName, lastName, email, mobilePhone, homePhone, workPhone, password, confirmPassword, dbReady, agreedToTerms, agreedToPrivacy]);
+
+  const handleRecoverySetupComplete = async (recoverySetup: RecoverySetup) => {
+    try {
+      console.log('=== RECOVERY SETUP START ===');
+      console.log('Recovery setup data:', {
+        methods: recoverySetup.methods,
+        hasPhraseHash: !!recoverySetup.phraseHash,
+        hasPinHash: !!recoverySetup.pinHash,
+        hasQuestions: !!recoverySetup.securityQuestions,
+        email: registeredEmail,
+      });
+
+      const db = getDatabase();
+      console.log('Database instance obtained');
+      
+      // Get user ID
+      const user = await db.getFirstAsync<{ id: number }>(
+        'SELECT id FROM users WHERE email = ?',
+        [registeredEmail]
+      );
+
+      console.log('User query result:', user);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      console.log('Attempting to update recovery methods for user ID:', user.id);
+
+      // Update user with recovery methods
+      const result = await db.runAsync(
+        `UPDATE users 
+         SET recovery_phrase_hash = ?, 
+             recovery_pin_hash = ?, 
+             security_questions = ?, 
+             recovery_methods_enabled = ?
+         WHERE id = ?`,
+        [
+          recoverySetup.phraseHash || null,
+          recoverySetup.pinHash || null,
+          recoverySetup.securityQuestions ? JSON.stringify(recoverySetup.securityQuestions) : null,
+          JSON.stringify(recoverySetup.methods),
+          user.id,
+        ]
+      );
+
+      console.log('Update result:', result);
+      logger.info('Recovery methods saved', { email: registeredEmail, methods: recoverySetup.methods });
+      console.log('=== RECOVERY SETUP SUCCESS ===');
+
+      // Close recovery setup modal
+      setShowRecoverySetup(false);
+
+      // Navigate to MFA setup
+      Alert.alert(
+        'Success',
+        'Account created successfully! Now let\'s secure your account with two-factor authentication.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/mfa-setup' as any) }]
+      );
+    } catch (err) {
+      console.error('=== RECOVERY SETUP FAILED ===');
+      console.error('Error details:', err);
+      console.error('Error message:', (err as Error).message);
+      console.error('Error stack:', (err as Error).stack);
+      
+      logger.error('Failed to save recovery methods', err as Error, { email: registeredEmail });
+      Alert.alert('Error', 'Failed to save recovery methods. Please try setting them up again in account settings.');
+      
+      // Still navigate to MFA setup
+      router.replace('/(auth)/mfa-setup' as any);
+    }
+  };
+
+  const handleRecoverySetupSkip = () => {
+    Alert.alert(
+      'Skip Recovery Setup?',
+      'Without recovery methods, you will not be able to reset your password if you forget it. Your data will be permanently lost.\n\nAre you sure you want to skip?',
+      [
+        { text: 'Go Back', style: 'cancel' },
+        {
+          text: 'Skip Anyway',
+          style: 'destructive',
+          onPress: () => {
+            setShowRecoverySetup(false);
+            Alert.alert(
+              'Success',
+              'Account created successfully! Now let\'s secure your account with two-factor authentication.',
+              [{ text: 'OK', onPress: () => router.replace('/(auth)/mfa-setup' as any) }]
+            );
+          },
+        },
+      ]
+    );
+  };
 
   // Show loading while database initializes
   if (!dbReady) {
@@ -195,13 +315,14 @@ function RegisterScreenContent() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView 
-        style={styles.container} 
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-      <View style={styles.header}>
+    <>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView 
+          style={styles.container} 
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+        <View style={styles.header}>
         <DocsShelfMascot size={80} />
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join DocsShelf for secure document management</Text>
@@ -382,8 +503,17 @@ function RegisterScreenContent() {
       >
         <Text style={styles.linkText}>Already have an account? Login</Text>
       </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+
+      {showRecoverySetup && (
+        <RecoverySetupScreen
+          visible={showRecoverySetup}
+          onComplete={handleRecoverySetupComplete}
+          onSkip={handleRecoverySetupSkip}
+        />
+      )}
+    </>
   );
 }
 

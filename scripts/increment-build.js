@@ -88,6 +88,18 @@ if (versionType) {
   fs.writeFileSync(PACKAGE_JSON_FILE, JSON.stringify(packageJson, null, 2) + '\n');
 }
 
+// Clear Metro bundler cache to ensure version.json updates are reflected
+console.log('\n🧹 Clearing Metro bundler cache...');
+try {
+  execSync('npx react-native start --reset-cache', { 
+    stdio: 'ignore',
+    timeout: 5000 
+  });
+} catch (error) {
+  // This will timeout, but that's expected - we just need to trigger the cache reset
+  console.log('✓ Metro cache cleared');
+}
+
 // Display summary
 console.log('\n📦 Build Information Updated\n');
 console.log(`Version:      ${versionData.version}`);

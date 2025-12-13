@@ -105,6 +105,11 @@ export default function QuickReferenceScreen() {
       icon: 'settings',
       description: 'App settings, security, about, help',
     },
+    {
+      screen: 'Tag Management',
+      icon: 'pricetags',
+      description: 'Create and manage tags for document organization',
+    },
   ];
 
   const commonTasks = [
@@ -115,6 +120,18 @@ export default function QuickReferenceScreen() {
     {
       task: 'View all receipts',
       steps: 'Categories → Tap "Receipt" category',
+    },
+    {
+      task: 'Create and use tags',
+      steps: 'Settings → Tag Management → + button → Name tag',
+    },
+    {
+      task: 'Tag a document',
+      steps: 'Open document → Edit → Tags section → Select tags',
+    },
+    {
+      task: 'Find documents by tag',
+      steps: 'Documents → Search bar → Type tag name',
     },
     {
       task: 'Organize documents',
@@ -203,7 +220,7 @@ export default function QuickReferenceScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>

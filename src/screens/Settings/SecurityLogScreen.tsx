@@ -216,7 +216,7 @@ export default function SecurityLogScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top', 'left', 'right', 'bottom']}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Loading security logs...</Text>
       </SafeAreaView>
@@ -224,7 +224,7 @@ export default function SecurityLogScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
